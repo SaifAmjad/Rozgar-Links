@@ -1,5 +1,15 @@
 export { healthResponseSchema, type HealthResponse } from './schemas/health.js';
 export {
+  jobCountrySchema,
+  jobFieldIdSchema,
+  jobListingSchema,
+  jobsProvenanceSchema,
+  jobsResponseSchema,
+  type JobListing,
+  type JobsProvenance,
+  type JobsResponse,
+} from './schemas/jobs.js';
+export {
   applicationFieldsSchema,
   createApplicationFieldsSchema,
   gulfCountries,

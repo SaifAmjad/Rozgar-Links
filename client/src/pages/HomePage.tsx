@@ -1,17 +1,11 @@
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  ClipboardCheck,
-  Globe2,
-  Search,
-  ShieldCheck,
-} from 'lucide-react';
+import { ArrowRight, ClipboardCheck, Globe2, Search, ShieldCheck } from 'lucide-react';
 
 import { PageContainer } from '../components/layout/PageContainer';
 import { Badge } from '../components/ui/Badge';
 import { ButtonLink } from '../components/ui/ButtonLink';
 import { Card } from '../components/ui/Card';
 import { DashboardSection } from '../features/dashboard/DashboardSection';
+import { FeaturedJobs } from '../features/jobs/FeaturedJobs';
 
 const serviceCards = [
   {
@@ -114,30 +108,7 @@ export function HomePage() {
 
       <DashboardSection />
 
-      <section className="py-14 sm:py-18" aria-labelledby="jobs-preview-title">
-        <PageContainer>
-          <div className="grid gap-8 rounded-xl border bg-bg p-6 shadow-soft lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
-            <div>
-              <div className="flex items-center gap-3 text-primary">
-                <BriefcaseBusiness aria-hidden="true" className="text-brand-green" size={24} />
-                <span className="text-sm font-bold uppercase tracking-[0.18em]">
-                  Sample directory
-                </span>
-              </div>
-              <h2 className="mt-4 text-3xl" id="jobs-preview-title">
-                Featured jobs will appear here
-              </h2>
-              <p className="mt-3 max-w-2xl leading-7 text-muted">
-                Fictional examples will be marked “Sample listing” and will never include invented
-                original-source links. The directory arrives in Milestone 5.
-              </p>
-            </div>
-            <ButtonLink to="/jobs" variant="outline">
-              View jobs page <ArrowRight aria-hidden="true" size={18} />
-            </ButtonLink>
-          </div>
-        </PageContainer>
-      </section>
+      <FeaturedJobs />
 
       <section className="bg-surface py-14 sm:py-18" aria-labelledby="process-title">
         <PageContainer>

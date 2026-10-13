@@ -19,6 +19,10 @@ const envSchema = z.object({
   BANK_IBAN: z.string().trim().min(1).default('DEMO-NOT-FOR-PAYMENT'),
   BANK_NAME: z.string().trim().min(1).default('Sample Bank (Demo)'),
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
+  ENABLE_SCRAPING: z
+    .literal('false')
+    .default('false')
+    .transform(() => false as const),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PAYMENT_DETAILS_ARE_DEMO: z
     .literal('true')

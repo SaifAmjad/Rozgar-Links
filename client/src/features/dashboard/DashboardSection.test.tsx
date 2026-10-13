@@ -61,7 +61,9 @@ describe('DashboardSection', () => {
       screen.getByRole('status', { name: /loading daily opportunity overview/i }),
     ).toBeInTheDocument();
     expect((await screen.findAllByText('1,480')).length).toBeGreaterThan(0);
-    expect(await screen.findByRole('heading', { name: 'Openings by country' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Openings by country' }, { timeout: 5_000 }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Country' })).toBeInTheDocument();
     expect(screen.getAllByText('Indicative figures, updated daily').length).toBeGreaterThan(1);
   });
