@@ -3,7 +3,7 @@
 **Tagline:** Connecting People with Global Opportunities
 
 **Urdu:** لوگوں کو مواقع سے جوڑنا
-**Status:** Implementation in progress. Milestone 1 scaffold is complete.
+**Status:** Implementation in progress. Milestones 1–2 are complete.
 
 ## Overview and scope
 Build a mobile-first, accessible Gulf hiring-assistance portal for applicants, primarily in Pakistan, seeking opportunities in Saudi Arabia, UAE, Oman, Qatar, Kuwait and Bahrain. Provide a daily **indicative** jobs dashboard, a searchable sample/authorized external listing directory, and a five-step application wizard that emails submitted details and attachments to an administrator. The service must not imply that a listed employer, GulfTalent or NaukriGulf has partnered with or endorsed Rozgar Links without written authorization. Never claim to guarantee employment.
@@ -127,7 +127,7 @@ Local `npm install` (commit lockfile), copy `.env.example` to `.env`, fill safe 
 
 ## Build order (commit after every milestone)
 - [x] **M1 — Scaffold:** workspaces, TypeScript, shared package, root scripts, lint/test/build, `.gitignore`, logo fallback, app/router/server health. **Accept:** clean install, health endpoint, lint/build/test pass. Commit `chore: scaffold monorepo`.
-- [ ] **M2 — Brand/pages:** Tailwind tokens, responsive layout, nav/footer, home shell, jobs/apply placeholders, FAQ/contact/privacy/terms/fees stub routes. **Accept:** WCAG keyboard basics and matching palette. Commit `feat: add brand shell and pages`.
+- [x] **M2 — Brand/pages:** Tailwind tokens, responsive layout, nav/footer, home shell, jobs/apply placeholders, FAQ/contact/privacy/terms/fees stub routes. **Accept:** WCAG keyboard basics and matching palette. Commit `feat: add brand shell and pages`.
 - [ ] **M3 — Shared taxonomy/schema:** 12x8–15 role data, shared Zod application validation, taxonomy route/public config. **Accept:** conditional schema and unique-ID tests. Commit `feat: add taxonomy and contracts`.
 - [ ] **M4 — Stats:** deterministic generator, repository, daily scheduler and stats/history endpoints, frontend charts/labels/states. **Accept:** same date same totals, coherent sums, timezone rollover tests. Commit `feat: add daily indicative dashboard`.
 - [ ] **M5 — Jobs:** ManualProvider with ~40 fictional samples, interface, cache/refresh, jobs endpoint/filters/cards, non-endorsement, scraper stub. **Accept:** accurate sample labels, no invented external URLs, query tests. Commit `feat: add sample job directory`.

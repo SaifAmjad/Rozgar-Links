@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
@@ -13,7 +13,58 @@ describe('App router', () => {
     );
 
     expect(screen.getByRole('heading', { name: /connecting people/i })).toBeInTheDocument();
-    expect(screen.getByLabelText('Rozgar Links')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Rozgar Links')).toHaveLength(2);
+    expect(screen.getByText(/no placement guarantee/i)).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/jobs', 'Jobs across the Gulf'],
+    ['/apply', 'Prepare before you apply'],
+    ['/faq', 'Frequently asked questions'],
+    ['/contact', 'Contact Rozgar Links'],
+    ['/privacy', 'Privacy notice'],
+    ['/terms', 'Terms of service'],
+    ['/fees-and-refunds', 'Fees and refunds'],
+  ])('renders the %s route', (route, heading) => {
+    render(
+      <MemoryRouter initialEntries={[route]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+  });
+
+  it('renders the independent-service disclaimer and legal navigation', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/not affiliated with or endorsed by gulftalent/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
+    expect(screen.getByText(/recruitment licence: pending-verification/i)).toBeInTheDocument();
+  });
+
+  it('opens and closes the mobile menu with the keyboard', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const openButton = screen.getByRole('button', { name: 'Open navigation menu' });
+    expect(openButton).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(openButton);
+    const closeButton = screen.getByRole('button', { name: 'Close navigation menu' });
+    expect(closeButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('navigation', { name: 'Mobile navigation' })).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveFocus();
+    expect(screen.queryByRole('navigation', { name: 'Mobile navigation' })).not.toBeInTheDocument();
   });
 
   it('renders an accessible fallback for unknown routes', () => {
