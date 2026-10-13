@@ -1,0 +1,209 @@
+{
+  "version": "1.0.0",
+  "fields": [
+    {
+      "id": "construction",
+      "label": "Construction",
+      "roles": [
+        { "id": "mason", "label": "Mason" },
+        { "id": "carpenter", "label": "Carpenter" },
+        { "id": "construction-electrician", "label": "Construction Electrician" },
+        { "id": "plumber", "label": "Plumber" },
+        { "id": "steel-fixer", "label": "Steel Fixer" },
+        { "id": "construction-painter", "label": "Construction Painter" },
+        { "id": "scaffolder", "label": "Scaffolder" },
+        { "id": "tile-setter", "label": "Tile Setter" },
+        { "id": "heavy-equipment-operator", "label": "Heavy Equipment Operator" },
+        { "id": "site-supervisor", "label": "Site Supervisor" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "hospitality",
+      "label": "Hospitality",
+      "roles": [
+        { "id": "hotel-receptionist", "label": "Hotel Receptionist" },
+        { "id": "waiter", "label": "Waiter" },
+        { "id": "chef", "label": "Chef" },
+        { "id": "cook", "label": "Cook" },
+        { "id": "housekeeper", "label": "Housekeeper" },
+        { "id": "barista", "label": "Barista" },
+        { "id": "restaurant-supervisor", "label": "Restaurant Supervisor" },
+        { "id": "concierge", "label": "Concierge" },
+        { "id": "laundry-attendant", "label": "Laundry Attendant" },
+        { "id": "food-and-beverage-supervisor", "label": "Food and Beverage Supervisor" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "healthcare",
+      "label": "Healthcare",
+      "roles": [
+        { "id": "registered-nurse", "label": "Registered Nurse" },
+        { "id": "nursing-assistant", "label": "Nursing Assistant" },
+        { "id": "general-physician", "label": "General Physician" },
+        { "id": "medical-laboratory-technician", "label": "Medical Laboratory Technician" },
+        { "id": "radiology-technician", "label": "Radiology Technician" },
+        { "id": "pharmacist", "label": "Pharmacist" },
+        { "id": "physiotherapist", "label": "Physiotherapist" },
+        { "id": "dental-assistant", "label": "Dental Assistant" },
+        { "id": "emergency-medical-technician", "label": "Emergency Medical Technician" },
+        { "id": "medical-receptionist", "label": "Medical Receptionist" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "information-technology",
+      "label": "Information Technology",
+      "roles": [
+        { "id": "software-developer", "label": "Software Developer" },
+        { "id": "frontend-developer", "label": "Frontend Developer" },
+        { "id": "backend-developer", "label": "Backend Developer" },
+        { "id": "network-engineer", "label": "Network Engineer" },
+        { "id": "systems-administrator", "label": "Systems Administrator" },
+        { "id": "cybersecurity-analyst", "label": "Cybersecurity Analyst" },
+        { "id": "cloud-engineer", "label": "Cloud Engineer" },
+        { "id": "database-administrator", "label": "Database Administrator" },
+        { "id": "it-support-specialist", "label": "IT Support Specialist" },
+        { "id": "qa-engineer", "label": "QA Engineer" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "oil-and-gas",
+      "label": "Oil & Gas",
+      "roles": [
+        { "id": "drilling-technician", "label": "Drilling Technician" },
+        { "id": "petroleum-engineer", "label": "Petroleum Engineer" },
+        { "id": "process-operator", "label": "Process Operator" },
+        { "id": "pipeline-technician", "label": "Pipeline Technician" },
+        { "id": "instrumentation-technician", "label": "Instrumentation Technician" },
+        { "id": "oil-and-gas-safety-officer", "label": "Oil and Gas Safety Officer" },
+        { "id": "rig-mechanic", "label": "Rig Mechanic" },
+        { "id": "welding-inspector", "label": "Welding Inspector" },
+        { "id": "production-technician", "label": "Production Technician" },
+        { "id": "maintenance-planner", "label": "Maintenance Planner" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "logistics",
+      "label": "Logistics",
+      "roles": [
+        { "id": "warehouse-associate", "label": "Warehouse Associate" },
+        { "id": "inventory-controller", "label": "Inventory Controller" },
+        { "id": "forklift-operator", "label": "Forklift Operator" },
+        { "id": "logistics-coordinator", "label": "Logistics Coordinator" },
+        { "id": "supply-chain-analyst", "label": "Supply Chain Analyst" },
+        { "id": "freight-forwarder", "label": "Freight Forwarder" },
+        { "id": "dispatch-coordinator", "label": "Dispatch Coordinator" },
+        { "id": "customs-clearance-assistant", "label": "Customs Clearance Assistant" },
+        { "id": "warehouse-supervisor", "label": "Warehouse Supervisor" },
+        { "id": "procurement-assistant", "label": "Procurement Assistant" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "retail",
+      "label": "Retail",
+      "roles": [
+        { "id": "sales-associate", "label": "Sales Associate" },
+        { "id": "cashier", "label": "Cashier" },
+        { "id": "retail-storekeeper", "label": "Retail Storekeeper" },
+        { "id": "visual-merchandiser", "label": "Visual Merchandiser" },
+        { "id": "store-supervisor", "label": "Store Supervisor" },
+        { "id": "customer-service-representative", "label": "Customer Service Representative" },
+        { "id": "retail-inventory-associate", "label": "Retail Inventory Associate" },
+        { "id": "department-manager", "label": "Department Manager" },
+        { "id": "retail-merchandiser", "label": "Retail Merchandiser" },
+        { "id": "retail-buyer", "label": "Retail Buyer" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "drivers-and-transport",
+      "label": "Drivers & Transport",
+      "roles": [
+        { "id": "light-vehicle-driver", "label": "Light Vehicle Driver" },
+        { "id": "heavy-truck-driver", "label": "Heavy Truck Driver" },
+        { "id": "bus-driver", "label": "Bus Driver" },
+        { "id": "delivery-driver", "label": "Delivery Driver" },
+        { "id": "taxi-driver", "label": "Taxi Driver" },
+        { "id": "trailer-driver", "label": "Trailer Driver" },
+        { "id": "fleet-coordinator", "label": "Fleet Coordinator" },
+        { "id": "transport-supervisor", "label": "Transport Supervisor" },
+        { "id": "vehicle-mechanic", "label": "Vehicle Mechanic" },
+        { "id": "transport-dispatcher", "label": "Transport Dispatcher" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "security",
+      "label": "Security",
+      "roles": [
+        { "id": "security-guard", "label": "Security Guard" },
+        { "id": "security-supervisor", "label": "Security Supervisor" },
+        { "id": "cctv-operator", "label": "CCTV Operator" },
+        { "id": "access-control-officer", "label": "Access Control Officer" },
+        { "id": "loss-prevention-officer", "label": "Loss Prevention Officer" },
+        { "id": "patrol-officer", "label": "Patrol Officer" },
+        { "id": "event-security-officer", "label": "Event Security Officer" },
+        { "id": "security-systems-technician", "label": "Security Systems Technician" },
+        { "id": "control-room-operator", "label": "Control Room Operator" },
+        { "id": "fire-watch-officer", "label": "Fire Watch Officer" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "engineering",
+      "label": "Engineering",
+      "roles": [
+        { "id": "civil-engineer", "label": "Civil Engineer" },
+        { "id": "mechanical-engineer", "label": "Mechanical Engineer" },
+        { "id": "electrical-engineer", "label": "Electrical Engineer" },
+        { "id": "chemical-engineer", "label": "Chemical Engineer" },
+        { "id": "instrumentation-engineer", "label": "Instrumentation Engineer" },
+        { "id": "hvac-engineer", "label": "HVAC Engineer" },
+        { "id": "structural-engineer", "label": "Structural Engineer" },
+        { "id": "quality-engineer", "label": "Quality Engineer" },
+        { "id": "project-engineer", "label": "Project Engineer" },
+        { "id": "maintenance-engineer", "label": "Maintenance Engineer" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "administration",
+      "label": "Administration",
+      "roles": [
+        { "id": "administrative-assistant", "label": "Administrative Assistant" },
+        { "id": "office-coordinator", "label": "Office Coordinator" },
+        { "id": "executive-assistant", "label": "Executive Assistant" },
+        { "id": "document-controller", "label": "Document Controller" },
+        { "id": "data-entry-operator", "label": "Data Entry Operator" },
+        { "id": "office-receptionist", "label": "Office Receptionist" },
+        { "id": "secretary", "label": "Secretary" },
+        { "id": "payroll-assistant", "label": "Payroll Assistant" },
+        { "id": "human-resources-assistant", "label": "Human Resources Assistant" },
+        { "id": "procurement-officer", "label": "Procurement Officer" },
+        { "id": "other", "label": "Other" }
+      ]
+    },
+    {
+      "id": "education",
+      "label": "Education",
+      "roles": [
+        { "id": "primary-school-teacher", "label": "Primary School Teacher" },
+        { "id": "secondary-school-teacher", "label": "Secondary School Teacher" },
+        { "id": "english-language-teacher", "label": "English Language Teacher" },
+        { "id": "mathematics-teacher", "label": "Mathematics Teacher" },
+        { "id": "science-teacher", "label": "Science Teacher" },
+        { "id": "special-education-teacher", "label": "Special Education Teacher" },
+        { "id": "teaching-assistant", "label": "Teaching Assistant" },
+        { "id": "school-administrator", "label": "School Administrator" },
+        { "id": "academic-coordinator", "label": "Academic Coordinator" },
+        { "id": "school-librarian", "label": "School Librarian" },
+        { "id": "other", "label": "Other" }
+      ]
+    }
+  ]
+}
