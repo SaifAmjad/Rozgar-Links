@@ -126,6 +126,13 @@ describe('applicationFieldsSchema', () => {
     expect(issuePaths(missingCurrency)).toContain('salaryCurrency');
   });
 
+  it('normalizes a blank optional salary currency', () => {
+    const result = parseWith({ salaryCurrency: '' });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.salaryCurrency).toBeUndefined();
+  });
+
   it('rejects a future payment date', () => {
     const result = parseWith({ paymentDate: '2026-10-14' });
 

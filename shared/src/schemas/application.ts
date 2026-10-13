@@ -153,7 +153,10 @@ export function createApplicationFieldsSchema({
       lastJobTitle: optionalText(120),
       expectedSalaryMin: optionalNumber(10_000_000),
       expectedSalaryMax: optionalNumber(10_000_000),
-      salaryCurrency: supportedCurrencySchema.optional(),
+      salaryCurrency: z.preprocess(
+        (value) => (value === '' ? undefined : value),
+        supportedCurrencySchema.optional(),
+      ),
       preferredJoiningDate: z.preprocess(
         (value) => (value === '' ? undefined : value),
         isoDateSchema.optional(),

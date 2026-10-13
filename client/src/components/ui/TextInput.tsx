@@ -1,22 +1,17 @@
-import { useId, type InputHTMLAttributes } from 'react';
+import { forwardRef, useId, type InputHTMLAttributes } from 'react';
 
 import { cn } from '../../lib/cn';
 
 interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  description?: string;
-  error?: string;
+  description?: string | undefined;
+  error?: string | undefined;
   label: string;
 }
 
-export function TextInput({
-  className,
-  description,
-  error,
-  id,
-  label,
-  required,
-  ...props
-}: TextInputProps) {
+export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput(
+  { className, description, error, id, label, required, ...props },
+  ref,
+) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const descriptionId = description ? `${inputId}-description` : undefined;
@@ -39,6 +34,7 @@ export function TextInput({
         aria-invalid={error ? true : undefined}
         className="min-h-11 w-full rounded-xl border bg-bg px-4 py-2.5 text-text placeholder:text-muted disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted"
         id={inputId}
+        ref={ref}
         required={required}
         {...props}
       />
@@ -49,4 +45,4 @@ export function TextInput({
       ) : null}
     </div>
   );
-}
+});

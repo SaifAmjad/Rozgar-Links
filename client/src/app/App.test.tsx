@@ -19,7 +19,7 @@ describe('App router', () => {
 
   it.each([
     ['/jobs', 'Jobs across the Gulf'],
-    ['/apply', 'Prepare before you apply'],
+    ['/apply', 'Application form'],
     ['/faq', 'Frequently asked questions'],
     ['/contact', 'Contact Rozgar Links'],
     ['/privacy', 'Privacy notice'],
