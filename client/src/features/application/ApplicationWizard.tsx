@@ -19,6 +19,7 @@ import {
   supportedCurrencies,
   type ApplicationFields,
   type ApplicationFieldsInput,
+  type ApplicationSubmissionResponse,
   type JobTaxonomy,
   type PublicConfigResponse,
 } from '@rozgar-links/shared';
@@ -26,7 +27,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { TextInput } from '../../components/ui/TextInput';
-import { fetchApplicationSetup } from './api';
+import { fetchApplicationSetup, submitApplication } from './api';
 import { SelectField, TextareaField } from './FormControls';
 import {
   validateApplicationFile,
@@ -244,7 +245,9 @@ export function ApplicationWizard() {
   const [showErrorSummary, setShowErrorSummary] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionValidated, setSubmissionValidated] = useState(false);
+  const [submissionError, setSubmissionError] = useState('');
+  const [submissionResult, setSubmissionResult] = useState<ApplicationSubmissionResponse>();
+  const [website, setWebsite] = useState('');
   const [paymentPreviewUrl, setPaymentPreviewUrl] = useState('');
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
   const fileInputRefs = useRef<Partial<Record<ApplicationFileKey, HTMLInputElement | null>>>({});
@@ -291,7 +294,7 @@ export function ApplicationWizard() {
   const summaryErrors = [...new Set([...currentFormErrors, ...currentFileErrors])];
 
   function changeFile(key: ApplicationFileKey, file?: File) {
-    setSubmissionValidated(false);
+    setSubmissionError('');
     setFiles((current) => ({ ...current, [key]: file }));
     setFileErrors((current) => ({ ...current, [key]: validateApplicationFile(key, file) }));
     if (key === 'paymentScreenshot') {
@@ -327,7 +330,7 @@ export function ApplicationWizard() {
 
   async function nextStep() {
     setShowErrorSummary(true);
-    setSubmissionValidated(false);
+    setSubmissionError('');
     let valid = true;
 
     if (currentStep === 0) valid = await validateFields(personalFields);
@@ -362,15 +365,25 @@ export function ApplicationWizard() {
     }
   }
 
-  async function onValidSubmit() {
+  async function onValidSubmit(application: ApplicationFields) {
     if (submissionLock.current) return;
     submissionLock.current = true;
     setIsSubmitting(true);
+    setSubmissionError('');
     setShowErrorSummary(false);
-    await Promise.resolve();
-    setSubmissionValidated(true);
-    setIsSubmitting(false);
-    submissionLock.current = false;
+    try {
+      const result = await submitApplication(application, files, website);
+      setSubmissionResult(result);
+    } catch (error) {
+      setSubmissionError(
+        error instanceof Error
+          ? error.message
+          : 'The application could not be submitted. Please try again.',
+      );
+    } finally {
+      setIsSubmitting(false);
+      submissionLock.current = false;
+    }
   }
 
   function onInvalidSubmit() {
@@ -378,7 +391,8 @@ export function ApplicationWizard() {
   }
 
   const allFilesValid = Object.keys(validateApplicationFiles(files)).length === 0;
-  const canSubmit = currentStep === 4 && isValid && allFilesValid && Boolean(setup);
+  const canSubmit =
+    currentStep === 4 && isValid && allFilesValid && Boolean(setup) && !submissionResult;
 
   return (
     <FormProvider {...methods}>
@@ -391,6 +405,17 @@ export function ApplicationWizard() {
             void handleSubmit(onValidSubmit, onInvalidSubmit)(event);
           }}
         >
+          <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+            <label htmlFor="application-website">Website</label>
+            <input
+              autoComplete="off"
+              id="application-website"
+              onChange={(event) => setWebsite(event.target.value)}
+              tabIndex={-1}
+              type="text"
+              value={website}
+            />
+          </div>
           <nav aria-label="Application progress" className="mb-6 overflow-x-auto pb-2">
             <ol className="flex min-w-[38rem] gap-2">
               {steps.map((step, index) => (
@@ -518,17 +543,32 @@ export function ApplicationWizard() {
                   Continue <ChevronRight aria-hidden="true" size={18} />
                 </Button>
               ) : (
-                <Button disabled={!canSubmit || isSubmitting || submissionValidated} type="submit">
+                <Button disabled={!canSubmit || isSubmitting} type="submit">
                   {isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={18} /> : null}
-                  {submissionValidated ? 'Validated' : 'Validate application'}
+                  {submissionResult ? 'Submitted' : 'Submit application'}
                 </Button>
               )}
             </div>
 
-            <div aria-live="polite" className="mt-4 min-h-6 text-sm font-semibold text-brand-green">
-              {submissionValidated
-                ? 'Application validated. Nothing was sent or stored; secure submission is added in M7.'
-                : ''}
+            <div aria-live="polite" className="mt-4 min-h-6 text-sm font-semibold">
+              {submissionResult ? (
+                <div className="rounded-xl border border-brand-green bg-green-50 p-4 text-brand-green">
+                  <p>
+                    Administrator email accepted by the configured SMTP server. Reference:{' '}
+                    {submissionResult.referenceId}
+                  </p>
+                  <p className="mt-1">
+                    {submissionResult.confirmationEmailSent
+                      ? 'Applicant confirmation was accepted by SMTP.'
+                      : 'No applicant confirmation email was sent.'}
+                  </p>
+                </div>
+              ) : null}
+              {submissionError ? (
+                <p className="rounded-xl border border-error bg-red-50 p-4 text-error" role="alert">
+                  {submissionError} Your information and selected files remain available for retry.
+                </p>
+              ) : null}
             </div>
           </Card>
         </form>
@@ -538,8 +578,8 @@ export function ApplicationWizard() {
             <ShieldAlert aria-hidden="true" className="text-warning" size={25} />
             <h2 className="mt-3 text-lg">Demo workflow only</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              M6 validates information in your browser. It does not upload, email, persist or submit
-              personal data or documents.
+              Applications are sent directly to the configured administrator by SMTP. Files remain
+              in memory and are not written to public or persistent storage.
             </p>
           </Card>
           <Card>

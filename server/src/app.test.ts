@@ -39,3 +39,16 @@ describe('GET /api/config/public', () => {
     expect(serializedConfig).not.toContain('secret');
   });
 });
+
+describe('API security middleware', () => {
+  it('sets Helmet headers and allows only the configured browser origin', async () => {
+    const allowed = await request(createApp()).get('/api/health').set('Origin', 'http://localhost:5173');
+    const blocked = await request(createApp()).get('/api/health').set('Origin', 'https://evil.example');
+
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers['x-content-type-options']).toBe('nosniff');
+    expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+    expect(blocked.status).toBe(403);
+    expect(blocked.body.error.code).toBe('origin_not_allowed');
+  });
+});

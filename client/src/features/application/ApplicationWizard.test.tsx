@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { jobTaxonomy, type PublicConfigResponse } from '@rozgar-links/shared';
 
-import { fetchApplicationSetup } from './api';
+import { fetchApplicationSetup, submitApplication } from './api';
 import { ApplicationWizard } from './ApplicationWizard';
 
-vi.mock('./api', () => ({ fetchApplicationSetup: vi.fn() }));
+vi.mock('./api', () => ({ fetchApplicationSetup: vi.fn(), submitApplication: vi.fn() }));
 
 const config: PublicConfigResponse = {
   bankAccountTitle: 'Rozgar Links Demo',
@@ -63,9 +63,40 @@ async function fillPreferences() {
   expect(await screen.findByRole('heading', { name: 'Documents' })).toBeInTheDocument();
 }
 
+async function reachReview() {
+  await reachPreferences();
+  await fillPreferences();
+
+  const cv = new File(['demo cv'], 'demo-resume.pdf', { type: 'application/pdf' });
+  fireEvent.change(screen.getByLabelText(/^cv/i), { target: { files: [cv] } });
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+  expect(await screen.findByRole('heading', { name: 'Payment' })).toBeInTheDocument();
+  expect(screen.getByText(/fake \/ demo bank details/i)).toBeInTheDocument();
+
+  const screenshot = new File(['demo payment'], 'demo-payment.png', { type: 'image/png' });
+  fireEvent.change(screen.getByLabelText(/payment screenshot/i), {
+    target: { files: [screenshot] },
+  });
+  fireEvent.change(screen.getByLabelText(/transaction reference/i), {
+    target: { value: 'DEMO-TXN-01' },
+  });
+  fireEvent.change(screen.getByLabelText(/payment date/i), { target: { value: '2026-10-01' } });
+  fireEvent.click(screen.getByLabelText(/accept the terms/i));
+  fireEvent.click(screen.getByLabelText(/information is complete/i));
+  fireEvent.click(screen.getByLabelText(/accept the fee and refund policy/i));
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+  expect(await screen.findByRole('heading', { name: 'Review' })).toBeInTheDocument();
+}
+
 describe('ApplicationWizard', () => {
   beforeEach(() => {
     vi.mocked(fetchApplicationSetup).mockResolvedValue({ config, taxonomy: jobTaxonomy });
+    vi.mocked(submitApplication).mockReset();
+    vi.mocked(submitApplication).mockResolvedValue({
+      success: true,
+      referenceId: 'RL-2026-ABC234',
+      confirmationEmailSent: false,
+    });
   });
 
   it('blocks incomplete personal details and announces errors', async () => {
@@ -108,39 +139,35 @@ describe('ApplicationWizard', () => {
     expect(screen.getByLabelText(/describe the other role/i)).toBeRequired();
   });
 
-  it('reaches review only with valid files and consents, then validates without sending', async () => {
-    await reachPreferences();
-    await fillPreferences();
-
-    const cv = new File(['demo cv'], 'demo-resume.pdf', { type: 'application/pdf' });
-    fireEvent.change(screen.getByLabelText(/^cv/i), { target: { files: [cv] } });
-    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-    expect(await screen.findByRole('heading', { name: 'Payment' })).toBeInTheDocument();
-    expect(screen.getByText(/fake \/ demo bank details/i)).toBeInTheDocument();
-
-    const screenshot = new File(['demo payment'], 'demo-payment.png', { type: 'image/png' });
-    fireEvent.change(screen.getByLabelText(/payment screenshot/i), {
-      target: { files: [screenshot] },
-    });
-    fireEvent.change(screen.getByLabelText(/transaction reference/i), {
-      target: { value: 'DEMO-TXN-01' },
-    });
-    fireEvent.change(screen.getByLabelText(/payment date/i), { target: { value: '2026-10-01' } });
-    fireEvent.click(screen.getByLabelText(/accept the terms/i));
-    fireEvent.click(screen.getByLabelText(/information is complete/i));
-    fireEvent.click(screen.getByLabelText(/accept the fee and refund policy/i));
-    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-
-    expect(await screen.findByRole('heading', { name: 'Review' })).toBeInTheDocument();
+  it('submits valid multipart data once and reports SMTP-confirmation status accurately', async () => {
+    await reachReview();
     expect(screen.getByText('••••5671')).toBeInTheDocument();
     expect(screen.getByText('Unverified demo evidence')).toBeInTheDocument();
 
-    const validateButton = screen.getByRole('button', { name: /validate application/i });
-    await waitFor(() => expect(validateButton).toBeEnabled());
-    fireEvent.click(validateButton);
-    fireEvent.click(validateButton);
+    const submitButton = screen.getByRole('button', { name: /submit application/i });
+    await waitFor(() => expect(submitButton).toBeEnabled());
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/nothing was sent or stored/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Validated' })).toBeDisabled();
+    expect(await screen.findByText(/reference: RL-2026-ABC234/i)).toBeInTheDocument();
+    expect(screen.getByText(/no applicant confirmation email was sent/i)).toBeInTheDocument();
+    expect(submitApplication).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Submitted' })).toBeDisabled();
+  });
+
+  it('preserves selected files and allows retry after a submission failure', async () => {
+    vi.mocked(submitApplication).mockRejectedValueOnce(new Error('Application email was not accepted.'));
+    await reachReview();
+
+    const submitButton = screen.getByRole('button', { name: /submit application/i });
+    await waitFor(() => expect(submitButton).toBeEnabled());
+    fireEvent.click(submitButton);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/remain available for retry/i);
+    expect(submitButton).toBeEnabled();
+    const documentEditButton = screen.getAllByRole('button', { name: 'Edit' })[2];
+    if (!documentEditButton) throw new Error('Expected the documents edit button.');
+    fireEvent.click(documentEditButton);
+    expect(await screen.findByText('Selected: demo-resume.pdf')).toBeInTheDocument();
   });
 });

@@ -19,6 +19,10 @@ export {
   type ApplicationFields,
   type ApplicationFieldsInput,
 } from './schemas/application.js';
+export {
+  applicationSubmissionResponseSchema,
+  type ApplicationSubmissionResponse,
+} from './schemas/applicationSubmission.js';
 export { publicConfigResponseSchema, type PublicConfigResponse } from './schemas/publicConfig.js';
 export {
   gccCountryNames,
