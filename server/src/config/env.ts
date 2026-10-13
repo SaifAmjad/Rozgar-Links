@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import dotenv from 'dotenv';
+import { validate as validateCron } from 'node-cron';
 import { z } from 'zod';
 
 import { supportedCurrencySchema } from '@rozgar-links/shared';
@@ -26,6 +27,23 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
   SERVICE_FEE_AMOUNT: z.coerce.number().finite().nonnegative().default(5000),
   SERVICE_FEE_CURRENCY: supportedCurrencySchema.default('PKR'),
+  STATS_CRON: z
+    .string()
+    .trim()
+    .refine(validateCron, 'Invalid cron expression.')
+    .default('5 0 * * *'),
+  TZ: z
+    .string()
+    .trim()
+    .refine((timeZone) => {
+      try {
+        new Intl.DateTimeFormat('en', { timeZone }).format();
+        return true;
+      } catch {
+        return false;
+      }
+    }, 'Invalid IANA timezone.')
+    .default('Asia/Karachi'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

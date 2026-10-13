@@ -11,6 +11,7 @@ import { PageContainer } from '../components/layout/PageContainer';
 import { Badge } from '../components/ui/Badge';
 import { ButtonLink } from '../components/ui/ButtonLink';
 import { Card } from '../components/ui/Card';
+import { DashboardSection } from '../features/dashboard/DashboardSection';
 
 const serviceCards = [
   {
@@ -111,31 +112,7 @@ export function HomePage() {
         </PageContainer>
       </section>
 
-      <section className="bg-surface py-14 sm:py-18" aria-labelledby="dashboard-title">
-        <PageContainer>
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div className="max-w-2xl">
-              <Badge>Indicative figures</Badge>
-              <h2 className="mt-4 text-3xl" id="dashboard-title">
-                Daily opportunity overview
-              </h2>
-              <p className="mt-3 leading-7 text-muted">
-                The dashboard will show clearly labelled generated estimates after Milestone 4. No
-                live or verified opening count is displayed yet.
-              </p>
-            </div>
-            <span className="text-sm font-bold text-muted">Dashboard coming in M4</span>
-          </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {['Total openings', 'Countries covered', 'New today', 'Last updated'].map((label) => (
-              <Card className="bg-bg" key={label}>
-                <p className="text-sm font-semibold text-muted">{label}</p>
-                <p className="mt-4 text-xl font-bold text-primary">Not published</p>
-              </Card>
-            ))}
-          </div>
-        </PageContainer>
-      </section>
+      <DashboardSection />
 
       <section className="py-14 sm:py-18" aria-labelledby="jobs-preview-title">
         <PageContainer>

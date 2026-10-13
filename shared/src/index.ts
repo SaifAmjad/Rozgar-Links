@@ -11,6 +11,18 @@ export {
 } from './schemas/application.js';
 export { publicConfigResponseSchema, type PublicConfigResponse } from './schemas/publicConfig.js';
 export {
+  gccCountryNames,
+  statsCountryEntrySchema,
+  statsFieldEntrySchema,
+  statsHistoryResponseSchema,
+  statsProvenanceSchema,
+  statsResponseSchema,
+  statsTrendEntrySchema,
+  type StatsHistoryResponse,
+  type StatsResponse,
+  type StatsTrendEntry,
+} from './schemas/stats.js';
+export {
   jobFieldSchema,
   jobRoleSchema,
   jobTaxonomySchema,
