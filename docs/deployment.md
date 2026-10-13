@@ -83,7 +83,8 @@ runtime JSON files.
    output settings.
 4. Set `CLIENT_URL` to the exact production Vercel URL or custom-domain origin. Keep
    `VITE_API_BASE_URL=/api`, `APP_TIME_ZONE=Asia/Karachi`, `PAYMENT_DETAILS_ARE_DEMO=true` and
-   `ENABLE_SCRAPING=false`.
+   `ENABLE_SCRAPING=false`. Do not add `NODE_ENV` manually; Vercel manages it, and forcing
+   `NODE_ENV=production` during installation can omit the TypeScript/Vite build dependencies.
 5. Deploy, then smoke-test `/api/health`, `/api/config/public`, `/api/stats`, `/api/jobs`, `/jobs`
    and `/apply`. The public config must report `applicationSubmissionEnabled: false`, and
    `POST /api/applications` must return `503 demo_submission_disabled` without accepting a body.
