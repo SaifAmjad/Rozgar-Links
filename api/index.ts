@@ -1,3 +1,5 @@
+import type { Request, Response } from 'express';
+
 import { jobListingSchema } from '@rozgar-links/shared';
 
 import sampleJobs from '../server/data/jobs.seed.json' with { type: 'json' };
@@ -33,4 +35,14 @@ const app = createApp({
   }),
 });
 
-export default app;
+export default function handler(request: Request, response: Response) {
+  const requestUrl = new URL(request.url, 'http://vercel.internal');
+  const forwardedPath = requestUrl.searchParams.get('path');
+
+  if (forwardedPath) {
+    requestUrl.searchParams.delete('path');
+    request.url = `/api/${forwardedPath}${requestUrl.search}`;
+  }
+
+  return app(request, response);
+}

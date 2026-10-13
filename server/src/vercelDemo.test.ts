@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
-import app from '../../api/[...path].js';
+import app from '../../api/index.js';
 
 describe('Vercel demo adapter', () => {
   it('serves read-only demo data and rejects application submissions', async () => {
@@ -25,5 +25,12 @@ describe('Vercel demo adapter', () => {
     );
     expect(submission.status).toBe(503);
     expect(submission.body.error.code).toBe('demo_submission_disabled');
+  });
+
+  it('restores API paths forwarded through the Vercel rewrite', async () => {
+    const response = await request(app).get('/api?path=stats');
+
+    expect(response.status).toBe(200);
+    expect(response.body.provenance).toBe('estimated');
   });
 });
