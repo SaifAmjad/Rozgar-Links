@@ -12,6 +12,7 @@ export const publicConfigResponseSchema = z
     serviceFeeCurrency: supportedCurrencySchema,
     taxonomyVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
     isDemoPayment: z.literal(true),
+    applicationSubmissionEnabled: z.boolean(),
   })
   .strict();
 

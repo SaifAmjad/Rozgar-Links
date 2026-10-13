@@ -33,17 +33,38 @@ describe('GET /api/config/public', () => {
 
     expect(response.status).toBe(200);
     expect(config.isDemoPayment).toBe(true);
+    expect(config.applicationSubmissionEnabled).toBe(true);
     expect(config.taxonomyVersion).toBe(taxonomyResponse.body.version);
     expect(serializedConfig).not.toContain('smtp');
     expect(serializedConfig).not.toContain('password');
     expect(serializedConfig).not.toContain('secret');
   });
+
+  it('exposes and enforces disabled submission mode without parsing uploads', async () => {
+    const app = createApp({ applicationSubmissionEnabled: false });
+    const configResponse = await request(app).get('/api/config/public');
+    const submissionResponse = await request(app).post('/api/applications');
+
+    expect(configResponse.body.applicationSubmissionEnabled).toBe(false);
+    expect(submissionResponse.status).toBe(503);
+    expect(submissionResponse.body).toEqual({
+      success: false,
+      error: {
+        code: 'demo_submission_disabled',
+        message: 'Application submission is disabled in this hosted demo. No data was accepted.',
+      },
+    });
+  });
 });
 
 describe('API security middleware', () => {
   it('sets Helmet headers and allows only the configured browser origin', async () => {
-    const allowed = await request(createApp()).get('/api/health').set('Origin', 'http://localhost:5173');
-    const blocked = await request(createApp()).get('/api/health').set('Origin', 'https://evil.example');
+    const allowed = await request(createApp())
+      .get('/api/health')
+      .set('Origin', 'http://localhost:5173');
+    const blocked = await request(createApp())
+      .get('/api/health')
+      .set('Origin', 'https://evil.example');
 
     expect(allowed.status).toBe(200);
     expect(allowed.headers['x-content-type-options']).toBe('nosniff');

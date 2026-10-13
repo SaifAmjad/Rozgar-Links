@@ -1,10 +1,16 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmCliPath = process.env.npm_execpath;
+
+if (!npmCliPath) {
+  throw new Error('npm_execpath is unavailable. Start development with npm run dev.');
+}
+
 const workspaces = ['@rozgar-links/server', '@rozgar-links/client'];
 const children = workspaces.map((workspace) =>
-  spawn(npmCommand, ['run', 'dev', '--workspace', workspace], {
+  spawn(process.execPath, [npmCliPath, 'run', 'dev', '--workspace', workspace], {
     stdio: 'inherit',
+    windowsHide: true,
   }),
 );
 
@@ -15,7 +21,16 @@ function stop(exitCode = 0) {
   isStopping = true;
 
   for (const child of children) {
-    child.kill();
+    if (!child.pid || child.exitCode !== null) continue;
+
+    if (process.platform === 'win32') {
+      spawnSync('taskkill.exe', ['/pid', String(child.pid), '/t', '/f'], {
+        stdio: 'ignore',
+        windowsHide: true,
+      });
+    } else {
+      child.kill('SIGTERM');
+    }
   }
 
   process.exitCode = exitCode;

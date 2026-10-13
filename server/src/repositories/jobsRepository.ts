@@ -36,9 +36,14 @@ export interface JobsCacheResult {
   recoveredFromMemory: boolean;
 }
 
+export interface JobsCacheRepository {
+  read(): Promise<JobsCacheResult>;
+  save(cache: JobsCache): Promise<void>;
+}
+
 const defaultCacheFile = fileURLToPath(new URL('../../data/jobs.cache.json', import.meta.url));
 
-export class JobsRepository {
+export class JobsRepository implements JobsCacheRepository {
   private lastValidCache: JobsCache | undefined;
   private writeQueue: Promise<void> = Promise.resolve();
 
@@ -92,5 +97,20 @@ export class JobsRepository {
 
       return { cache: undefined, recoveredFromMemory: false };
     }
+  }
+}
+
+export class MemoryJobsRepository implements JobsCacheRepository {
+  private cache: JobsCache | undefined;
+
+  async read(): Promise<JobsCacheResult> {
+    return {
+      cache: structuredClone(this.cache),
+      recoveredFromMemory: false,
+    };
+  }
+
+  async save(cache: JobsCache): Promise<void> {
+    this.cache = structuredClone(jobsCacheSchema.parse(cache));
   }
 }

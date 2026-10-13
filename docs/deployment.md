@@ -68,6 +68,30 @@ the server has a persistent writable volume and exactly one active cron worker. 
 current server to an ephemeral/serverless filesystem. If client and API origins differ, set the
 exact `CLIENT_URL`, configure `VITE_API_BASE_URL` at build time, and re-test CORS and uploads.
 
+## Vercel hosted demo
+
+The repository includes a deliberately restricted, single-project Vercel demo configuration. It
+serves the Vite frontend and read-only Express API from one origin while keeping application upload
+and email submission disabled. The Vercel adapter uses process-memory caches, deterministic
+indicative stats and the committed fictional sample catalog; it does not start `node-cron` or write
+runtime JSON files.
+
+1. Push the complete npm-workspace repository to GitHub.
+2. Import it once in Vercel and keep the project **Root Directory** at the repository root (`.`).
+3. Allow `vercel.json` to provide the Vite preset, `npm ci`, workspace build and `client/dist`
+   output settings.
+4. Set `CLIENT_URL` to the exact production Vercel URL or custom-domain origin. Keep
+   `VITE_API_BASE_URL=/api`, `PAYMENT_DETAILS_ARE_DEMO=true` and `ENABLE_SCRAPING=false`.
+5. Deploy, then smoke-test `/api/health`, `/api/config/public`, `/api/stats`, `/api/jobs`, `/jobs`
+   and `/apply`. The public config must report `applicationSubmissionEnabled: false`, and
+   `POST /api/applications` must return `503 demo_submission_disabled` without accepting a body.
+
+The `shared` workspace is a build dependency, not a separately deployed service. Vercel builds it
+before the client and bundles the required contracts into both the browser assets and API function.
+The hosted demo intentionally has no durable stats/jobs history: function cold starts recreate safe
+demo data. Do not enable submissions on this topology because Vercel Functions have a 4.5 MB total
+request-body limit, while the product contract permits several independently validated files.
+
 ## Backup and restore
 
 Back up only `stats.json`, `jobs.cache.json` and the reviewed seed catalog. Encrypt backups, limit
@@ -96,21 +120,21 @@ data. Test restore procedures before public launch.
 Production go-live remains blocked until all items have evidence and named approval:
 
 - [ ] Qualified legal review confirms authority and any overseas-employment/recruitment licence;
-  publish the verified legal entity and licence number.
+      publish the verified legal entity and licence number.
 - [ ] Privacy notice, terms, consent wording, fee/refund policy and no-guarantee wording receive
-  owner and legal sign-off.
+      owner and legal sign-off.
 - [ ] A retention/deletion schedule, subject-access procedure and verified applicant support channel
-  are operational, including the SMTP provider transfer disclosure.
+      are operational, including the SMTP provider transfer disclosure.
 - [ ] Real bank/payment details, fee amount, receipt process and manual payment-verification process
-  are independently approved; remove demo values only in runtime secrets/configuration.
+      are independently approved; remove demo values only in runtime secrets/configuration.
 - [ ] Any real job source has written permission, current Terms/robots review, true attribution and
-  original URLs. Keep scraping disabled otherwise.
+      original URLs. Keep scraping disabled otherwise.
 - [ ] SMTP/domain ownership, TLS, administrator mailbox access, bounce handling and confirmation
-  behavior are verified without real applicant data.
+      behavior are verified without real applicant data.
 - [ ] HTTPS, exact CORS origin, proxy trust, backups, restore, alerts, incident handling and PII-safe
-  logging are reviewed in the production environment.
+      logging are reviewed in the production environment.
 - [ ] Keyboard/screen-reader/mobile review and Lighthouse scores of at least 90 in every category are
-  recorded for representative production pages.
+      recorded for representative production pages.
 
 Legal and policy text in the app remains a draft until these gates are closed. This checklist is
 operational guidance, not legal advice.

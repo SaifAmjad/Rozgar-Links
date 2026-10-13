@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspace @rozgar-links/shared && npm run build --workspace @rozgar-links/client && npm run build --workspace @rozgar-links/server",
+    "build:vercel": "npm run build --workspace @rozgar-links/shared && tsc -p api/tsconfig.json && npm run build --workspace @rozgar-links/client",
     "dev": "npm run build --workspace @rozgar-links/shared && node scripts/dev.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

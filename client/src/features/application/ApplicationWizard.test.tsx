@@ -19,6 +19,7 @@ const config: PublicConfigResponse = {
   serviceFeeCurrency: 'PKR',
   taxonomyVersion: jobTaxonomy.version,
   isDemoPayment: true,
+  applicationSubmissionEnabled: true,
 };
 
 function renderWizard(route = '/apply') {
@@ -41,7 +42,9 @@ function fillPersonalDetails() {
   fireEvent.change(screen.getByLabelText(/passport number/i), { target: { value: 'AB123456' } });
   fireEvent.change(screen.getByLabelText(/passport expiry/i), { target: { value: '2030-12-31' } });
   fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'ayesha@example.com' } });
-  fireEvent.change(screen.getByLabelText(/phone \/ whatsapp/i), { target: { value: '+923001234567' } });
+  fireEvent.change(screen.getByLabelText(/phone \/ whatsapp/i), {
+    target: { value: '+923001234567' },
+  });
   fireEvent.change(screen.getByLabelText(/current city/i), { target: { value: 'Lahore' } });
   fireEvent.change(screen.getByLabelText(/current country/i), { target: { value: 'Pakistan' } });
 }
@@ -162,7 +165,9 @@ describe('ApplicationWizard', () => {
   });
 
   it('preserves selected files and allows retry after a submission failure', async () => {
-    vi.mocked(submitApplication).mockRejectedValueOnce(new Error('Application email was not accepted.'));
+    vi.mocked(submitApplication).mockRejectedValueOnce(
+      new Error('Application email was not accepted.'),
+    );
     await reachReview();
 
     const submitButton = screen.getByRole('button', { name: /submit application/i });
@@ -175,5 +180,17 @@ describe('ApplicationWizard', () => {
     if (!documentEditButton) throw new Error('Expected the documents edit button.');
     fireEvent.click(documentEditButton);
     expect(await screen.findByText('Selected: demo-resume.pdf')).toBeInTheDocument();
+  });
+
+  it('clearly disables submission in hosted demo mode', async () => {
+    vi.mocked(fetchApplicationSetup).mockResolvedValue({
+      config: { ...config, applicationSubmissionEnabled: false },
+      taxonomy: jobTaxonomy,
+    });
+    await reachReview();
+
+    expect(screen.getByRole('status')).toHaveTextContent(/no application details or files/i);
+    expect(screen.getByRole('button', { name: /submission disabled in demo/i })).toBeDisabled();
+    expect(submitApplication).not.toHaveBeenCalled();
   });
 });

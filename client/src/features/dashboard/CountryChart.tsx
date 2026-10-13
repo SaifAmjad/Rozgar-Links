@@ -24,7 +24,7 @@ export function CountryChart({ stats }: CountryChartProps) {
   const rows = stats.byCountry.map((entry) => ({ count: entry.count, label: entry.country }));
 
   return (
-    <Card className="min-w-0 lg:col-span-2">
+    <Card className="min-w-0 border-0 shadow-none">
       <figure aria-labelledby="country-chart-title">
         <figcaption>
           <h3 className="text-xl" id="country-chart-title">
@@ -36,7 +36,7 @@ export function CountryChart({ stats }: CountryChartProps) {
         </figcaption>
         <div
           aria-label="Bar chart of indicative openings by Gulf country"
-          className="mt-5 h-72 w-full"
+          className="mt-5 hidden h-80 w-full sm:block"
           role="img"
         >
           <ResponsiveContainer height="100%" width="100%">

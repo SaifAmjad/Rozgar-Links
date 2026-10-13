@@ -66,6 +66,24 @@ describe('DashboardSection', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Country' })).toBeInTheDocument();
     expect(screen.getAllByText('Indicative figures, updated daily').length).toBeGreaterThan(1);
+
+    const countryTab = screen.getByRole('tab', { name: 'Countries' });
+    const trendTab = screen.getByRole('tab', { name: '7-day trend' });
+    const fieldTab = screen.getByRole('tab', { name: 'Job fields' });
+    expect(countryTab).toHaveAttribute('aria-selected', 'true');
+
+    fireEvent.keyDown(countryTab, { key: 'ArrowRight' });
+    expect(
+      await screen.findByRole('heading', { name: 'Seven-day trend' }, { timeout: 5_000 }),
+    ).toBeInTheDocument();
+    expect(trendTab).toHaveAttribute('aria-selected', 'true');
+    expect(trendTab).toHaveFocus();
+
+    fireEvent.click(fieldTab);
+    expect(
+      await screen.findByRole('heading', { name: 'Openings by job field' }, { timeout: 5_000 }),
+    ).toBeInTheDocument();
+    expect(fieldTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('announces an API error and retries without inventing values', async () => {

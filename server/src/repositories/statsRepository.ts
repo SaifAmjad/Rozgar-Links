@@ -19,13 +19,19 @@ export interface StoredStatsResult {
   snapshot: StatsResponse | undefined;
 }
 
+export interface StatsStoreRepository {
+  findByDate(date: string): Promise<StoredStatsResult>;
+  findLatest(): Promise<StoredStatsResult>;
+  save(snapshot: StatsResponse): Promise<void>;
+}
+
 const defaultStatsFile = fileURLToPath(new URL('../../data/stats.json', import.meta.url));
 
 function cloneStore(store: StatsStore): StatsStore {
   return structuredClone(store);
 }
 
-export class StatsRepository {
+export class StatsRepository implements StatsStoreRepository {
   private lastValidStore: StatsStore | undefined;
   private writeQueue: Promise<void> = Promise.resolve();
 
@@ -121,5 +127,34 @@ export class StatsRepository {
 
       return { recoveredFromMemory: false, store: { version: 1, snapshots: [] } };
     }
+  }
+}
+
+export class MemoryStatsRepository implements StatsStoreRepository {
+  private snapshots: StatsResponse[] = [];
+
+  async findByDate(date: string): Promise<StoredStatsResult> {
+    return {
+      recoveredFromMemory: false,
+      snapshot: structuredClone(this.snapshots.find((snapshot) => snapshot.date === date)),
+    };
+  }
+
+  async findLatest(): Promise<StoredStatsResult> {
+    return {
+      recoveredFromMemory: false,
+      snapshot: structuredClone(
+        [...this.snapshots].sort((left, right) => right.date.localeCompare(left.date))[0],
+      ),
+    };
+  }
+
+  async save(snapshot: StatsResponse): Promise<void> {
+    const validatedSnapshot = statsResponseSchema.parse(snapshot);
+    this.snapshots = this.snapshots
+      .filter((entry) => entry.date !== validatedSnapshot.date)
+      .concat(structuredClone(validatedSnapshot))
+      .sort((left, right) => left.date.localeCompare(right.date))
+      .slice(-31);
   }
 }

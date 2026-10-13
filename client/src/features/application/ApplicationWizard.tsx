@@ -195,7 +195,9 @@ function FileField({
         ref={inputRef}
         type="file"
       />
-      {file ? <p className="text-sm font-semibold text-brand-green">Selected: {file.name}</p> : null}
+      {file ? (
+        <p className="text-sm font-semibold text-brand-green">Selected: {file.name}</p>
+      ) : null}
       {error ? (
         <p className="text-sm font-semibold text-error" id={`${id}-error`}>
           {error}
@@ -214,8 +216,9 @@ export function ApplicationWizard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedCountry = searchParams.get('country');
-  const prefilledCountry = (Object.entries(countryLabels) as [(typeof gulfCountries)[number], string][])
-    .find(([slug, label]) => requestedCountry === slug || requestedCountry === label)?.[0];
+  const prefilledCountry = (
+    Object.entries(countryLabels) as [(typeof gulfCountries)[number], string][]
+  ).find(([slug, label]) => requestedCountry === slug || requestedCountry === label)?.[0];
   const methods = useForm<ApplicationFieldsInput, unknown, ApplicationFields>({
     defaultValues: {
       ...defaultValues,
@@ -257,6 +260,7 @@ export function ApplicationWizard() {
   const selectedRoles = useWatch({ control, name: 'roles' }) ?? [];
   const hasDrivingLicence = useWatch({ control, name: 'hasDrivingLicence' });
   const allValues = useWatch({ control });
+  const applicationSubmissionEnabled = setup?.config.applicationSubmissionEnabled ?? false;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -287,8 +291,8 @@ export function ApplicationWizard() {
   }, [roleSearch, selectedField, setup]);
 
   const currentFormErrors = collectErrorMessages(errors);
-  const currentFileErrors = Object.values(fileErrors).filter(
-    (message): message is string => Boolean(message),
+  const currentFileErrors = Object.values(fileErrors).filter((message): message is string =>
+    Boolean(message),
   );
   const summaryErrors = [...new Set([...currentFormErrors, ...currentFileErrors])];
 
@@ -298,7 +302,8 @@ export function ApplicationWizard() {
     setFileErrors((current) => ({ ...current, [key]: validateApplicationFile(key, file) }));
     if (key === 'paymentScreenshot') {
       if (paymentPreviewUrlRef.current) URL.revokeObjectURL(paymentPreviewUrlRef.current);
-      const nextUrl = file && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
+      const nextUrl =
+        file && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
       paymentPreviewUrlRef.current = nextUrl;
       setPaymentPreviewUrl(nextUrl);
     }
@@ -365,6 +370,10 @@ export function ApplicationWizard() {
   }
 
   async function onValidSubmit(application: ApplicationFields) {
+    if (!applicationSubmissionEnabled) {
+      setSubmissionError('Application submission is disabled in this hosted demo.');
+      return;
+    }
     if (submissionLock.current) return;
     submissionLock.current = true;
     setIsSubmitting(true);
@@ -390,8 +399,7 @@ export function ApplicationWizard() {
   }
 
   const allFilesValid = Object.keys(validateApplicationFiles(files)).length === 0;
-  const canSubmit =
-    currentStep === 4 && isValid && allFilesValid && Boolean(setup);
+  const canSubmit = currentStep === 4 && isValid && allFilesValid && applicationSubmissionEnabled;
 
   return (
     <FormProvider {...methods}>
@@ -415,6 +423,20 @@ export function ApplicationWizard() {
               value={website}
             />
           </div>
+          {setup && !applicationSubmissionEnabled ? (
+            <div
+              className="mb-6 rounded-xl border border-warning bg-amber-50 p-4 text-sm leading-6 text-text"
+              id="demo-submission-notice"
+              role="status"
+            >
+              <p className="font-black text-primary">Hosted demonstration — submission disabled</p>
+              <p className="mt-1 text-muted">
+                You can explore and validate the complete workflow, but no application details or
+                files will be uploaded, emailed or accepted from this deployment. Use test data
+                only.
+              </p>
+            </div>
+          ) : null}
           <nav aria-label="Application progress" className="mb-6 overflow-x-auto pb-2">
             <ol className="flex min-w-[38rem] gap-2">
               {steps.map((step, index) => (
@@ -466,9 +488,7 @@ export function ApplicationWizard() {
             ) : null}
 
             <div className="mt-6">
-              {currentStep === 0 ? (
-                <PersonalStep errors={errors} register={register} />
-              ) : null}
+              {currentStep === 0 ? <PersonalStep errors={errors} register={register} /> : null}
               {currentStep === 1 && setup ? (
                 <PreferencesStep
                   appendLanguage={append}
@@ -542,9 +562,19 @@ export function ApplicationWizard() {
                   Continue <ChevronRight aria-hidden="true" size={18} />
                 </Button>
               ) : (
-                <Button disabled={!canSubmit || isSubmitting} type="submit">
-                  {isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={18} /> : null}
-                  Submit application
+                <Button
+                  aria-describedby={
+                    applicationSubmissionEnabled ? undefined : 'demo-submission-notice'
+                  }
+                  disabled={!canSubmit || isSubmitting}
+                  type="submit"
+                >
+                  {isSubmitting ? (
+                    <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />
+                  ) : null}
+                  {applicationSubmissionEnabled
+                    ? 'Submit application'
+                    : 'Submission disabled in demo'}
                 </Button>
               )}
             </div>
@@ -564,8 +594,9 @@ export function ApplicationWizard() {
             <ShieldAlert aria-hidden="true" className="text-warning" size={25} />
             <h2 className="mt-3 text-lg">Demo workflow only</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Applications are sent directly to the configured administrator by SMTP. Files remain
-              in memory and are not written to public or persistent storage.
+              {applicationSubmissionEnabled
+                ? 'Applications are sent directly to the configured administrator by SMTP. Files remain in memory and are not written to public or persistent storage.'
+                : 'This hosted preview does not accept applications or send email. Selected files remain in your browser and are discarded when you leave or refresh the page.'}
             </p>
           </Card>
           <Card>
@@ -590,16 +621,37 @@ interface PersonalStepProps {
 function PersonalStep({ errors, register }: PersonalStepProps) {
   return (
     <div className="grid gap-5 sm:grid-cols-2">
-      <TextInput error={errorMessage(errors.firstName)} label="First name" required {...register('firstName')} />
-      <TextInput error={errorMessage(errors.lastName)} label="Last name" required {...register('lastName')} />
-      <TextInput error={errorMessage(errors.dateOfBirth)} label="Date of birth" required type="date" {...register('dateOfBirth')} />
+      <TextInput
+        error={errorMessage(errors.firstName)}
+        label="First name"
+        required
+        {...register('firstName')}
+      />
+      <TextInput
+        error={errorMessage(errors.lastName)}
+        label="Last name"
+        required
+        {...register('lastName')}
+      />
+      <TextInput
+        error={errorMessage(errors.dateOfBirth)}
+        label="Date of birth"
+        required
+        type="date"
+        {...register('dateOfBirth')}
+      />
       <SelectField error={errorMessage(errors.gender)} label="Gender" {...register('gender')}>
         <option value="">Prefer not to say</option>
         <option value="female">Female</option>
         <option value="male">Male</option>
         <option value="other">Other</option>
       </SelectField>
-      <TextInput error={errorMessage(errors.nationality)} label="Nationality" required {...register('nationality')} />
+      <TextInput
+        error={errorMessage(errors.nationality)}
+        label="Nationality"
+        required
+        {...register('nationality')}
+      />
       <TextInput
         description="Pakistani applicants must use #####-#######-#."
         error={errorMessage(errors.nationalId)}
@@ -607,9 +659,27 @@ function PersonalStep({ errors, register }: PersonalStepProps) {
         required
         {...register('nationalId')}
       />
-      <TextInput error={errorMessage(errors.passportNumber)} label="Passport number" required {...register('passportNumber')} />
-      <TextInput error={errorMessage(errors.passportExpiry)} label="Passport expiry" required type="date" {...register('passportExpiry')} />
-      <TextInput autoComplete="email" error={errorMessage(errors.email)} label="Email" required type="email" {...register('email')} />
+      <TextInput
+        error={errorMessage(errors.passportNumber)}
+        label="Passport number"
+        required
+        {...register('passportNumber')}
+      />
+      <TextInput
+        error={errorMessage(errors.passportExpiry)}
+        label="Passport expiry"
+        required
+        type="date"
+        {...register('passportExpiry')}
+      />
+      <TextInput
+        autoComplete="email"
+        error={errorMessage(errors.email)}
+        label="Email"
+        required
+        type="email"
+        {...register('email')}
+      />
       <div className="grid grid-cols-[8rem_1fr] gap-3">
         <SelectField label="Phone code" defaultValue="+92" aria-label="Phone country code">
           <option value="+92">PK +92</option>
@@ -631,9 +701,23 @@ function PersonalStep({ errors, register }: PersonalStepProps) {
           {...register('phone')}
         />
       </div>
-      <TextInput error={errorMessage(errors.currentCity)} label="Current city" required {...register('currentCity')} />
-      <TextInput error={errorMessage(errors.currentCountry)} label="Current country" required {...register('currentCountry')} />
-      <SelectField error={errorMessage(errors.maritalStatus)} label="Marital status" {...register('maritalStatus')}>
+      <TextInput
+        error={errorMessage(errors.currentCity)}
+        label="Current city"
+        required
+        {...register('currentCity')}
+      />
+      <TextInput
+        error={errorMessage(errors.currentCountry)}
+        label="Current country"
+        required
+        {...register('currentCountry')}
+      />
+      <SelectField
+        error={errorMessage(errors.maritalStatus)}
+        label="Marital status"
+        {...register('maritalStatus')}
+      >
         <option value="">Prefer not to say</option>
         <option value="single">Single</option>
         <option value="married">Married</option>
@@ -696,13 +780,18 @@ function PreferencesStep({
                 All Gulf countries
               </label>
               {gulfCountries.map((country) => (
-                <label className="flex min-h-11 items-center gap-3 rounded-xl border px-4 py-2" key={country}>
+                <label
+                  className="flex min-h-11 items-center gap-3 rounded-xl border px-4 py-2"
+                  key={country}
+                >
                   <input
                     checked={field.value?.includes(country) ?? false}
                     className={checkboxClasses()}
                     disabled={field.value?.includes('all-gulf')}
                     onChange={(event) => {
-                      const withoutAll = (field.value ?? []).filter((value) => value !== 'all-gulf');
+                      const withoutAll = (field.value ?? []).filter(
+                        (value) => value !== 'all-gulf',
+                      );
                       field.onChange(
                         event.target.checked
                           ? [...withoutAll, country]
@@ -717,7 +806,9 @@ function PreferencesStep({
             </div>
           )}
         />
-        {errorMessage(errors.countries) ? <p className="mt-2 text-sm font-semibold text-error">{errorMessage(errors.countries)}</p> : null}
+        {errorMessage(errors.countries) ? (
+          <p className="mt-2 text-sm font-semibold text-error">{errorMessage(errors.countries)}</p>
+        ) : null}
       </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -735,10 +826,20 @@ function PreferencesStep({
         >
           <option value="">Select a field</option>
           {taxonomy.fields.map((field) => (
-            <option key={field.id} value={field.id}>{field.label}</option>
+            <option key={field.id} value={field.id}>
+              {field.label}
+            </option>
           ))}
         </SelectField>
-        <TextInput error={errorMessage(errors.yearsExperience)} label="Years of experience" min="0" required step="0.5" type="number" {...register('yearsExperience')} />
+        <TextInput
+          error={errorMessage(errors.yearsExperience)}
+          label="Years of experience"
+          min="0"
+          required
+          step="0.5"
+          type="number"
+          {...register('yearsExperience')}
+        />
       </div>
 
       <fieldset>
@@ -759,11 +860,20 @@ function PreferencesStep({
               {availableRoles.map((role) => {
                 const selected = field.value?.includes(role.id) ?? false;
                 return (
-                  <label className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold ${selected ? 'border-primary bg-primary text-white' : 'bg-bg text-primary'}`} key={role.id}>
+                  <label
+                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold ${selected ? 'border-primary bg-primary text-white' : 'bg-bg text-primary'}`}
+                    key={role.id}
+                  >
                     <input
                       checked={selected}
                       className="sr-only"
-                      onChange={(event) => field.onChange(event.target.checked ? [...(field.value ?? []), role.id] : (field.value ?? []).filter((id) => id !== role.id))}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.checked
+                            ? [...(field.value ?? []), role.id]
+                            : (field.value ?? []).filter((id) => id !== role.id),
+                        )
+                      }
                       type="checkbox"
                     />
                     {role.label}
@@ -773,38 +883,103 @@ function PreferencesStep({
             </div>
           )}
         />
-        {errorMessage(errors.roles) ? <p className="mt-2 text-sm font-semibold text-error">{errorMessage(errors.roles)}</p> : null}
+        {errorMessage(errors.roles) ? (
+          <p className="mt-2 text-sm font-semibold text-error">{errorMessage(errors.roles)}</p>
+        ) : null}
       </fieldset>
 
       {selectedRoles.includes('other') ? (
-        <TextInput error={errorMessage(errors.otherRole)} label="Describe the other role" required {...register('otherRole')} />
+        <TextInput
+          error={errorMessage(errors.otherRole)}
+          label="Describe the other role"
+          required
+          {...register('otherRole')}
+        />
       ) : null}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <TextInput error={errorMessage(errors.highestEducation)} label="Highest education" required {...register('highestEducation')} />
-        <TextInput error={errorMessage(errors.lastJobTitle)} label="Last job title" {...register('lastJobTitle')} />
-        <TextInput error={errorMessage(errors.expectedSalaryMin)} label="Expected salary minimum" min="0" type="number" {...register('expectedSalaryMin')} />
-        <TextInput error={errorMessage(errors.expectedSalaryMax)} label="Expected salary maximum" min="0" type="number" {...register('expectedSalaryMax')} />
-        <SelectField error={errorMessage(errors.salaryCurrency)} label="Salary currency" {...register('salaryCurrency')}>
+        <TextInput
+          error={errorMessage(errors.highestEducation)}
+          label="Highest education"
+          required
+          {...register('highestEducation')}
+        />
+        <TextInput
+          error={errorMessage(errors.lastJobTitle)}
+          label="Last job title"
+          {...register('lastJobTitle')}
+        />
+        <TextInput
+          error={errorMessage(errors.expectedSalaryMin)}
+          label="Expected salary minimum"
+          min="0"
+          type="number"
+          {...register('expectedSalaryMin')}
+        />
+        <TextInput
+          error={errorMessage(errors.expectedSalaryMax)}
+          label="Expected salary maximum"
+          min="0"
+          type="number"
+          {...register('expectedSalaryMax')}
+        />
+        <SelectField
+          error={errorMessage(errors.salaryCurrency)}
+          label="Salary currency"
+          {...register('salaryCurrency')}
+        >
           <option value="">Select currency</option>
-          {supportedCurrencies.map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+          {supportedCurrencies.map((currency) => (
+            <option key={currency} value={currency}>
+              {currency}
+            </option>
+          ))}
         </SelectField>
-        <TextInput error={errorMessage(errors.preferredJoiningDate)} label="Preferred joining date" type="date" {...register('preferredJoiningDate')} />
+        <TextInput
+          error={errorMessage(errors.preferredJoiningDate)}
+          label="Preferred joining date"
+          type="date"
+          {...register('preferredJoiningDate')}
+        />
       </div>
 
       <fieldset>
         <legend className="text-sm font-bold text-primary">Languages</legend>
         <div className="mt-3 space-y-3">
           {languageFields.map((language, index) => (
-            <div className="grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_1fr_auto]" key={language.id}>
-              <TextInput error={errorMessage(errors.languages?.[index]?.language)} label={`Language ${index + 1}`} required {...register(`languages.${index}.language`)} />
-              <SelectField error={errorMessage(errors.languages?.[index]?.level)} label="Level" required {...register(`languages.${index}.level`)}>
-                {languageLevels.map((level) => <option key={level} value={level}>{level}</option>)}
+            <div
+              className="grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_1fr_auto]"
+              key={language.id}
+            >
+              <TextInput
+                error={errorMessage(errors.languages?.[index]?.language)}
+                label={`Language ${index + 1}`}
+                required
+                {...register(`languages.${index}.language`)}
+              />
+              <SelectField
+                error={errorMessage(errors.languages?.[index]?.level)}
+                label="Level"
+                required
+                {...register(`languages.${index}.level`)}
+              >
+                {languageLevels.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
               </SelectField>
-              <Button className="self-end" onClick={() => removeLanguage(index)} variant="ghost">Remove</Button>
+              <Button className="self-end" onClick={() => removeLanguage(index)} variant="ghost">
+                Remove
+              </Button>
             </div>
           ))}
-          <Button onClick={() => appendLanguage({ language: '', level: 'basic' })} variant="outline">Add language</Button>
+          <Button
+            onClick={() => appendLanguage({ language: '', level: 'basic' })}
+            variant="outline"
+          >
+            Add language
+          </Button>
         </div>
       </fieldset>
 
@@ -813,7 +988,14 @@ function PreferencesStep({
           <input className={checkboxClasses()} type="checkbox" {...register('hasDrivingLicence')} />
           I have a driving licence
         </label>
-        {hasDrivingLicence ? <TextInput error={errorMessage(errors.licenceCountry)} label="Licence issuing country" required {...register('licenceCountry')} /> : null}
+        {hasDrivingLicence ? (
+          <TextInput
+            error={errorMessage(errors.licenceCountry)}
+            label="Licence issuing country"
+            required
+            {...register('licenceCountry')}
+          />
+        ) : null}
         <label className="flex min-h-11 items-center gap-3 rounded-xl border px-4 py-3 font-semibold text-primary">
           <input className={checkboxClasses()} type="checkbox" {...register('willingToRelocate')} />
           Willing to relocate
@@ -828,12 +1010,24 @@ function PreferencesStep({
             description="Separate up to 30 skills with commas."
             error={errorMessage(errors.skills)}
             label="Skills"
-            onChange={(event) => field.onChange(event.target.value.split(',').map((skill) => skill.trim()).filter(Boolean))}
+            onChange={(event) =>
+              field.onChange(
+                event.target.value
+                  .split(',')
+                  .map((skill) => skill.trim())
+                  .filter(Boolean),
+              )
+            }
             value={(field.value ?? []).join(', ')}
           />
         )}
       />
-      <TextareaField error={errorMessage(errors.notes)} label="Additional notes" maxLength={2000} {...register('notes')} />
+      <TextareaField
+        error={errorMessage(errors.notes)}
+        label="Additional notes"
+        maxLength={2000}
+        {...register('notes')}
+      />
     </div>
   );
 }
@@ -849,11 +1043,37 @@ function DocumentsStep({ errors, files, onChange, setInputRef }: DocumentsStepPr
   return (
     <div className="space-y-4">
       <p className="rounded-xl bg-amber-50 p-4 text-sm leading-6 text-warning">
-        Use test files only. Files remain in browser memory and are not uploaded or stored in M6.
+        Use test files only. Selected files remain in browser memory until a configured submission
+        succeeds or you leave this page.
       </p>
-      <FileField accept=".pdf,.doc,.docx" description="PDF, DOC or DOCX; maximum 5 MiB." error={errors.cv} file={files.cv} inputRef={(element) => setInputRef('cv', element)} label="CV" onChange={(file) => onChange('cv', file)} required />
-      <FileField accept=".jpg,.jpeg,.png,.pdf" description="Optional JPG, PNG or PDF; maximum 5 MiB." error={errors.passportCopy} file={files.passportCopy} inputRef={(element) => setInputRef('passportCopy', element)} label="Passport copy" onChange={(file) => onChange('passportCopy', file)} />
-      <FileField accept=".jpg,.jpeg,.png,.pdf" description="Optional JPG, PNG or PDF; maximum 5 MiB." error={errors.photo} file={files.photo} inputRef={(element) => setInputRef('photo', element)} label="Photo" onChange={(file) => onChange('photo', file)} />
+      <FileField
+        accept=".pdf,.doc,.docx"
+        description="PDF, DOC or DOCX; maximum 5 MiB."
+        error={errors.cv}
+        file={files.cv}
+        inputRef={(element) => setInputRef('cv', element)}
+        label="CV"
+        onChange={(file) => onChange('cv', file)}
+        required
+      />
+      <FileField
+        accept=".jpg,.jpeg,.png,.pdf"
+        description="Optional JPG, PNG or PDF; maximum 5 MiB."
+        error={errors.passportCopy}
+        file={files.passportCopy}
+        inputRef={(element) => setInputRef('passportCopy', element)}
+        label="Passport copy"
+        onChange={(file) => onChange('passportCopy', file)}
+      />
+      <FileField
+        accept=".jpg,.jpeg,.png,.pdf"
+        description="Optional JPG, PNG or PDF; maximum 5 MiB."
+        error={errors.photo}
+        file={files.photo}
+        inputRef={(element) => setInputRef('photo', element)}
+        label="Photo"
+        onChange={(file) => onChange('photo', file)}
+      />
     </div>
   );
 }
@@ -871,7 +1091,18 @@ interface PaymentStepProps {
   register: ReturnType<typeof useForm<ApplicationFieldsInput>>['register'];
 }
 
-function PaymentStep({ config, copyStatus, errors, fileError, fileInputRef, onCopy, onFileChange, paymentFile, paymentPreviewUrl, register }: PaymentStepProps) {
+function PaymentStep({
+  config,
+  copyStatus,
+  errors,
+  fileError,
+  fileInputRef,
+  onCopy,
+  onFileChange,
+  paymentFile,
+  paymentPreviewUrl,
+  register,
+}: PaymentStepProps) {
   const paymentDetails = [
     ['Bank', config.bankName],
     ['Account title', config.bankAccountTitle],
@@ -881,43 +1112,115 @@ function PaymentStep({ config, copyStatus, errors, fileError, fileInputRef, onCo
   return (
     <div className="space-y-6">
       <div className="rounded-xl border-2 border-warning bg-amber-50 p-5">
-        <p className="text-sm font-black uppercase tracking-[0.16em] text-warning">Fake / demo bank details — do not pay</p>
-        <p className="mt-2 text-sm leading-6 text-muted">Displayed only to validate the form experience. Payment collection is not launched.</p>
+        <p className="text-sm font-black uppercase tracking-[0.16em] text-warning">
+          Fake / demo bank details — do not pay
+        </p>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Displayed only to validate the form experience. Payment collection is not launched.
+        </p>
         <dl className="mt-4 space-y-3">
           {paymentDetails.map(([label, value]) => (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-bg p-3" key={label}>
-              <div><dt className="text-xs font-bold uppercase text-muted">{label}</dt><dd className="font-semibold text-primary">{value}</dd></div>
-              <Button aria-label={`Copy ${label}`} onClick={() => void onCopy(label, value)} variant="ghost"><Copy aria-hidden="true" size={16} /> Copy</Button>
+            <div
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-bg p-3"
+              key={label}
+            >
+              <div>
+                <dt className="text-xs font-bold uppercase text-muted">{label}</dt>
+                <dd className="font-semibold text-primary">{value}</dd>
+              </div>
+              <Button
+                aria-label={`Copy ${label}`}
+                onClick={() => void onCopy(label, value)}
+                variant="ghost"
+              >
+                <Copy aria-hidden="true" size={16} /> Copy
+              </Button>
             </div>
           ))}
         </dl>
-        <p className="mt-4 font-bold text-primary">Demo fee: {config.serviceFeeCurrency} {config.serviceFeeAmount.toLocaleString()}</p>
-        <p aria-live="polite" className="mt-2 min-h-5 text-sm font-semibold text-brand-green">{copyStatus}</p>
+        <p className="mt-4 font-bold text-primary">
+          Demo fee: {config.serviceFeeCurrency} {config.serviceFeeAmount.toLocaleString()}
+        </p>
+        <p aria-live="polite" className="mt-2 min-h-5 text-sm font-semibold text-brand-green">
+          {copyStatus}
+        </p>
       </div>
 
-      <FileField accept=".jpg,.jpeg,.png" description="Required JPEG or PNG; maximum 5 MiB. The secure server validates its file signature again." error={fileError} file={paymentFile} inputRef={fileInputRef} label="Payment screenshot" onChange={onFileChange} required />
-      {paymentPreviewUrl ? <img alt="Payment screenshot preview" className="max-h-72 rounded-xl border object-contain" src={paymentPreviewUrl} /> : null}
+      <FileField
+        accept=".jpg,.jpeg,.png"
+        description="Required JPEG or PNG; maximum 5 MiB. The secure server validates its file signature again."
+        error={fileError}
+        file={paymentFile}
+        inputRef={fileInputRef}
+        label="Payment screenshot"
+        onChange={onFileChange}
+        required
+      />
+      {paymentPreviewUrl ? (
+        <img
+          alt="Payment screenshot preview"
+          className="max-h-72 rounded-xl border object-contain"
+          src={paymentPreviewUrl}
+        />
+      ) : null}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <TextInput error={errorMessage(errors.transactionReference)} label="Transaction reference" required {...register('transactionReference')} />
-        <TextInput error={errorMessage(errors.paymentDate)} label="Payment date" max={new Date().toISOString().slice(0, 10)} required type="date" {...register('paymentDate')} />
+        <TextInput
+          error={errorMessage(errors.transactionReference)}
+          label="Transaction reference"
+          required
+          {...register('transactionReference')}
+        />
+        <TextInput
+          error={errorMessage(errors.paymentDate)}
+          label="Payment date"
+          max={new Date().toISOString().slice(0, 10)}
+          required
+          type="date"
+          {...register('paymentDate')}
+        />
       </div>
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-bold text-primary">Required confirmations</legend>
-        <ConsentField error={errorMessage(errors.acceptTerms)} label="I accept the terms and conditions." registration={register('acceptTerms')} />
-        <ConsentField error={errorMessage(errors.confirmAccuracy)} label="I confirm the information is complete and accurate." registration={register('confirmAccuracy')} />
-        <ConsentField error={errorMessage(errors.acceptFeePolicy)} label="I accept the fee and refund policy and understand this demo does not verify payment." registration={register('acceptFeePolicy')} />
+        <ConsentField
+          error={errorMessage(errors.acceptTerms)}
+          label="I accept the terms and conditions."
+          registration={register('acceptTerms')}
+        />
+        <ConsentField
+          error={errorMessage(errors.confirmAccuracy)}
+          label="I confirm the information is complete and accurate."
+          registration={register('confirmAccuracy')}
+        />
+        <ConsentField
+          error={errorMessage(errors.acceptFeePolicy)}
+          label="I accept the fee and refund policy and understand this demo does not verify payment."
+          registration={register('acceptFeePolicy')}
+        />
       </fieldset>
     </div>
   );
 }
 
-function ConsentField({ error, label, registration }: { error?: string | undefined; label: string; registration: ReturnType<ReturnType<typeof useForm<ApplicationFieldsInput>>['register']> }) {
+function ConsentField({
+  error,
+  label,
+  registration,
+}: {
+  error?: string | undefined;
+  label: string;
+  registration: ReturnType<ReturnType<typeof useForm<ApplicationFieldsInput>>['register']>;
+}) {
   return (
     <div>
       <label className="flex min-h-11 items-start gap-3 rounded-xl border p-4 font-semibold text-primary">
-        <input aria-invalid={error ? true : undefined} className={`${checkboxClasses()} mt-0.5 shrink-0`} type="checkbox" {...registration} />
+        <input
+          aria-invalid={error ? true : undefined}
+          className={`${checkboxClasses()} mt-0.5 shrink-0`}
+          type="checkbox"
+          {...registration}
+        />
         {label}
       </label>
       {error ? <p className="mt-1 text-sm font-semibold text-error">{error}</p> : null}
@@ -928,13 +1231,29 @@ function ConsentField({ error, label, registration }: { error?: string | undefin
 function SetupUnavailable({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
     <div className="rounded-xl border bg-surface p-5" role={error ? 'alert' : 'status'}>
-      <p className="font-semibold text-primary">{error || 'Loading validated application options…'}</p>
-      {error ? <Button className="mt-4" onClick={onRetry} variant="outline">Retry setup</Button> : null}
+      <p className="font-semibold text-primary">
+        {error || 'Loading validated application options…'}
+      </p>
+      {error ? (
+        <Button className="mt-4" onClick={onRetry} variant="outline">
+          Retry setup
+        </Button>
+      ) : null}
     </div>
   );
 }
 
-function ReviewStep({ files, onEdit, taxonomy, values }: { files: ApplicationFiles; onEdit: (step: number) => void; taxonomy?: JobTaxonomy | undefined; values: Record<string, unknown> }) {
+function ReviewStep({
+  files,
+  onEdit,
+  taxonomy,
+  values,
+}: {
+  files: ApplicationFiles;
+  onEdit: (step: number) => void;
+  taxonomy?: JobTaxonomy | undefined;
+  values: Record<string, unknown>;
+}) {
   const textValue = (key: string) => (typeof values[key] === 'string' ? values[key] : '');
   const selectedRoles = Array.isArray(values.roles)
     ? values.roles.filter((value): value is string => typeof value === 'string')
@@ -943,7 +1262,10 @@ function ReviewStep({ files, onEdit, taxonomy, values }: { files: ApplicationFil
     ? values.countries.filter((value): value is string => typeof value === 'string')
     : [];
   const field = taxonomy?.fields.find((item) => item.id === textValue('field'));
-  const roles = field?.roles.filter((role) => selectedRoles.includes(role.id)).map((role) => role.label).join(', ');
+  const roles = field?.roles
+    .filter((role) => selectedRoles.includes(role.id))
+    .map((role) => role.label)
+    .join(', ');
   const countries = selectedCountries.includes('all-gulf')
     ? 'All Gulf countries'
     : selectedCountries
@@ -951,21 +1273,85 @@ function ReviewStep({ files, onEdit, taxonomy, values }: { files: ApplicationFil
         .map((country) => countryLabels[country])
         .join(', ');
   const sections: { title: string; step: number; items: [string, string | undefined][] }[] = [
-    { title: 'Personal', step: 0, items: [['Name', `${textValue('firstName')} ${textValue('lastName')}`.trim()], ['Date of birth', textValue('dateOfBirth')], ['Nationality', textValue('nationality')], ['National ID', maskIdentifier(values.nationalId)], ['Passport', maskIdentifier(values.passportNumber)], ['Passport expiry', textValue('passportExpiry')], ['Email', textValue('email')], ['Phone', textValue('phone')], ['Location', `${textValue('currentCity')}, ${textValue('currentCountry')}`]] },
-    { title: 'Preferences', step: 1, items: [['Countries', countries], ['Field', field?.label], ['Roles', roles], ['Other role', textValue('otherRole')], ['Experience', `${textValue('yearsExperience')} years`], ['Education', textValue('highestEducation')], ['Last job', textValue('lastJobTitle')], ['Salary', textValue('salaryCurrency') ? `${textValue('salaryCurrency')} ${textValue('expectedSalaryMin') || '—'}–${textValue('expectedSalaryMax') || '—'}` : undefined], ['Joining date', textValue('preferredJoiningDate')], ['Relocation', values.willingToRelocate ? 'Yes' : 'No']] },
-    { title: 'Documents', step: 2, items: [['CV', files.cv?.name], ['Passport copy', files.passportCopy?.name ?? 'Not provided'], ['Photo', files.photo?.name ?? 'Not provided']] },
-    { title: 'Payment evidence', step: 3, items: [['Screenshot', files.paymentScreenshot?.name], ['Transaction reference', textValue('transactionReference')], ['Payment date', textValue('paymentDate')], ['Status', 'Unverified demo evidence']] },
+    {
+      title: 'Personal',
+      step: 0,
+      items: [
+        ['Name', `${textValue('firstName')} ${textValue('lastName')}`.trim()],
+        ['Date of birth', textValue('dateOfBirth')],
+        ['Nationality', textValue('nationality')],
+        ['National ID', maskIdentifier(values.nationalId)],
+        ['Passport', maskIdentifier(values.passportNumber)],
+        ['Passport expiry', textValue('passportExpiry')],
+        ['Email', textValue('email')],
+        ['Phone', textValue('phone')],
+        ['Location', `${textValue('currentCity')}, ${textValue('currentCountry')}`],
+      ],
+    },
+    {
+      title: 'Preferences',
+      step: 1,
+      items: [
+        ['Countries', countries],
+        ['Field', field?.label],
+        ['Roles', roles],
+        ['Other role', textValue('otherRole')],
+        ['Experience', `${textValue('yearsExperience')} years`],
+        ['Education', textValue('highestEducation')],
+        ['Last job', textValue('lastJobTitle')],
+        [
+          'Salary',
+          textValue('salaryCurrency')
+            ? `${textValue('salaryCurrency')} ${textValue('expectedSalaryMin') || '—'}–${textValue('expectedSalaryMax') || '—'}`
+            : undefined,
+        ],
+        ['Joining date', textValue('preferredJoiningDate')],
+        ['Relocation', values.willingToRelocate ? 'Yes' : 'No'],
+      ],
+    },
+    {
+      title: 'Documents',
+      step: 2,
+      items: [
+        ['CV', files.cv?.name],
+        ['Passport copy', files.passportCopy?.name ?? 'Not provided'],
+        ['Photo', files.photo?.name ?? 'Not provided'],
+      ],
+    },
+    {
+      title: 'Payment evidence',
+      step: 3,
+      items: [
+        ['Screenshot', files.paymentScreenshot?.name],
+        ['Transaction reference', textValue('transactionReference')],
+        ['Payment date', textValue('paymentDate')],
+        ['Status', 'Unverified demo evidence'],
+      ],
+    },
   ];
   return (
     <div className="space-y-5">
-      <p className="rounded-xl bg-surface p-4 text-sm leading-6 text-muted">Review the sanitized summary. Sensitive identifiers are masked and nothing has been submitted.</p>
+      <p className="rounded-xl bg-surface p-4 text-sm leading-6 text-muted">
+        Review the sanitized summary. Sensitive identifiers are masked and nothing has been
+        submitted.
+      </p>
       {sections.map((section) => (
         <section className="rounded-xl border p-5" key={section.title}>
-          <div className="flex items-center justify-between gap-3"><h3 className="text-lg">{section.title}</h3><Button onClick={() => onEdit(section.step)} variant="ghost">Edit</Button></div>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-lg">{section.title}</h3>
+            <Button onClick={() => onEdit(section.step)} variant="ghost">
+              Edit
+            </Button>
+          </div>
           <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-            {section.items.filter(([, value]) => value !== undefined && value !== '').map(([label, value]) => (
-              <div key={label}><dt className="text-xs font-bold uppercase tracking-wide text-muted">{label}</dt><dd className="mt-1 break-words font-semibold text-text">{String(value)}</dd></div>
-            ))}
+            {section.items
+              .filter(([, value]) => value !== undefined && value !== '')
+              .map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-muted">{label}</dt>
+                  <dd className="mt-1 break-words font-semibold text-text">{String(value)}</dd>
+                </div>
+              ))}
           </dl>
         </section>
       ))}

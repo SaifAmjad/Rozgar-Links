@@ -31,7 +31,7 @@ export function TrendChart({ stats }: TrendChartProps) {
   }));
 
   return (
-    <Card className="min-w-0 lg:col-span-2">
+    <Card className="min-w-0 border-0 shadow-none">
       <figure aria-labelledby="trend-chart-title">
         <figcaption>
           <h3 className="text-xl" id="trend-chart-title">
@@ -43,7 +43,7 @@ export function TrendChart({ stats }: TrendChartProps) {
         </figcaption>
         <div
           aria-label="Line chart of indicative openings over seven days"
-          className="mt-5 h-72 w-full"
+          className="mt-5 hidden h-80 w-full sm:block"
           role="img"
         >
           <ResponsiveContainer height="100%" width="100%">

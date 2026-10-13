@@ -1,7 +1,11 @@
 import { jobsResponseSchema, type JobListing, type JobsResponse } from '@rozgar-links/shared';
 
 import type { JobProvider } from '../providers/JobProvider.js';
-import { JobsRepository, type JobsCache } from '../repositories/jobsRepository.js';
+import {
+  JobsRepository,
+  type JobsCache,
+  type JobsCacheRepository,
+} from '../repositories/jobsRepository.js';
 
 const DAY_IN_MS = 86_400_000;
 
@@ -17,7 +21,7 @@ interface JobsServiceOptions {
   cacheTtlMs?: number;
   now?: () => Date;
   provider: JobProvider;
-  repository?: JobsRepository;
+  repository?: JobsCacheRepository;
 }
 
 export class JobsUnavailableError extends Error {
@@ -30,7 +34,7 @@ export class JobsUnavailableError extends Error {
 export class JobsService {
   private readonly cacheTtlMs: number;
   private readonly now: () => Date;
-  private readonly repository: JobsRepository;
+  private readonly repository: JobsCacheRepository;
 
   constructor({
     cacheTtlMs = DAY_IN_MS,

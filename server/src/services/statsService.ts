@@ -5,7 +5,7 @@ import {
   type StatsResponse,
 } from '@rozgar-links/shared';
 
-import { StatsRepository } from '../repositories/statsRepository.js';
+import { StatsRepository, type StatsStoreRepository } from '../repositories/statsRepository.js';
 import {
   generateStatsHistory,
   generateStatsSnapshot,
@@ -22,14 +22,14 @@ export class StatsUnavailableError extends Error {
 interface StatsServiceOptions {
   generate?: typeof generateStatsSnapshot;
   now?: () => Date;
-  repository?: StatsRepository;
+  repository?: StatsStoreRepository;
   timeZone: string;
 }
 
 export class StatsService {
   private readonly generate: typeof generateStatsSnapshot;
   private readonly now: () => Date;
-  private readonly repository: StatsRepository;
+  private readonly repository: StatsStoreRepository;
 
   constructor({
     generate = generateStatsSnapshot,

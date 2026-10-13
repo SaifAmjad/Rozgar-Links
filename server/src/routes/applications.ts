@@ -23,6 +23,7 @@ import {
 export interface ApplicationsRouterOptions {
   audit?: ApplicationAuditLogger;
   deliver?: (input: ApplicationDeliveryInput) => Promise<ApplicationDeliveryResult>;
+  enabled?: boolean;
   rateLimitMax?: number;
 }
 
@@ -83,6 +84,19 @@ export function createApplicationsRouter(options: ApplicationsRouterOptions = {}
     });
     next();
   });
+
+  if (options.enabled === false) {
+    router.post('/', (_request, response) => {
+      response.status(503).json({
+        success: false,
+        error: {
+          code: 'demo_submission_disabled',
+          message: 'Application submission is disabled in this hosted demo. No data was accepted.',
+        },
+      });
+    });
+    return router;
+  }
 
   router.post('/', applicationLimiter, uploadApplication, async (request, response, next) => {
     try {

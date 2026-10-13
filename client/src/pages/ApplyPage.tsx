@@ -12,7 +12,7 @@ export function ApplyPage() {
             Review fee policy
           </ButtonLink>
         }
-        description="Complete the five-step demo workflow, validate every required field and review a sanitized summary before secure email delivery. Use test details and documents only."
+        description="Explore the five-step workflow, validate every required field and review a sanitized summary. Hosted demo submissions are disabled, so use test details and documents only."
         eyebrow="Application service"
         title="Application form"
       />
