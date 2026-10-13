@@ -1,0 +1,36 @@
+{
+  "name": "rozgar-links",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Accessible Gulf hiring-assistance portal scaffold",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @rozgar-links/shared && npm run build --workspace @rozgar-links/client && npm run build --workspace @rozgar-links/server",
+    "dev": "npm run build --workspace @rozgar-links/shared && node scripts/dev.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "pretest": "npm run build --workspace @rozgar-links/shared",
+    "start": "npm run start --workspace @rozgar-links/server",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "prettier": "^3.4.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.71.2"
+  }
+}

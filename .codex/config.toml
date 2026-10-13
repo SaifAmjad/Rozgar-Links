@@ -1,0 +1,12 @@
+# Project-local Codex defaults. Validate keys against installed Codex CLI version.
+# Override model at invocation if this model is unavailable to your account.
+model = "gpt-5.3-codex"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# Keep network off unless an approved milestone requires dependencies/docs.
+[sandbox_workspace_write]
+network_access = false
+
+# Agents should read README.md and AGENTS.md; skills are under .agents/skills/.
+# Never put API keys, passwords, or SMTP credentials in this TOML file.
