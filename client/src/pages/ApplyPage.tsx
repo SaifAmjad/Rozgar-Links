@@ -12,7 +12,7 @@ export function ApplyPage() {
             Review fee policy
           </ButtonLink>
         }
-        description="Complete the five-step demo form, validate every required field and review a sanitized summary. Secure server submission remains disabled until Milestone 7."
+        description="Complete the five-step demo workflow, validate every required field and review a sanitized summary before secure email delivery. Use test details and documents only."
         eyebrow="Application service"
         title="Application form"
       />

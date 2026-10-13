@@ -20,6 +20,7 @@ describe('App router', () => {
   it.each([
     ['/jobs', 'Jobs across the Gulf'],
     ['/apply', 'Application form'],
+    ['/success', 'Submission receipt unavailable'],
     ['/faq', 'Frequently asked questions'],
     ['/contact', 'Contact Rozgar Links'],
     ['/privacy', 'Privacy notice'],
@@ -45,6 +46,30 @@ describe('App router', () => {
     expect(screen.getByText(/not affiliated with or endorsed by gulftalent/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
     expect(screen.getByText(/recruitment licence: pending-verification/i)).toBeInTheDocument();
+  });
+
+  it('shows only a contract-valid submission receipt and confirmation status', () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/success',
+            state: {
+              success: true,
+              referenceId: 'RL-2026-ABC234',
+              confirmationEmailSent: true,
+            },
+          },
+        ]}
+      >
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Application submitted' })).toBeInTheDocument();
+    expect(screen.getByText('RL-2026-ABC234')).toBeInTheDocument();
+    expect(screen.getByText(/confirmation email was accepted/i)).toBeInTheDocument();
+    expect(screen.getByText(/does not verify payment/i)).toBeInTheDocument();
   });
 
   it('opens and closes the mobile menu with the keyboard', () => {

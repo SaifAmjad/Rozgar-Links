@@ -10,7 +10,7 @@ import {
   type FieldErrors,
   type FieldPath,
 } from 'react-hook-form';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   applicationFieldsSchema,
@@ -19,7 +19,6 @@ import {
   supportedCurrencies,
   type ApplicationFields,
   type ApplicationFieldsInput,
-  type ApplicationSubmissionResponse,
   type JobTaxonomy,
   type PublicConfigResponse,
 } from '@rozgar-links/shared';
@@ -212,6 +211,7 @@ interface SetupState {
 }
 
 export function ApplicationWizard() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedCountry = searchParams.get('country');
   const prefilledCountry = (Object.entries(countryLabels) as [(typeof gulfCountries)[number], string][])
@@ -246,7 +246,6 @@ export function ApplicationWizard() {
   const [copyStatus, setCopyStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
-  const [submissionResult, setSubmissionResult] = useState<ApplicationSubmissionResponse>();
   const [website, setWebsite] = useState('');
   const [paymentPreviewUrl, setPaymentPreviewUrl] = useState('');
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -373,7 +372,7 @@ export function ApplicationWizard() {
     setShowErrorSummary(false);
     try {
       const result = await submitApplication(application, files, website);
-      setSubmissionResult(result);
+      navigate('/success', { replace: true, state: result });
     } catch (error) {
       setSubmissionError(
         error instanceof Error
@@ -392,7 +391,7 @@ export function ApplicationWizard() {
 
   const allFilesValid = Object.keys(validateApplicationFiles(files)).length === 0;
   const canSubmit =
-    currentStep === 4 && isValid && allFilesValid && Boolean(setup) && !submissionResult;
+    currentStep === 4 && isValid && allFilesValid && Boolean(setup);
 
   return (
     <FormProvider {...methods}>
@@ -545,25 +544,12 @@ export function ApplicationWizard() {
               ) : (
                 <Button disabled={!canSubmit || isSubmitting} type="submit">
                   {isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={18} /> : null}
-                  {submissionResult ? 'Submitted' : 'Submit application'}
+                  Submit application
                 </Button>
               )}
             </div>
 
             <div aria-live="polite" className="mt-4 min-h-6 text-sm font-semibold">
-              {submissionResult ? (
-                <div className="rounded-xl border border-brand-green bg-green-50 p-4 text-brand-green">
-                  <p>
-                    Administrator email accepted by the configured SMTP server. Reference:{' '}
-                    {submissionResult.referenceId}
-                  </p>
-                  <p className="mt-1">
-                    {submissionResult.confirmationEmailSent
-                      ? 'Applicant confirmation was accepted by SMTP.'
-                      : 'No applicant confirmation email was sent.'}
-                  </p>
-                </div>
-              ) : null}
               {submissionError ? (
                 <p className="rounded-xl border border-error bg-red-50 p-4 text-error" role="alert">
                   {submissionError} Your information and selected files remain available for retry.
@@ -909,7 +895,7 @@ function PaymentStep({ config, copyStatus, errors, fileError, fileInputRef, onCo
         <p aria-live="polite" className="mt-2 min-h-5 text-sm font-semibold text-brand-green">{copyStatus}</p>
       </div>
 
-      <FileField accept=".jpg,.jpeg,.png" description="Required JPEG or PNG; maximum 5 MiB. This is not verified in M6." error={fileError} file={paymentFile} inputRef={fileInputRef} label="Payment screenshot" onChange={onFileChange} required />
+      <FileField accept=".jpg,.jpeg,.png" description="Required JPEG or PNG; maximum 5 MiB. The secure server validates its file signature again." error={fileError} file={paymentFile} inputRef={fileInputRef} label="Payment screenshot" onChange={onFileChange} required />
       {paymentPreviewUrl ? <img alt="Payment screenshot preview" className="max-h-72 rounded-xl border object-contain" src={paymentPreviewUrl} /> : null}
 
       <div className="grid gap-5 sm:grid-cols-2">

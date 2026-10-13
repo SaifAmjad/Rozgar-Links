@@ -20,7 +20,7 @@ const questions = [
   },
   {
     answer:
-      'No. Uploads are not active in this milestone. When submission is implemented, documents will be processed privately and emailed to the configured administrator without permanent applicant storage.',
+      'Documents are processed in memory and emailed to the configured administrator only after secure server validation. During this demonstration stage, use test files only; applicant data is not stored in the application database.',
     question: 'Should I send my CV or identity documents now?',
   },
   {

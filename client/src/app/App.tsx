@@ -8,6 +8,7 @@ import { HomePage } from '../pages/HomePage';
 import { JobsPage } from '../pages/JobsPage';
 import { FeesRefundsPage, PrivacyPage, TermsPage } from '../pages/LegalPages';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { SuccessPage } from '../pages/SuccessPage';
 
 export function App() {
   return (
@@ -16,6 +17,7 @@ export function App() {
         <Route index element={<HomePage />} />
         <Route path="jobs" element={<JobsPage />} />
         <Route path="apply" element={<ApplyPage />} />
+        <Route path="success" element={<SuccessPage />} />
         <Route path="faq" element={<FaqPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="privacy" element={<PrivacyPage />} />

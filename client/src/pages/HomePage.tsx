@@ -31,7 +31,7 @@ const processSteps = [
   [
     '3',
     'Submit',
-    'Send once through the secure form when submission is enabled in a later milestone.',
+    'Send once through the secure form; the server confirms administrator delivery before issuing a reference.',
   ],
 ];
 

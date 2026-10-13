@@ -44,7 +44,7 @@ export function ContactPage() {
           <h2 className="text-lg">Applicant safety notice</h2>
           <p className="mt-2 leading-7 text-muted">
             Rozgar Links is not accepting applications, fees, resumes, passport copies, CNIC values
-            or payment evidence through contact channels in this milestone.
+            or payment evidence through contact channels during this demonstration stage.
           </p>
         </div>
       </PageContainer>

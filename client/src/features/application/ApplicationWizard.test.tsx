@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { jobTaxonomy, type PublicConfigResponse } from '@rozgar-links/shared';
 
 import { fetchApplicationSetup, submitApplication } from './api';
 import { ApplicationWizard } from './ApplicationWizard';
+import { SuccessPage } from '../../pages/SuccessPage';
 
 vi.mock('./api', () => ({ fetchApplicationSetup: vi.fn(), submitApplication: vi.fn() }));
 
@@ -23,7 +24,10 @@ const config: PublicConfigResponse = {
 function renderWizard(route = '/apply') {
   return render(
     <MemoryRouter initialEntries={[route]}>
-      <ApplicationWizard />
+      <Routes>
+        <Route path="/apply" element={<ApplicationWizard />} />
+        <Route path="/success" element={<SuccessPage />} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -149,10 +153,12 @@ describe('ApplicationWizard', () => {
     fireEvent.click(submitButton);
     fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/reference: RL-2026-ABC234/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /application submitted/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('RL-2026-ABC234')).toBeInTheDocument();
     expect(screen.getByText(/no applicant confirmation email was sent/i)).toBeInTheDocument();
     expect(submitApplication).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Submitted' })).toBeDisabled();
   });
 
   it('preserves selected files and allows retry after a submission failure', async () => {

@@ -1,0 +1,64 @@
+name: rozgar-links
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.invalid}
+      APPLICATION_RATE_LIMIT_MAX: ${APPLICATION_RATE_LIMIT_MAX:-5}
+      BANK_ACCOUNT_NUMBER: ${BANK_ACCOUNT_NUMBER:-DEMO-NOT-FOR-PAYMENT}
+      BANK_ACCOUNT_TITLE: ${BANK_ACCOUNT_TITLE:-Demo Account - Do Not Pay}
+      BANK_IBAN: ${BANK_IBAN:-DEMO-NOT-FOR-PAYMENT}
+      BANK_NAME: ${BANK_NAME:-Sample Bank (Demo)}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:8080}
+      ENABLE_SCRAPING: 'false'
+      MAIL_FROM: ${MAIL_FROM:-Rozgar Links <no-reply@example.invalid>}
+      MAX_FILE_MB: ${MAX_FILE_MB:-5}
+      NODE_ENV: production
+      PAYMENT_DETAILS_ARE_DEMO: 'true'
+      PORT: 4000
+      SEND_APPLICANT_CONFIRMATION: ${SEND_APPLICANT_CONFIRMATION:-false}
+      SERVICE_FEE_AMOUNT: ${SERVICE_FEE_AMOUNT:-5000}
+      SERVICE_FEE_CURRENCY: ${SERVICE_FEE_CURRENCY:-PKR}
+      SMTP_CONNECTION_TIMEOUT_MS: ${SMTP_CONNECTION_TIMEOUT_MS:-10000}
+      SMTP_HOST: ${SMTP_HOST:-smtp.example.invalid}
+      SMTP_PASS: ${SMTP_PASS:-replace-me}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-replace-me}
+      STATS_CRON: ${STATS_CRON:-5 0 * * *}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      TZ: ${TZ:-Asia/Karachi}
+    expose:
+      - '4000'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    volumes:
+      - server-data:/app/server/data
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      - '${CLIENT_PORT:-8080}:8080'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+
+volumes:
+  server-data:
