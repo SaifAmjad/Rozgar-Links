@@ -29,7 +29,7 @@ const app = createApp({
   }),
   statsService: new StatsService({
     repository: new MemoryStatsRepository(),
-    timeZone: env.TZ,
+    timeZone: env.APP_TIME_ZONE,
   }),
 });
 

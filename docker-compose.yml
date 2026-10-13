@@ -31,7 +31,8 @@ services:
       SMTP_USER: ${SMTP_USER:-replace-me}
       STATS_CRON: ${STATS_CRON:-5 0 * * *}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
-      TZ: ${TZ:-Asia/Karachi}
+      APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Karachi}
+      TZ: ${APP_TIME_ZONE:-Asia/Karachi}
     expose:
       - '4000'
     read_only: true

@@ -10,9 +10,9 @@ const app = createApp();
 await startStatsCron({
   expression: env.STATS_CRON,
   service: statsService,
-  timeZone: env.TZ,
+  timeZone: env.APP_TIME_ZONE,
 });
-await startJobsCron({ service: jobsService, timeZone: env.TZ });
+await startJobsCron({ service: jobsService, timeZone: env.APP_TIME_ZONE });
 
 const server = app.listen(env.PORT, () => {
   console.log(`Rozgar Links API listening on port ${env.PORT}.`);

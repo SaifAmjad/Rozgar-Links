@@ -15,6 +15,18 @@ dotenv.config({ path: selectedEnvPath, quiet: true });
 
 const envSchema = z.object({
   ADMIN_EMAIL: z.string().trim().email().default('admin@example.invalid'),
+  APP_TIME_ZONE: z
+    .string()
+    .trim()
+    .refine((timeZone) => {
+      try {
+        new Intl.DateTimeFormat('en', { timeZone }).format();
+        return true;
+      } catch {
+        return false;
+      }
+    }, 'Invalid IANA timezone.')
+    .default('Asia/Karachi'),
   APPLICATION_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(100).default(5),
   BANK_ACCOUNT_NUMBER: z.string().trim().min(1).default('DEMO-NOT-FOR-PAYMENT'),
   BANK_ACCOUNT_TITLE: z.string().trim().min(1).default('Demo Account — Do Not Pay'),
@@ -53,18 +65,6 @@ const envSchema = z.object({
     .trim()
     .refine(validateCron, 'Invalid cron expression.')
     .default('5 0 * * *'),
-  TZ: z
-    .string()
-    .trim()
-    .refine((timeZone) => {
-      try {
-        new Intl.DateTimeFormat('en', { timeZone }).format();
-        return true;
-      } catch {
-        return false;
-      }
-    }, 'Invalid IANA timezone.')
-    .default('Asia/Karachi'),
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(2).default(0),
 });
 

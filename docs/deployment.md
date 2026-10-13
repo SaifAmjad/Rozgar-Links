@@ -51,8 +51,9 @@ image. `.env.example` is the authoritative key list.
   sender reputation are approved.
 - Safety flags: `ENABLE_SCRAPING=false` and `PAYMENT_DETAILS_ARE_DEMO=true` are intentionally
   fail-closed in v1 and cannot be enabled through configuration.
-- Scheduling: keep `TZ=Asia/Karachi` and a valid `STATS_CRON`, unless an approved operations plan
-  specifies alternatives.
+- Scheduling: keep `APP_TIME_ZONE=Asia/Karachi` and a valid `STATS_CRON`, unless an approved
+  operations plan specifies alternatives. The Compose container mirrors this value to its system
+  `TZ`; do not try to configure reserved `TZ` directly on Vercel.
 
 There are no database migrations in v1. The only state is validated non-PII JSON in
 `server/data`.
@@ -81,7 +82,8 @@ runtime JSON files.
 3. Allow `vercel.json` to provide the Vite preset, `npm ci`, workspace build and `client/dist`
    output settings.
 4. Set `CLIENT_URL` to the exact production Vercel URL or custom-domain origin. Keep
-   `VITE_API_BASE_URL=/api`, `PAYMENT_DETAILS_ARE_DEMO=true` and `ENABLE_SCRAPING=false`.
+   `VITE_API_BASE_URL=/api`, `APP_TIME_ZONE=Asia/Karachi`, `PAYMENT_DETAILS_ARE_DEMO=true` and
+   `ENABLE_SCRAPING=false`.
 5. Deploy, then smoke-test `/api/health`, `/api/config/public`, `/api/stats`, `/api/jobs`, `/jobs`
    and `/apply`. The public config must report `applicationSubmissionEnabled: false`, and
    `POST /api/applications` must return `503 demo_submission_disabled` without accepting a body.
