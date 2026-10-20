@@ -9,7 +9,6 @@ import {
   AdminDeliveryError,
   deliverApplication,
   type ApplicationDeliveryInput,
-  type ApplicationDeliveryResult,
 } from '../email/applicationEmail.js';
 import { SmtpUnavailableError } from '../email/transport.js';
 import { HttpError } from '../errors/httpError.js';
@@ -22,7 +21,7 @@ import {
 
 export interface ApplicationsRouterOptions {
   audit?: ApplicationAuditLogger;
-  deliver?: (input: ApplicationDeliveryInput) => Promise<ApplicationDeliveryResult>;
+  deliver?: (input: ApplicationDeliveryInput) => Promise<void>;
   enabled?: boolean;
   rateLimitMax?: number;
 }
@@ -111,12 +110,11 @@ export function createApplicationsRouter(options: ApplicationsRouterOptions = {}
       const application = parseApplicationFields(request.body.fields);
       const files = getValidatedApplicationFiles(request);
       const referenceId = createApplicationReference();
-      const delivery = await deliver({ application, files, referenceId });
+      await deliver({ application, files, referenceId });
 
       response.status(201).json({
         success: true,
         referenceId,
-        confirmationEmailSent: delivery.confirmationEmailSent,
       });
     } catch (error) {
       if (error instanceof SmtpUnavailableError) {

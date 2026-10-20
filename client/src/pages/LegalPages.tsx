@@ -68,7 +68,7 @@ const termsSections = [
 const feeSections = [
   {
     heading: 'Collection is disabled',
-    body: 'Any bank details or fee values shown in this demonstration are fake data until legal, licensing, identity and payment approvals are complete.',
+    body: 'Any bank details or fee values shown in this demonstration are test data and must not be used until legal, licensing, identity and payment approvals are complete.',
   },
   {
     heading: 'Proof is not verification',

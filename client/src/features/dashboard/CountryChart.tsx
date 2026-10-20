@@ -24,10 +24,10 @@ export function CountryChart({ stats }: CountryChartProps) {
   const rows = stats.byCountry.map((entry) => ({ count: entry.count, label: entry.country }));
 
   return (
-    <Card className="min-w-0 border-0 shadow-none">
+    <Card className="min-w-0 border-0 p-4 shadow-none sm:p-5">
       <figure aria-labelledby="country-chart-title">
         <figcaption>
-          <h3 className="text-xl" id="country-chart-title">
+          <h3 className="text-lg" id="country-chart-title">
             Openings by country
           </h3>
           <div className="mt-2">
@@ -36,16 +36,16 @@ export function CountryChart({ stats }: CountryChartProps) {
         </figcaption>
         <div
           aria-label="Bar chart of indicative openings by Gulf country"
-          className="mt-5 hidden h-80 w-full sm:block"
+          className="mt-3 hidden h-56 w-full sm:block lg:h-64"
           role="img"
         >
           <ResponsiveContainer height="100%" width="100%">
-            <BarChart data={stats.byCountry} margin={{ bottom: 42, left: 8, right: 8, top: 8 }}>
+            <BarChart data={stats.byCountry} margin={{ bottom: 34, left: 0, right: 8, top: 8 }}>
               <CartesianGrid stroke="#e2e8f0" strokeDasharray="4 4" />
               <XAxis
                 angle={-28}
                 dataKey="country"
-                height={70}
+                height={58}
                 interval={0}
                 textAnchor="end"
                 tick={{ fill: '#475569', fontSize: 11 }}

@@ -3,7 +3,9 @@ import { Router } from 'express';
 
 import { env } from '../config/env.js';
 
-export function createPublicConfigRouter(applicationSubmissionEnabled = true) {
+export function createPublicConfigRouter(
+  applicationSubmissionEnabled = env.APPLICATION_SUBMISSION_ENABLED,
+) {
   const router = Router();
 
   router.get('/', (_request, response) => {

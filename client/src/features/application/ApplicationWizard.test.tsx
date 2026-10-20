@@ -37,16 +37,12 @@ function fillPersonalDetails() {
   fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'Ayesha' } });
   fireEvent.change(screen.getByLabelText(/last name/i), { target: { value: 'Khan' } });
   fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: '1992-04-10' } });
-  fireEvent.change(screen.getByLabelText(/^nationality/i), { target: { value: 'Pakistani' } });
-  fireEvent.change(screen.getByLabelText(/national id/i), { target: { value: '12345-1234567-1' } });
-  fireEvent.change(screen.getByLabelText(/passport number/i), { target: { value: 'AB123456' } });
-  fireEvent.change(screen.getByLabelText(/passport expiry/i), { target: { value: '2030-12-31' } });
+  fireEvent.change(screen.getByLabelText(/^cnic/i), { target: { value: '12345-1234567-1' } });
   fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'ayesha@example.com' } });
   fireEvent.change(screen.getByLabelText(/phone \/ whatsapp/i), {
-    target: { value: '+923001234567' },
+    target: { value: '03001234567' },
   });
   fireEvent.change(screen.getByLabelText(/current city/i), { target: { value: 'Lahore' } });
-  fireEvent.change(screen.getByLabelText(/current country/i), { target: { value: 'Pakistan' } });
 }
 
 async function reachPreferences(route = '/apply') {
@@ -63,9 +59,7 @@ async function fillPreferences() {
   fireEvent.change(screen.getByLabelText(/job field/i), {
     target: { value: jobTaxonomy.fields[0]?.id },
   });
-  fireEvent.click(screen.getByLabelText(jobTaxonomy.fields[0]?.roles[0]?.label ?? ''));
   fireEvent.change(screen.getByLabelText(/years of experience/i), { target: { value: '4' } });
-  fireEvent.change(screen.getByLabelText(/highest education/i), { target: { value: 'Diploma' } });
   fireEvent.click(screen.getByRole('button', { name: /continue/i }));
   expect(await screen.findByRole('heading', { name: 'Documents' })).toBeInTheDocument();
 }
@@ -78,19 +72,15 @@ async function reachReview() {
   fireEvent.change(screen.getByLabelText(/^cv/i), { target: { files: [cv] } });
   fireEvent.click(screen.getByRole('button', { name: /continue/i }));
   expect(await screen.findByRole('heading', { name: 'Payment' })).toBeInTheDocument();
-  expect(screen.getByText(/fake \/ demo bank details/i)).toBeInTheDocument();
+  expect(screen.getByText(/test payment details/i)).toBeInTheDocument();
 
   const screenshot = new File(['demo payment'], 'demo-payment.png', { type: 'image/png' });
   fireEvent.change(screen.getByLabelText(/payment screenshot/i), {
     target: { files: [screenshot] },
   });
-  fireEvent.change(screen.getByLabelText(/transaction reference/i), {
-    target: { value: 'DEMO-TXN-01' },
-  });
-  fireEvent.change(screen.getByLabelText(/payment date/i), { target: { value: '2026-10-01' } });
-  fireEvent.click(screen.getByLabelText(/accept the terms/i));
-  fireEvent.click(screen.getByLabelText(/information is complete/i));
-  fireEvent.click(screen.getByLabelText(/accept the fee and refund policy/i));
+  expect(screen.queryByLabelText(/transaction reference/i)).not.toBeInTheDocument();
+  expect(screen.queryByLabelText(/payment date/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/required confirmations/i)).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /continue/i }));
   expect(await screen.findByRole('heading', { name: 'Review' })).toBeInTheDocument();
 }
@@ -102,7 +92,6 @@ describe('ApplicationWizard', () => {
     vi.mocked(submitApplication).mockResolvedValue({
       success: true,
       referenceId: 'RL-2026-ABC234',
-      confirmationEmailSent: false,
     });
   });
 
@@ -114,39 +103,50 @@ describe('ApplicationWizard', () => {
     expect(screen.getByRole('heading', { name: 'Personal' })).toBeInTheDocument();
   });
 
-  it('prefills only a recognized Gulf country from the jobs query', async () => {
-    await reachPreferences('/apply?country=Saudi%20Arabia&job=sample-001');
+  it('formats CNIC and removes non-digits from Pakistani phone input', () => {
+    renderWizard();
+
+    const cnic = screen.getByLabelText(/^cnic/i);
+    const phone = screen.getByLabelText(/phone \/ whatsapp/i);
+    fireEvent.change(cnic, { target: { value: '12345abc1234567z1' } });
+    fireEvent.change(phone, { target: { value: '03ab001-23456789' } });
+
+    expect(cnic).toHaveValue('12345-1234567-1');
+    expect(phone).toHaveValue('03001234567');
+    expect(phone).toHaveAttribute('maxlength', '11');
+  });
+
+  it('removes non-numeric characters from experience', async () => {
+    await reachPreferences();
+
+    const experience = screen.getByLabelText(/years of experience/i);
+    fireEvent.change(experience, { target: { value: '4years' } });
+
+    expect(experience).toHaveValue('4');
+  });
+
+  it('prefills recognized job choices and explains they can be changed', async () => {
+    const field = jobTaxonomy.fields[0];
+    if (!field) throw new Error('Expected a taxonomy field.');
+
+    await reachPreferences(
+      `/apply?country=Saudi%20Arabia&field=${encodeURIComponent(field.id)}&job=sample-001`,
+    );
     expect(screen.getByLabelText('Saudi Arabia')).toBeChecked();
+    expect(screen.getByLabelText(/job field/i)).toHaveValue(field.id);
+    expect(screen.getByText(/job selected/i)).toBeInTheDocument();
   });
 
-  it('clears incompatible roles when the selected field changes', async () => {
-    await reachPreferences();
-    const firstField = jobTaxonomy.fields[0];
-    const secondField = jobTaxonomy.fields[1];
-    if (!firstField || !secondField) throw new Error('Expected taxonomy fields.');
+  it('shows a compact accessible progress indicator', () => {
+    renderWizard();
 
-    fireEvent.change(screen.getByLabelText(/job field/i), { target: { value: firstField.id } });
-    fireEvent.click(screen.getByLabelText(firstField.roles[0]?.label ?? ''));
-    fireEvent.change(screen.getByLabelText(/job field/i), { target: { value: secondField.id } });
-    fireEvent.change(screen.getByLabelText(/years of experience/i), { target: { value: '4' } });
-    fireEvent.change(screen.getByLabelText(/highest education/i), { target: { value: 'Diploma' } });
-    fireEvent.click(screen.getByLabelText('Saudi Arabia'));
-    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Select at least one role.');
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
+    expect(
+      screen.getAllByText(/tell us who you are and how to contact you/i).length,
+    ).toBeGreaterThan(0);
   });
 
-  it('requires details when Other is selected', async () => {
-    await reachPreferences();
-    fireEvent.change(screen.getByLabelText(/job field/i), {
-      target: { value: jobTaxonomy.fields[0]?.id },
-    });
-    fireEvent.click(screen.getByLabelText('Other'));
-
-    expect(screen.getByLabelText(/describe the other role/i)).toBeRequired();
-  });
-
-  it('submits valid multipart data once and reports SMTP-confirmation status accurately', async () => {
+  it('submits valid multipart data once and shows the server reference', async () => {
     await reachReview();
     expect(screen.getByText('••••5671')).toBeInTheDocument();
     expect(screen.getByText('Unverified demo evidence')).toBeInTheDocument();
@@ -160,7 +160,6 @@ describe('ApplicationWizard', () => {
       await screen.findByRole('heading', { name: /application submitted/i }),
     ).toBeInTheDocument();
     expect(screen.getByText('RL-2026-ABC234')).toBeInTheDocument();
-    expect(screen.getByText(/no applicant confirmation email was sent/i)).toBeInTheDocument();
     expect(submitApplication).toHaveBeenCalledTimes(1);
   });
 
@@ -189,7 +188,7 @@ describe('ApplicationWizard', () => {
     });
     await reachReview();
 
-    expect(screen.getByRole('status')).toHaveTextContent(/no application details or files/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/nothing is submitted/i);
     expect(screen.getByRole('button', { name: /submission disabled in demo/i })).toBeDisabled();
     expect(submitApplication).not.toHaveBeenCalled();
   });

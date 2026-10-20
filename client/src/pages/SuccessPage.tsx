@@ -1,5 +1,5 @@
 import { applicationSubmissionResponseSchema } from '@rozgar-links/shared';
-import { CheckCircle2, MailCheck, MailX } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 import { PageContainer } from '../components/layout/PageContainer';
@@ -27,7 +27,7 @@ export function SuccessPage() {
     );
   }
 
-  const { confirmationEmailSent, referenceId } = submission.data;
+  const { referenceId } = submission.data;
 
   return (
     <PageContainer className="py-14 sm:py-20">
@@ -47,21 +47,8 @@ export function SuccessPage() {
           <p className="mt-1 break-all text-2xl font-black text-primary">{referenceId}</p>
         </div>
 
-        <div className="mt-5 flex items-start gap-3 rounded-xl border p-4" role="status">
-          {confirmationEmailSent ? (
-            <MailCheck aria-hidden="true" className="mt-0.5 shrink-0 text-brand-green" size={22} />
-          ) : (
-            <MailX aria-hidden="true" className="mt-0.5 shrink-0 text-warning" size={22} />
-          )}
-          <p className="text-sm leading-6 text-muted">
-            {confirmationEmailSent
-              ? 'Your confirmation email was accepted by the configured SMTP server.'
-              : 'No applicant confirmation email was sent. Use the reference above for follow-up.'}
-          </p>
-        </div>
-
         <div className="mt-7 flex flex-wrap gap-3">
-          <ButtonLink to="/jobs">Browse sample jobs</ButtonLink>
+          <ButtonLink to="/jobs">Browse jobs</ButtonLink>
           <ButtonLink to="/contact" variant="outline">
             Contact information
           </ButtonLink>

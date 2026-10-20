@@ -10,9 +10,9 @@ interface ChartTableProps {
 
 export function ChartTable({ labelHeader, rows, valueHeader }: ChartTableProps) {
   return (
-    <details className="group mt-5 overflow-hidden rounded-xl border bg-surface" open>
+    <details className="group mt-3 overflow-hidden rounded-lg border bg-surface">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-primary">
-        Exact values and accessible table
+        View exact values
         <ChevronDown
           aria-hidden="true"
           className="shrink-0 transition-transform group-open:rotate-180"

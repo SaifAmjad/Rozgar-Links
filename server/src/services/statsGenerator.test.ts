@@ -33,6 +33,17 @@ describe('stats generator', () => {
     });
   });
 
+  it('changes every country count for the next daily snapshot', () => {
+    const today = generateStatsSnapshot('2026-10-20', 'Asia/Karachi');
+    const tomorrow = generateStatsSnapshot('2026-10-21', 'Asia/Karachi');
+
+    expect(tomorrow.totalOpenings).not.toBe(today.totalOpenings);
+    today.byCountry.forEach((entry) => {
+      const nextEntry = tomorrow.byCountry.find(({ country }) => country === entry.country);
+      expect(nextEntry?.count).not.toBe(entry.count);
+    });
+  });
+
   it('rolls over at midnight in the configured timezone', () => {
     expect(getDateInTimeZone(new Date('2026-01-01T18:59:59.000Z'), 'Asia/Karachi')).toBe(
       '2026-01-01',

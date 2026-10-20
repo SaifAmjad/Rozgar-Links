@@ -1,22 +1,24 @@
-import { PageIntro } from '../components/PageIntro';
 import { PageContainer } from '../components/layout/PageContainer';
-import { ButtonLink } from '../components/ui/ButtonLink';
 import { ApplicationWizard } from '../features/application/ApplicationWizard';
 
 export function ApplyPage() {
   return (
     <>
-      <PageIntro
-        actions={
-          <ButtonLink to="/fees-and-refunds" variant="outline">
-            Review fee policy
-          </ButtonLink>
-        }
-        description="Explore the five-step workflow, validate every required field and review a sanitized summary. Hosted demo submissions are disabled, so use test details and documents only."
-        eyebrow="Application service"
-        title="Application form"
-      />
-      <PageContainer className="py-10 sm:py-14">
+      <section className="border-b bg-surface py-8 sm:py-10">
+        <PageContainer>
+          <div className="mx-auto max-w-4xl">
+            <p className="text-sm font-black uppercase tracking-[0.16em] text-brand-green">
+              Five simple steps
+            </p>
+            <h1 className="mt-2 text-3xl sm:text-4xl">Application form</h1>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
+              Complete one step at a time. You can review everything before submitting.
+            </p>
+          </div>
+        </PageContainer>
+      </section>
+
+      <PageContainer className="py-6 sm:py-10">
         <ApplicationWizard />
       </PageContainer>
     </>

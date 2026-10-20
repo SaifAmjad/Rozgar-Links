@@ -46,7 +46,7 @@ describe('JobsDirectory', () => {
     vi.mocked(fetchJobs).mockReset();
   });
 
-  it('renders sample provenance with no fabricated original-source link', async () => {
+  it('renders a curated listing with no fabricated original-source link', async () => {
     vi.mocked(fetchJobs).mockResolvedValue(response());
     render(
       <MemoryRouter>
@@ -56,11 +56,12 @@ describe('JobsDirectory', () => {
 
     expect(screen.getByRole('status', { name: /loading jobs/i })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Site Mason' })).toBeInTheDocument();
-    expect(screen.getAllByText('Sample listing').length).toBeGreaterThan(0);
+    expect(screen.getByText('Job listing')).toBeInTheDocument();
+    expect(screen.getAllByText('Rozgar Links').length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: /original source/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /apply with us/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /view application steps/i })).toHaveAttribute(
       'href',
-      '/apply?country=Saudi%20Arabia&job=sample-001',
+      '/apply?country=Saudi%20Arabia&field=construction&job=sample-001',
     );
   });
 

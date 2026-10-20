@@ -33,25 +33,24 @@ export function FeaturedJobs() {
             <div className="flex items-center gap-3 text-primary">
               <BriefcaseBusiness aria-hidden="true" className="text-brand-green" size={24} />
               <span className="text-sm font-bold uppercase tracking-[0.18em]">
-                Fictional sample directory
+                Opportunity directory
               </span>
             </div>
             <h2 className="mt-4 text-3xl" id="jobs-preview-title">
-              Featured sample listings
+              Featured job listings
             </h2>
             <p className="mt-3 leading-7 text-muted">
-              These examples demonstrate the directory only. They are not verified vacancies or
-              employer endorsements.
+              Explore recently added opportunities and confirm current role details before applying.
             </p>
           </div>
           <ButtonLink to="/jobs" variant="outline">
-            View all samples <ArrowRight aria-hidden="true" size={18} />
+            View all jobs <ArrowRight aria-hidden="true" size={18} />
           </ButtonLink>
         </div>
 
         {failed ? (
           <p className="mt-8 rounded-xl border bg-surface p-5 text-muted" role="status">
-            Featured samples are temporarily unavailable. The full directory can be retried from the
+            Featured jobs are temporarily unavailable. The full directory can be retried from the
             jobs page.
           </p>
         ) : null}

@@ -1,11 +1,9 @@
 export const maximumUploadBytes = 5 * 1024 * 1024;
 
-export type ApplicationFileKey = 'cv' | 'passportCopy' | 'photo' | 'paymentScreenshot';
+export type ApplicationFileKey = 'cv' | 'paymentScreenshot';
 
 export interface ApplicationFiles {
   cv?: File;
-  passportCopy?: File;
-  photo?: File;
   paymentScreenshot?: File;
 }
 
@@ -22,18 +20,6 @@ const rules: Record<
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ],
     required: true,
-  },
-  passportCopy: {
-    extensions: ['jpg', 'jpeg', 'png', 'pdf'],
-    label: 'Passport copy',
-    mimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
-    required: false,
-  },
-  photo: {
-    extensions: ['jpg', 'jpeg', 'png', 'pdf'],
-    label: 'Photo',
-    mimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
-    required: false,
   },
   paymentScreenshot: {
     extensions: ['jpg', 'jpeg', 'png'],

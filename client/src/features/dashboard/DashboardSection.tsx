@@ -1,4 +1,4 @@
-import { BarChart3, Globe2, RefreshCw, ShieldCheck, TrendingUp } from 'lucide-react';
+import { BarChart3, Globe2, Info, RefreshCw, TrendingUp } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 
@@ -34,9 +34,9 @@ const dashboardViews = [
 function DashboardSkeleton() {
   return (
     <div aria-label="Loading daily opportunity overview" role="status">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton className="h-44" key={index} />
+          <Skeleton className="h-28" key={index} />
         ))}
       </div>
       <ChartSkeleton />
@@ -46,7 +46,7 @@ function DashboardSkeleton() {
 }
 
 function ChartSkeleton() {
-  return <Skeleton className="mt-6 h-[32rem]" />;
+  return <Skeleton className="mt-4 h-80" />;
 }
 
 function ActiveChart({ stats, view }: { stats: StatsResponse; view: DashboardView }) {
@@ -104,48 +104,32 @@ export function DashboardSection() {
   }, [requestVersion]);
 
   return (
-    <section
-      className="relative overflow-hidden border-y bg-surface py-14 sm:py-18 lg:py-20"
-      aria-labelledby="dashboard-title"
-    >
-      <div
-        aria-hidden="true"
-        className="absolute -right-28 top-10 h-72 w-72 rounded-full bg-accent-blue/10"
-      />
-      <PageContainer className="relative">
-        <div className="grid gap-6 lg:grid-cols-[1fr_22rem] lg:items-end">
-          <div className="max-w-3xl">
+    <section className="border-y bg-surface py-10 sm:py-12" aria-labelledby="dashboard-title">
+      <PageContainer>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
             <Badge>
               <BarChart3 aria-hidden="true" className="mr-1.5" size={14} />
-              Interactive opportunity insights
+              Daily opportunity snapshot
             </Badge>
-            <h2 className="mt-4 text-3xl sm:text-4xl" id="dashboard-title">
-              See indicative patterns at a glance
+            <h2 className="mt-3 text-2xl sm:text-3xl" id="dashboard-title">
+              Job market statistics
             </h2>
-            <p className="mt-4 max-w-2xl leading-7 text-muted">
-              Explore the same daily estimate by country, recent trend or career field. Switch views
-              without losing context, and use the data tables for exact values.
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-base">
+              A simple overview of estimated opportunities by country, trend and job field.
             </p>
           </div>
 
-          <div className="rounded-xl border bg-bg p-4 shadow-soft">
-            <div className="flex gap-3">
-              <ShieldCheck
-                aria-hidden="true"
-                className="mt-0.5 shrink-0 text-brand-green"
-                size={21}
-              />
-              <div>
-                <p className="font-bold text-primary">Read these figures with context</p>
-                <p className="mt-1 text-sm leading-6 text-muted">
-                  Estimates illustrate patterns only; they are not verified vacancies.
-                </p>
-              </div>
-            </div>
+          <div className="flex max-w-md items-start gap-2 rounded-xl border bg-bg px-4 py-3 text-sm text-muted">
+            <Info aria-hidden="true" className="mt-0.5 shrink-0 text-brand-green" size={17} />
+            <p>
+              <strong className="text-primary">Indicative only.</strong> These estimates are not
+              verified vacancies.
+            </p>
           </div>
         </div>
 
-        <div className="mt-9">
+        <div className="mt-6">
           {!stats && !error ? <DashboardSkeleton /> : null}
 
           {error ? (
@@ -163,9 +147,9 @@ export function DashboardSection() {
 
           {stats ? (
             <div aria-live="polite">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <ProvenanceLabel isStale={stats.isStale} />
-                <p className="text-sm text-muted">One validated API response powers every view.</p>
+                <p className="text-xs text-muted">Updated from one validated daily snapshot.</p>
               </div>
 
               {stats.totalOpenings === 0 ? (
@@ -176,19 +160,12 @@ export function DashboardSection() {
 
               <SummaryCards stats={stats} />
 
-              <div className="mt-6 overflow-hidden rounded-xl border bg-bg shadow-soft">
-                <div className="border-b bg-surface p-3 sm:flex sm:items-center sm:justify-between sm:gap-5 sm:p-4">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-brand-green">
-                      Explore the data
-                    </p>
-                    <p className="mt-1 text-sm text-muted">
-                      Choose a view to compare the estimates.
-                    </p>
-                  </div>
+              <div className="mt-4 overflow-hidden rounded-xl border bg-bg shadow-soft">
+                <div className="border-b bg-surface p-2.5 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
+                  <p className="px-1 text-sm font-bold text-primary">Explore the estimates</p>
                   <div
                     aria-label="Opportunity insight views"
-                    className="mt-3 grid grid-cols-3 gap-1 rounded-xl border bg-bg p-1 sm:mt-0 sm:min-w-[24rem]"
+                    className="mt-2 grid grid-cols-3 gap-1 rounded-lg border bg-bg p-1 sm:mt-0 sm:min-w-[22rem]"
                     role="tablist"
                   >
                     {dashboardViews.map(({ icon: Icon, id, label }, index) => (

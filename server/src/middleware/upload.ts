@@ -10,7 +10,7 @@ import {
 } from './fileInspection.js';
 
 const maximumFileBytes = env.MAX_FILE_MB * 1024 * 1024;
-const maximumRequestBytes = maximumFileBytes * 4 + 100 * 1024;
+const maximumRequestBytes = maximumFileBytes * 2 + 100 * 1024;
 
 const claimedMimeTypes: Record<ApplicationFileField, Set<string>> = {
   cv: new Set([
@@ -18,8 +18,6 @@ const claimedMimeTypes: Record<ApplicationFileField, Set<string>> = {
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ]),
-  passportCopy: new Set(['application/pdf', 'image/jpeg', 'image/png']),
-  photo: new Set(['application/pdf', 'image/jpeg', 'image/png']),
   paymentScreenshot: new Set(['image/jpeg', 'image/png']),
 };
 
@@ -43,16 +41,14 @@ const uploader = multer({
     fieldSize: 50 * 1024,
     fields: 2,
     fileSize: maximumFileBytes,
-    files: 4,
-    parts: 6,
+    files: 2,
+    parts: 4,
   },
 });
 
 const applicationUpload = uploader.fields([
   { name: 'cv', maxCount: 1 },
   { name: 'paymentScreenshot', maxCount: 1 },
-  { name: 'passportCopy', maxCount: 1 },
-  { name: 'photo', maxCount: 1 },
 ]);
 
 export const uploadApplication: RequestHandler = (request, response, next) => {
@@ -86,8 +82,7 @@ export const uploadApplication: RequestHandler = (request, response, next) => {
   });
 };
 
-export type ValidatedApplicationFiles = Record<'cv' | 'paymentScreenshot', ValidatedApplicationFile> &
-  Partial<Record<'passportCopy' | 'photo', ValidatedApplicationFile>>;
+export type ValidatedApplicationFiles = Record<'cv' | 'paymentScreenshot', ValidatedApplicationFile>;
 
 export function getValidatedApplicationFiles(request: Express.Request): ValidatedApplicationFiles {
   const uploaded = (request.files ?? {}) as Record<string, Express.Multer.File[]>;
@@ -97,13 +92,9 @@ export function getValidatedApplicationFiles(request: Express.Request): Validate
     throw new HttpError(400, 'missing_upload', 'CV and payment screenshot are required.');
   }
 
-  const passportCopy = uploaded.passportCopy?.[0];
-  const photo = uploaded.photo?.[0];
   return {
     cv: validateUploadedFile('cv', cv),
     paymentScreenshot: validateUploadedFile('paymentScreenshot', paymentScreenshot),
-    ...(passportCopy ? { passportCopy: validateUploadedFile('passportCopy', passportCopy) } : {}),
-    ...(photo ? { photo: validateUploadedFile('photo', photo) } : {}),
   };
 }
 

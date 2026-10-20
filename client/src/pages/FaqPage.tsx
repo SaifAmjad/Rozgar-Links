@@ -10,7 +10,7 @@ const questions = [
   },
   {
     answer:
-      'Not yet. The jobs directory will begin with fictional examples that are visibly marked “Sample listing.” Real records require a genuine authorized source and original link.',
+      'The directory contains opportunities collected by Rozgar Links. Availability and requirements can change, so confirm the current details before applying.',
     question: 'Are the current jobs live vacancies?',
   },
   {

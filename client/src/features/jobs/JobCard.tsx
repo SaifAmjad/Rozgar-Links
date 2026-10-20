@@ -14,15 +14,15 @@ interface JobCardProps {
 }
 
 export function JobCard({ job }: JobCardProps) {
-  const applicationUrl = `/apply?country=${encodeURIComponent(job.country)}&job=${encodeURIComponent(job.id)}`;
+  const applicationUrl = `/apply?country=${encodeURIComponent(job.country)}&field=${encodeURIComponent(job.field)}&job=${encodeURIComponent(job.id)}`;
 
   return (
     <Card className="flex h-full flex-col" role="article" aria-labelledby={`${job.id}-title`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <Badge tone={job.isSample ? 'warning' : 'green'}>
-          {job.isSample ? 'Sample listing' : 'Authorized listing'}
-        </Badge>
-        <span className="text-xs font-semibold text-muted">{job.source}</span>
+        <Badge tone="green">Job listing</Badge>
+        <span className="text-xs font-semibold text-muted">
+          {job.isSample ? 'Rozgar Links' : job.source}
+        </span>
       </div>
       <h2 className="mt-5 text-xl" id={`${job.id}-title`}>
         {job.title}
@@ -56,18 +56,27 @@ export function JobCard({ job }: JobCardProps) {
           </div>
         </div>
       </dl>
-      <div className="mt-auto flex flex-wrap gap-3 pt-6">
-        <ButtonLink to={applicationUrl}>Apply with us</ButtonLink>
-        {!job.isSample && job.sourceUrl ? (
-          <a
-            className={getButtonClasses('outline')}
-            href={job.sourceUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Original source <ExternalLink aria-hidden="true" size={16} />
-          </a>
-        ) : null}
+      <div className="mt-auto pt-6">
+        <p className="mb-3 text-sm leading-6 text-muted">
+          {job.isSample
+            ? 'Continue with the country and work category already selected for you.'
+            : 'Review the guided application steps or visit the original source.'}
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <ButtonLink className="w-full sm:w-auto" to={applicationUrl}>
+            View application steps
+          </ButtonLink>
+          {!job.isSample && job.sourceUrl ? (
+            <a
+              className={getButtonClasses('outline')}
+              href={job.sourceUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Original source <ExternalLink aria-hidden="true" size={16} />
+            </a>
+          ) : null}
+        </div>
       </div>
     </Card>
   );

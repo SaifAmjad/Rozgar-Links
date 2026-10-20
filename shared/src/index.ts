@@ -13,7 +13,6 @@ export {
   applicationFieldsSchema,
   createApplicationFieldsSchema,
   gulfCountries,
-  languageLevels,
   supportedCurrencies,
   supportedCurrencySchema,
   type ApplicationFields,

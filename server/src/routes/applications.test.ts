@@ -10,28 +10,13 @@ const applicationFields = {
   firstName: 'Test',
   lastName: 'Applicant',
   dateOfBirth: '1990-01-01',
-  nationality: 'Pakistan',
   nationalId: '12345-1234567-1',
-  passportNumber: 'TEST-PASSPORT',
-  passportExpiry: '2030-12-31',
   email: 'applicant@example.com',
-  phone: '+923001234567',
+  phone: '03001234567',
   currentCity: 'Lahore',
-  currentCountry: 'Pakistan',
   countries: ['saudi-arabia'],
   field: 'construction',
-  roles: ['mason'],
   yearsExperience: 4,
-  highestEducation: 'Diploma',
-  languages: [],
-  hasDrivingLicence: false,
-  willingToRelocate: true,
-  skills: [],
-  transactionReference: 'DEMO-TRANSACTION',
-  paymentDate: '2026-10-01',
-  acceptTerms: true,
-  confirmAccuracy: true,
-  acceptFeePolicy: true,
 };
 
 const pdf = Buffer.from('%PDF-1.7\n1 0 obj\n%%EOF\n');
@@ -40,7 +25,10 @@ const png = Buffer.from(
   'base64',
 );
 
-function validRequest(app: ReturnType<typeof createApp>, overrides: { fields?: object; website?: string } = {}) {
+function validRequest(
+  app: ReturnType<typeof createApp>,
+  overrides: { fields?: object; website?: string } = {},
+) {
   return request(app)
     .post('/api/applications')
     .field('fields', JSON.stringify(overrides.fields ?? applicationFields))
@@ -51,16 +39,18 @@ function validRequest(app: ReturnType<typeof createApp>, overrides: { fields?: o
 
 describe('POST /api/applications', () => {
   it('returns 201 only after one accepted admin delivery', async () => {
-    const deliver = vi.fn().mockResolvedValue({ confirmationEmailSent: true });
+    const deliver = vi.fn().mockResolvedValue(undefined);
     const audit = vi.fn();
-    const app = createApp({ applications: { audit, deliver, rateLimitMax: 100 } });
+    const app = createApp({
+      applicationSubmissionEnabled: true,
+      applications: { audit, deliver, rateLimitMax: 100 },
+    });
 
     const response = await validRequest(app);
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
       success: true,
-      confirmationEmailSent: true,
     });
     expect(response.body.referenceId).toMatch(/^RL-\d{4}-[A-Z2-9]{6}$/);
     expect(deliver).toHaveBeenCalledTimes(1);
@@ -76,12 +66,14 @@ describe('POST /api/applications', () => {
     const auditJson = JSON.stringify(audit.mock.calls);
     expect(auditJson).not.toContain(applicationFields.email);
     expect(auditJson).not.toContain(applicationFields.nationalId);
-    expect(auditJson).not.toContain(applicationFields.passportNumber);
   });
 
   it('rejects missing, unexpected and signature-spoofed uploads', async () => {
-    const deliver = vi.fn().mockResolvedValue({ confirmationEmailSent: false });
-    const app = createApp({ applications: { deliver, rateLimitMax: 100 } });
+    const deliver = vi.fn().mockResolvedValue(undefined);
+    const app = createApp({
+      applicationSubmissionEnabled: true,
+      applications: { deliver, rateLimitMax: 100 },
+    });
 
     const missing = await request(app)
       .post('/api/applications')
@@ -103,8 +95,11 @@ describe('POST /api/applications', () => {
   });
 
   it('rejects oversized uploads without exposing file content', async () => {
-    const deliver = vi.fn().mockResolvedValue({ confirmationEmailSent: false });
-    const app = createApp({ applications: { deliver, rateLimitMax: 100 } });
+    const deliver = vi.fn().mockResolvedValue(undefined);
+    const app = createApp({
+      applicationSubmissionEnabled: true,
+      applications: { deliver, rateLimitMax: 100 },
+    });
 
     const response = await request(app)
       .post('/api/applications')
@@ -124,17 +119,20 @@ describe('POST /api/applications', () => {
   });
 
   it('rejects invalid fields, unknown text fields and the honeypot', async () => {
-    const deliver = vi.fn().mockResolvedValue({ confirmationEmailSent: false });
-    const app = createApp({ applications: { deliver, rateLimitMax: 100 } });
+    const deliver = vi.fn().mockResolvedValue(undefined);
+    const app = createApp({
+      applicationSubmissionEnabled: true,
+      applications: { deliver, rateLimitMax: 100 },
+    });
 
     const invalid = await validRequest(app, {
-      fields: { ...applicationFields, acceptTerms: false },
+      fields: { ...applicationFields, firstName: '' },
     });
     const unknown = await validRequest(app).field('extraField', 'not-allowed');
     const honeypot = await validRequest(app, { website: 'https://bot.example' });
 
     expect(invalid.status).toBe(400);
-    expect(invalid.body.error.fieldErrors.acceptTerms).toBeDefined();
+    expect(invalid.body.error.fieldErrors.firstName).toBeDefined();
     expect(unknown.status).toBe(400);
     expect(honeypot.status).toBe(400);
     expect(deliver).not.toHaveBeenCalled();
@@ -142,7 +140,10 @@ describe('POST /api/applications', () => {
 
   it('never reports success when admin SMTP delivery fails', async () => {
     const deliver = vi.fn().mockRejectedValue(new AdminDeliveryError());
-    const app = createApp({ applications: { deliver, rateLimitMax: 100 } });
+    const app = createApp({
+      applicationSubmissionEnabled: true,
+      applications: { deliver, rateLimitMax: 100 },
+    });
 
     const response = await validRequest(app);
 
@@ -156,7 +157,10 @@ describe('POST /api/applications', () => {
 
   it('returns a safe 503 when SMTP is not configured', async () => {
     const deliver = vi.fn().mockRejectedValue(new SmtpUnavailableError());
-    const app = createApp({ applications: { deliver, rateLimitMax: 100 } });
+    const app = createApp({
+      applicationSubmissionEnabled: true,
+      applications: { deliver, rateLimitMax: 100 },
+    });
 
     const response = await validRequest(app);
 
@@ -169,8 +173,9 @@ describe('POST /api/applications', () => {
 
   it('rate limits application attempts per app instance', async () => {
     const app = createApp({
+      applicationSubmissionEnabled: true,
       applications: {
-        deliver: vi.fn().mockResolvedValue({ confirmationEmailSent: false }),
+        deliver: vi.fn().mockResolvedValue(undefined),
         rateLimitMax: 2,
       },
     });

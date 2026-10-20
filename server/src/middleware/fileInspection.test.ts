@@ -118,7 +118,6 @@ describe('validateUploadedFile', () => {
         'word/document.xml': '<w:document></w:document>',
       }),
     ],
-    ['photo', 'photo.jpg', 'image/jpeg', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0xff, 0xd9])],
     ['paymentScreenshot', 'payment.png', 'image/png', validPng()],
   ] as const)('accepts valid %s content in %s', (field, filename, mimeType, buffer) => {
     expect(validateUploadedFile(field, uploadedFile(field, filename, mimeType, buffer))).toMatchObject({

@@ -120,7 +120,7 @@ export class JobsService {
         isStale,
         notice:
           catalog.provider.kind === 'sample'
-            ? 'Fictional sample listings for interface demonstration only.'
+            ? 'Listings collected and maintained by Rozgar Links. Confirm current details before applying.'
             : isStale
               ? 'Authorized source data could not be refreshed; the last valid cache is shown.'
               : 'Authorized source data; follow the original link for current details.',

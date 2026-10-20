@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import { env } from '../config/env.js';
 import { createApplicationsRouter, type ApplicationsRouterOptions } from './applications.js';
 import { healthRouter } from './health.js';
 import { createJobsRouter } from './jobs.js';
@@ -21,7 +22,8 @@ export interface ApiRouterOptions {
 export function createApiRouter(options: ApiRouterOptions = {}) {
   const apiRouter = Router();
 
-  const applicationSubmissionEnabled = options.applicationSubmissionEnabled ?? true;
+  const applicationSubmissionEnabled =
+    options.applicationSubmissionEnabled ?? env.APPLICATION_SUBMISSION_ENABLED;
   const applicationOptions = {
     ...options.applications,
     enabled: applicationSubmissionEnabled,

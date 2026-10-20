@@ -12,9 +12,12 @@ describe('App router', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: /connecting people/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /find your next gulf opportunity/i }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /find jobs/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByLabelText('Rozgar Links')).toHaveLength(2);
-    expect(screen.getByText(/no placement guarantee/i)).toBeInTheDocument();
+    expect(screen.getByText(/employment is not guaranteed/i)).toBeInTheDocument();
   });
 
   it.each([
@@ -57,7 +60,6 @@ describe('App router', () => {
             state: {
               success: true,
               referenceId: 'RL-2026-ABC234',
-              confirmationEmailSent: true,
             },
           },
         ]}
@@ -68,7 +70,6 @@ describe('App router', () => {
 
     expect(screen.getByRole('heading', { name: 'Application submitted' })).toBeInTheDocument();
     expect(screen.getByText('RL-2026-ABC234')).toBeInTheDocument();
-    expect(screen.getByText(/confirmation email was accepted/i)).toBeInTheDocument();
     expect(screen.getByText(/does not verify payment/i)).toBeInTheDocument();
   });
 

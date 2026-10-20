@@ -3,7 +3,7 @@ import { inflateRawSync } from 'node:zlib';
 
 import { HttpError } from '../errors/httpError.js';
 
-export type ApplicationFileField = 'cv' | 'passportCopy' | 'photo' | 'paymentScreenshot';
+export type ApplicationFileField = 'cv' | 'paymentScreenshot';
 
 export interface ValidatedApplicationFile {
   buffer: Buffer;
@@ -24,18 +24,6 @@ const allowedFiles: Record<ApplicationFileField, Record<string, string[]>> = {
     pdf: [pdfMime],
     doc: [docMime],
     docx: [docxMime],
-  },
-  passportCopy: {
-    jpg: [jpegMime],
-    jpeg: [jpegMime],
-    png: [pngMime],
-    pdf: [pdfMime],
-  },
-  photo: {
-    jpg: [jpegMime],
-    jpeg: [jpegMime],
-    png: [pngMime],
-    pdf: [pdfMime],
   },
   paymentScreenshot: {
     jpg: [jpegMime],

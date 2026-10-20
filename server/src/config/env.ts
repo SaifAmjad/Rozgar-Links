@@ -13,8 +13,14 @@ const selectedEnvPath = existsSync(rootEnvPath) ? rootEnvPath : serverEnvPath;
 
 dotenv.config({ path: selectedEnvPath, quiet: true });
 
+const singleEmailAddressSchema = z
+  .string()
+  .trim()
+  .email()
+  .refine((value) => !/[,;\r\n]/.test(value), 'Enter exactly one email address.');
+
 const envSchema = z.object({
-  ADMIN_EMAIL: z.string().trim().email().default('admin@example.invalid'),
+  ADMIN_EMAIL: singleEmailAddressSchema.default('admin@example.invalid'),
   APP_TIME_ZONE: z
     .string()
     .trim()
@@ -28,6 +34,10 @@ const envSchema = z.object({
     }, 'Invalid IANA timezone.')
     .default('Asia/Karachi'),
   APPLICATION_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(100).default(5),
+  APPLICATION_SUBMISSION_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   BANK_ACCOUNT_NUMBER: z.string().trim().min(1).default('DEMO-NOT-FOR-PAYMENT'),
   BANK_ACCOUNT_TITLE: z.string().trim().min(1).default('Demo Account — Do Not Pay'),
   BANK_IBAN: z.string().trim().min(1).default('DEMO-NOT-FOR-PAYMENT'),
@@ -45,10 +55,6 @@ const envSchema = z.object({
     .default('true')
     .transform(() => true as const),
   PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
-  SEND_APPLICANT_CONFIRMATION: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((value) => value === 'true'),
   SERVICE_FEE_AMOUNT: z.coerce.number().finite().nonnegative().default(5000),
   SERVICE_FEE_CURRENCY: supportedCurrencySchema.default('PKR'),
   SMTP_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).default(10_000),

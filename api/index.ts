@@ -24,7 +24,7 @@ const sampleProvider: JobProvider = {
 };
 
 const app = createApp({
-  applicationSubmissionEnabled: false,
+  applicationSubmissionEnabled: env.APPLICATION_SUBMISSION_ENABLED,
   jobsService: new JobsService({
     provider: sampleProvider,
     repository: new MemoryJobsRepository(),

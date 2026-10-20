@@ -27,10 +27,10 @@ export function FieldChart({ stats }: FieldChartProps) {
     .map((entry) => ({ count: entry.count, label: entry.field }));
 
   return (
-    <Card className="min-w-0 border-0 shadow-none">
+    <Card className="min-w-0 border-0 p-4 shadow-none sm:p-5">
       <figure aria-labelledby="field-chart-title">
         <figcaption>
-          <h3 className="text-xl" id="field-chart-title">
+          <h3 className="text-lg" id="field-chart-title">
             Openings by job field
           </h3>
           <div className="mt-2">
@@ -39,7 +39,7 @@ export function FieldChart({ stats }: FieldChartProps) {
         </figcaption>
         <div
           aria-label="Bar chart of indicative openings by job field"
-          className="mt-5 hidden h-[34rem] w-full md:block"
+          className="mt-3 hidden h-[28rem] w-full md:block"
           role="img"
         >
           <ResponsiveContainer height="100%" width="100%">

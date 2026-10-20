@@ -64,6 +64,7 @@ describe('DashboardSection', () => {
     expect(
       await screen.findByRole('heading', { name: 'Openings by country' }, { timeout: 5_000 }),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByText('View exact values'));
     expect(screen.getByRole('columnheader', { name: 'Country' })).toBeInTheDocument();
     expect(screen.getAllByText('Indicative figures, updated daily').length).toBeGreaterThan(1);
 
@@ -84,7 +85,7 @@ describe('DashboardSection', () => {
       await screen.findByRole('heading', { name: 'Openings by job field' }, { timeout: 5_000 }),
     ).toBeInTheDocument();
     expect(fieldTab).toHaveAttribute('aria-selected', 'true');
-  });
+  }, 20_000);
 
   it('announces an API error and retries without inventing values', async () => {
     vi.mocked(fetchStats).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(stats);

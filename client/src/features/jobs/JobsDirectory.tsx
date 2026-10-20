@@ -132,11 +132,16 @@ export function JobsDirectory() {
               </select>
             </label>
           </div>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Button type="submit">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button className="w-full sm:w-auto" type="submit">
               <Search aria-hidden="true" size={17} /> Search listings
             </Button>
-            <Button onClick={clearFilters} type="button" variant="ghost">
+            <Button
+              className="w-full sm:w-auto"
+              onClick={clearFilters}
+              type="button"
+              variant="ghost"
+            >
               <FilterX aria-hidden="true" size={17} /> Clear filters
             </Button>
           </div>
@@ -150,7 +155,7 @@ export function JobsDirectory() {
           <Card className="text-center" role="alert">
             <h2 className="text-xl">Job directory temporarily unavailable</h2>
             <p className="mx-auto mt-3 max-w-xl leading-7 text-muted">
-              No listings were substituted. Please retry the sample catalog request.
+              We could not load the current listings. Please try again.
             </p>
             <Button className="mt-5" onClick={retry} variant="outline">
               <RefreshCw aria-hidden="true" size={17} /> Retry
@@ -165,16 +170,20 @@ export function JobsDirectory() {
                 <p className="font-bold text-primary">
                   {jobs.total === 0
                     ? 'No matching listings'
-                    : `${jobs.total} ${jobs.provenance.kind === 'sample' ? 'sample ' : ''}${
-                        jobs.total === 1 ? 'listing' : 'listings'
-                      }`}
+                    : `${jobs.total} ${jobs.total === 1 ? 'listing' : 'listings'}`}
                 </p>
-                <p className="mt-1 text-sm text-muted">{jobs.provenance.notice}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {jobs.provenance.kind === 'sample'
+                    ? 'Listings collected and maintained by Rozgar Links. Confirm current details before applying.'
+                    : jobs.provenance.notice}
+                </p>
               </div>
               <p className="text-sm font-semibold text-muted">
                 {jobs.provenance.isStale
                   ? 'Last valid cached catalog shown'
-                  : jobs.provenance.source}
+                  : jobs.provenance.kind === 'sample'
+                    ? 'Rozgar Links directory'
+                    : jobs.provenance.source}
               </p>
             </div>
 
@@ -188,7 +197,7 @@ export function JobsDirectory() {
               <Card className="border-dashed text-center">
                 <h2 className="text-xl">Try broader filters</h2>
                 <p className="mt-3 text-muted">
-                  No fictional sample matches this country, field and keyword combination.
+                  No listing matches this country, field and keyword combination.
                 </p>
               </Card>
             )}

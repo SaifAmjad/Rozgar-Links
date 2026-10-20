@@ -26,8 +26,9 @@ describe('GET /api/taxonomy', () => {
 
 describe('GET /api/config/public', () => {
   it('returns only validated demo payment display values and the taxonomy version', async () => {
-    const response = await request(createApp()).get('/api/config/public');
-    const taxonomyResponse = await request(createApp()).get('/api/taxonomy');
+    const app = createApp({ applicationSubmissionEnabled: true });
+    const response = await request(app).get('/api/config/public');
+    const taxonomyResponse = await request(app).get('/api/taxonomy');
     const config = publicConfigResponseSchema.parse(response.body);
     const serializedConfig = JSON.stringify(config).toLowerCase();
 

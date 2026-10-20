@@ -39,8 +39,6 @@ export async function submitApplication(
   formData.append('website', website);
   if (files.cv) formData.append('cv', files.cv);
   if (files.paymentScreenshot) formData.append('paymentScreenshot', files.paymentScreenshot);
-  if (files.passportCopy) formData.append('passportCopy', files.passportCopy);
-  if (files.photo) formData.append('photo', files.photo);
 
   try {
     const response = await axios.post(`${apiBaseUrl}/applications`, formData);

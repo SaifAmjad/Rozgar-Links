@@ -46,9 +46,9 @@ image. `.env.example` is the authoritative key list.
 - Proxy handling: set `TRUST_PROXY_HOPS` only to the number of trusted reverse proxies. The Compose
   default is `1` because Nginx is the only hop.
 - SMTP: provide `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` and
-  `ADMIN_EMAIL`. Confirm TLS, sender-domain authorization and delivery monitoring before launch.
-- Confirmation: leave `SEND_APPLICANT_CONFIRMATION=false` until its content, support address and
-  sender reputation are approved.
+  one `ADMIN_EMAIL`. Confirm TLS, sender-domain authorization and delivery monitoring before launch.
+- Submission gate: keep `APPLICATION_SUBMISSION_ENABLED=false` until SMTP, privacy, legal and
+  payment checks pass. Set it to `true` only in an approved deployment.
 - Safety flags: `ENABLE_SCRAPING=false` and `PAYMENT_DETAILS_ARE_DEMO=true` are intentionally
   fail-closed in v1 and cannot be enabled through configuration.
 - Scheduling: keep `APP_TIME_ZONE=Asia/Karachi` and a valid `STATS_CRON`, unless an approved
@@ -69,12 +69,11 @@ the server has a persistent writable volume and exactly one active cron worker. 
 current server to an ephemeral/serverless filesystem. If client and API origins differ, set the
 exact `CLIENT_URL`, configure `VITE_API_BASE_URL` at build time, and re-test CORS and uploads.
 
-## Vercel hosted demo
+## Vercel deployment
 
-The repository includes a deliberately restricted, single-project Vercel demo configuration. It
-serves the Vite frontend and read-only Express API from one origin while keeping application upload
-and email submission disabled. The Vercel adapter uses process-memory caches, deterministic
-indicative stats and the committed fictional sample catalog; it does not start `node-cron` or write
+The repository includes a single-project Vercel configuration serving the Vite frontend and Express
+API from one origin. Application submission is controlled by `APPLICATION_SUBMISSION_ENABLED` and
+defaults to disabled. The adapter uses process-memory caches and does not start `node-cron` or write
 runtime JSON files.
 
 1. Push the complete npm-workspace repository to GitHub.
@@ -82,18 +81,24 @@ runtime JSON files.
 3. Allow `vercel.json` to provide the Vite preset, `npm ci`, workspace build and `client/dist`
    output settings.
 4. Set `CLIENT_URL` to the exact production Vercel URL or custom-domain origin. Keep
-   `VITE_API_BASE_URL=/api`, `APP_TIME_ZONE=Asia/Karachi`, `PAYMENT_DETAILS_ARE_DEMO=true` and
-   `ENABLE_SCRAPING=false`. Do not add `NODE_ENV` manually; Vercel manages it, and forcing
-   `NODE_ENV=production` during installation can omit the TypeScript/Vite build dependencies.
-5. Deploy, then smoke-test `/api/health`, `/api/config/public`, `/api/stats`, `/api/jobs`, `/jobs`
-   and `/apply`. The public config must report `applicationSubmissionEnabled: false`, and
-   `POST /api/applications` must return `503 demo_submission_disabled` without accepting a body.
+   `VITE_API_BASE_URL=/api`, `APP_TIME_ZONE=Asia/Karachi`, `MAX_FILE_MB=5`,
+   `PAYMENT_DETAILS_ARE_DEMO=true` and `ENABLE_SCRAPING=false`. Do not add `NODE_ENV` manually;
+   Vercel manages it, and forcing `NODE_ENV=production` during installation can omit build tools.
+5. Add `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` and exactly one
+   `ADMIN_EMAIL` as Vercel server environment variables. Never prefix them with `VITE_`.
+6. After launch checks pass, set `APPLICATION_SUBMISSION_ENABLED=true` and redeploy. The public
+   config must report `applicationSubmissionEnabled: true`.
+7. Submit files no larger than 5 MiB each and confirm exactly one administrator email arrives with the
+   clean summary, CV and payment screenshot. Confirm SMTP failure returns a non-201 response.
 
 The `shared` workspace is a build dependency, not a separately deployed service. Vercel builds it
 before the client and bundles the required contracts into both the browser assets and API function.
-The hosted demo intentionally has no durable stats/jobs history: function cold starts recreate safe
-demo data. Do not enable submissions on this topology because Vercel Functions have a 4.5 MB total
-request-body limit, while the product contract permits several independently validated files.
+The Vercel deployment has no durable stats/jobs history: function cold starts recreate in-memory
+data. The application allows uploads up to 5 MiB each, but Vercel Functions reject request bodies
+above 4.5 MB before the application can process them. A Vercel deployment therefore cannot reliably
+receive the largest allowed files through this multipart endpoint. Use approved private object storage
+with signed browser uploads, or deploy the API to a host that supports at least the configured request
+size, before relying on 5 MiB uploads in production.
 
 ## Backup and restore
 

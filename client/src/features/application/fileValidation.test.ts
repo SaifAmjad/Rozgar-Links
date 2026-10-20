@@ -6,7 +6,6 @@ describe('application file validation', () => {
   it('requires a CV and payment screenshot', () => {
     expect(validateApplicationFile('cv')).toBe('CV is required.');
     expect(validateApplicationFile('paymentScreenshot')).toBe('Payment screenshot is required.');
-    expect(validateApplicationFile('photo')).toBeUndefined();
   });
 
   it('checks both allowlisted MIME types and extensions', () => {

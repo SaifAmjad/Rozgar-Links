@@ -14,7 +14,7 @@ describe('FeaturedJobs', () => {
     vi.mocked(fetchJobs).mockReset();
   });
 
-  it('renders only API-provided featured samples', async () => {
+  it('renders only API-provided featured jobs', async () => {
     const result: JobsResponse = {
       items: [
         {
@@ -51,7 +51,7 @@ describe('FeaturedJobs', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Site Mason' })).toBeInTheDocument();
-    expect(screen.getByText(/not verified vacancies/i)).toBeInTheDocument();
+    expect(screen.getByText(/confirm current role details/i)).toBeInTheDocument();
     expect(fetchJobs).toHaveBeenCalledWith({ limit: 3, page: 1 }, expect.any(AbortSignal));
   });
 });
