@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
-import app from '../../api/index.js';
+import app, { restoreForwardedApiPath } from '../../api/index.js';
 import { env } from './config/env.js';
 
 describe('Vercel adapter', () => {
@@ -26,9 +26,26 @@ describe('Vercel adapter', () => {
   });
 
   it('restores API paths forwarded through the Vercel rewrite', async () => {
-    const response = await request(app).get('/api?path=stats');
+    const [statsResponse, jobsResponse] = await Promise.all([
+      request(app).get('/api?path=stats'),
+      request(app).get('/api?path=jobs&limit=3'),
+    ]);
 
-    expect(response.status).toBe(200);
-    expect(response.body.provenance).toBe('estimated');
+    expect(statsResponse.status).toBe(200);
+    expect(statsResponse.body.provenance).toBe('estimated');
+    expect(jobsResponse.status).toBe(200);
+    expect(jobsResponse.body.items).toHaveLength(3);
+  });
+
+  it('removes Vercel\'s pre-parsed internal path query', () => {
+    const vercelRequest = {
+      query: { limit: '3', path: 'jobs' },
+      url: '/api?path=jobs&limit=3',
+    } as unknown as Parameters<typeof restoreForwardedApiPath>[0];
+
+    restoreForwardedApiPath(vercelRequest);
+
+    expect(vercelRequest.url).toBe('/api/jobs?limit=3');
+    expect(vercelRequest.query).toEqual({ limit: '3' });
   });
 });

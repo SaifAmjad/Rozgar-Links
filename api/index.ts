@@ -35,14 +35,21 @@ const app = createApp({
   }),
 });
 
-export default function handler(request: Request, response: Response) {
+export function restoreForwardedApiPath(request: Request) {
   const requestUrl = new URL(request.url, 'http://vercel.internal');
   const forwardedPath = requestUrl.searchParams.get('path');
 
   if (forwardedPath) {
     requestUrl.searchParams.delete('path');
     request.url = `/api/${forwardedPath}${requestUrl.search}`;
+
+    const parsedQuery = request.query as Record<string, unknown> | undefined;
+    if (parsedQuery && typeof parsedQuery === 'object') delete parsedQuery.path;
   }
+}
+
+export default function handler(request: Request, response: Response) {
+  restoreForwardedApiPath(request);
 
   return app(request, response);
 }
