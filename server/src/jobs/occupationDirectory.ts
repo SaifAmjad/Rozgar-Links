@@ -7,6 +7,24 @@ import {
 } from '@rozgar-links/shared';
 import { z } from 'zod';
 
+export const DIRECTORY_COUNTRIES = [
+  { id: 'saudi-arabia', nameEn: 'Saudi Arabia', nameUr: 'سعودی عرب' },
+  { id: 'united-arab-emirates', nameEn: 'United Arab Emirates', nameUr: 'متحدہ عرب امارات' },
+  { id: 'qatar', nameEn: 'Qatar', nameUr: 'قطر' },
+  { id: 'kuwait', nameEn: 'Kuwait', nameUr: 'کویت' },
+  { id: 'oman', nameEn: 'Oman', nameUr: 'عمان' },
+  { id: 'bahrain', nameEn: 'Bahrain', nameUr: 'بحرین' },
+] as const;
+
+export const DIRECTORY_COUNTRY_IDS = [
+  'saudi-arabia',
+  'united-arab-emirates',
+  'qatar',
+  'kuwait',
+  'oman',
+  'bahrain',
+] as const;
+
 export const salaryGroupSchema = z.enum(['A', 'B', 'C', 'D']);
 
 const seedOccupationSchema = z
@@ -20,6 +38,7 @@ const seedOccupationSchema = z
     salaryMax: z.number().int().nonnegative().nullable(),
     salaryMaxOpenEnded: z.boolean(),
     salaryGroup: salaryGroupSchema,
+    countryIds: z.array(z.enum(DIRECTORY_COUNTRY_IDS)).min(1).max(6),
     sortOrder: z.number().int().min(1).max(64),
   })
   .strict()
@@ -87,7 +106,7 @@ export const occupationDirectoryRecordSchema = z
     salaryCurrency: z.literal('SAR'),
     salaryPeriod: z.literal('monthly'),
     salaryGroup: salaryGroupSchema,
-    countryIds: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
+    countryIds: z.array(z.enum(DIRECTORY_COUNTRY_IDS)).min(1).max(6),
     recordType: z.literal('occupation_directory'),
     isActive: z.literal(true),
     sortOrder: z.number().int().positive(),
@@ -119,22 +138,6 @@ export const SALARY_BANDS: ReadonlyArray<{
   { id: 'sar-3001-plus', minimum: 3001, maximum: null, group: 'D' },
 ];
 
-export const DIRECTORY_COUNTRIES = [
-  { id: 'saudi-arabia', nameEn: 'Saudi Arabia', nameUr: 'سعودی عرب' },
-  { id: 'united-arab-emirates', nameEn: 'United Arab Emirates', nameUr: 'متحدہ عرب امارات' },
-  { id: 'qatar', nameEn: 'Qatar', nameUr: 'قطر' },
-  { id: 'kuwait', nameEn: 'Kuwait', nameUr: 'کویت' },
-  { id: 'oman', nameEn: 'Oman', nameUr: 'عمان' },
-] as const;
-
-export const DIRECTORY_COUNTRY_IDS = [
-  'saudi-arabia',
-  'united-arab-emirates',
-  'qatar',
-  'kuwait',
-  'oman',
-] as const;
-
 export const DIRECTORY_CATEGORY_IDS = [
   'construction-civil-trades',
   'electrical-mep-solar',
@@ -153,7 +156,7 @@ export function parseOccupationSeed(input: unknown): OccupationCatalog {
     ...occupation,
     salaryCurrency: 'SAR' as const,
     salaryPeriod: 'monthly' as const,
-    countryIds: [],
+    countryIds: occupation.countryIds,
     recordType: 'occupation_directory' as const,
     isActive: true as const,
     createdAt: seed.publishedAt,

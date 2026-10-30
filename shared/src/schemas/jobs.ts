@@ -94,7 +94,7 @@ export const jobsFacetsSchema = z
     categories: z.array(occupationCategoryFacetSchema).length(9),
     designations: z.array(designationFacetSchema).length(64),
     salaryBands: z.array(salaryBandFacetSchema).length(4),
-    countries: z.array(directoryCountrySchema).length(5),
+    countries: z.array(directoryCountrySchema).length(6),
   })
   .strict();
 

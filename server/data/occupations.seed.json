@@ -68,7 +68,8 @@
       "salaryMax": 1550,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "A",
-      "sortOrder": 1
+      "sortOrder": 1,
+      "countryIds": ["bahrain", "kuwait"]
     },
     {
       "id": "occupation-002",
@@ -80,7 +81,8 @@
       "salaryMax": 2000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 2
+      "sortOrder": 2,
+      "countryIds": ["united-arab-emirates", "bahrain"]
     },
     {
       "id": "occupation-003",
@@ -92,7 +94,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 3
+      "sortOrder": 3,
+      "countryIds": ["united-arab-emirates", "saudi-arabia"]
     },
     {
       "id": "occupation-004",
@@ -104,7 +107,8 @@
       "salaryMax": 2100,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 4
+      "sortOrder": 4,
+      "countryIds": ["oman"]
     },
     {
       "id": "occupation-005",
@@ -116,7 +120,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 5
+      "sortOrder": 5,
+      "countryIds": ["qatar", "united-arab-emirates"]
     },
     {
       "id": "occupation-006",
@@ -128,7 +133,8 @@
       "salaryMax": 2000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 6
+      "sortOrder": 6,
+      "countryIds": ["bahrain", "kuwait", "united-arab-emirates"]
     },
     {
       "id": "occupation-007",
@@ -140,7 +146,8 @@
       "salaryMax": 1950,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 7
+      "sortOrder": 7,
+      "countryIds": ["kuwait"]
     },
     {
       "id": "occupation-008",
@@ -152,7 +159,8 @@
       "salaryMax": 1950,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 8
+      "sortOrder": 8,
+      "countryIds": ["qatar", "saudi-arabia"]
     },
     {
       "id": "occupation-009",
@@ -164,7 +172,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 9
+      "sortOrder": 9,
+      "countryIds": ["oman", "bahrain", "saudi-arabia"]
     },
     {
       "id": "occupation-010",
@@ -176,7 +185,8 @@
       "salaryMax": 2150,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 10
+      "sortOrder": 10,
+      "countryIds": ["saudi-arabia", "united-arab-emirates", "bahrain"]
     },
     {
       "id": "occupation-011",
@@ -188,7 +198,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 11
+      "sortOrder": 11,
+      "countryIds": ["united-arab-emirates", "saudi-arabia", "qatar"]
     },
     {
       "id": "occupation-012",
@@ -200,7 +211,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 12
+      "sortOrder": 12,
+      "countryIds": ["bahrain", "qatar", "united-arab-emirates"]
     },
     {
       "id": "occupation-013",
@@ -212,7 +224,8 @@
       "salaryMax": 2900,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 13
+      "sortOrder": 13,
+      "countryIds": ["saudi-arabia"]
     },
     {
       "id": "occupation-014",
@@ -224,7 +237,8 @@
       "salaryMax": 1600,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "A",
-      "sortOrder": 14
+      "sortOrder": 14,
+      "countryIds": ["bahrain", "saudi-arabia", "kuwait"]
     },
     {
       "id": "occupation-015",
@@ -236,7 +250,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 15
+      "sortOrder": 15,
+      "countryIds": ["oman", "qatar"]
     },
     {
       "id": "occupation-016",
@@ -248,7 +263,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 16
+      "sortOrder": 16,
+      "countryIds": ["united-arab-emirates", "kuwait", "oman"]
     },
     {
       "id": "occupation-017",
@@ -260,7 +276,8 @@
       "salaryMax": 2100,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 17
+      "sortOrder": 17,
+      "countryIds": ["oman", "bahrain", "kuwait"]
     },
     {
       "id": "occupation-018",
@@ -272,7 +289,8 @@
       "salaryMax": 2150,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 18
+      "sortOrder": 18,
+      "countryIds": ["qatar", "oman", "united-arab-emirates"]
     },
     {
       "id": "occupation-019",
@@ -284,7 +302,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 19
+      "sortOrder": 19,
+      "countryIds": ["saudi-arabia", "kuwait"]
     },
     {
       "id": "occupation-020",
@@ -296,7 +315,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 20
+      "sortOrder": 20,
+      "countryIds": ["kuwait", "qatar"]
     },
     {
       "id": "occupation-021",
@@ -308,7 +328,8 @@
       "salaryMax": 1600,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "A",
-      "sortOrder": 21
+      "sortOrder": 21,
+      "countryIds": ["bahrain", "united-arab-emirates", "saudi-arabia"]
     },
     {
       "id": "occupation-022",
@@ -320,7 +341,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 22
+      "sortOrder": 22,
+      "countryIds": ["bahrain", "oman"]
     },
     {
       "id": "occupation-023",
@@ -332,7 +354,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 23
+      "sortOrder": 23,
+      "countryIds": ["bahrain", "united-arab-emirates", "kuwait"]
     },
     {
       "id": "occupation-024",
@@ -344,7 +367,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 24
+      "sortOrder": 24,
+      "countryIds": ["saudi-arabia"]
     },
     {
       "id": "occupation-025",
@@ -356,7 +380,8 @@
       "salaryMax": 2800,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 25
+      "sortOrder": 25,
+      "countryIds": ["bahrain", "united-arab-emirates", "saudi-arabia"]
     },
     {
       "id": "occupation-026",
@@ -368,7 +393,8 @@
       "salaryMax": 2900,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 26
+      "sortOrder": 26,
+      "countryIds": ["qatar", "united-arab-emirates", "saudi-arabia"]
     },
     {
       "id": "occupation-027",
@@ -380,7 +406,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 27
+      "sortOrder": 27,
+      "countryIds": ["saudi-arabia"]
     },
     {
       "id": "occupation-028",
@@ -392,7 +419,8 @@
       "salaryMax": 4500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 28
+      "sortOrder": 28,
+      "countryIds": ["united-arab-emirates"]
     },
     {
       "id": "occupation-029",
@@ -404,7 +432,8 @@
       "salaryMax": 2800,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 29
+      "sortOrder": 29,
+      "countryIds": ["kuwait"]
     },
     {
       "id": "occupation-030",
@@ -416,7 +445,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 30
+      "sortOrder": 30,
+      "countryIds": ["united-arab-emirates"]
     },
     {
       "id": "occupation-031",
@@ -428,7 +458,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 31
+      "sortOrder": 31,
+      "countryIds": ["saudi-arabia", "united-arab-emirates"]
     },
     {
       "id": "occupation-032",
@@ -440,7 +471,8 @@
       "salaryMax": 1500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "A",
-      "sortOrder": 32
+      "sortOrder": 32,
+      "countryIds": ["oman", "bahrain", "united-arab-emirates"]
     },
     {
       "id": "occupation-033",
@@ -452,7 +484,8 @@
       "salaryMax": 1550,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "A",
-      "sortOrder": 33
+      "sortOrder": 33,
+      "countryIds": ["oman"]
     },
     {
       "id": "occupation-034",
@@ -464,7 +497,8 @@
       "salaryMax": 1600,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "A",
-      "sortOrder": 34
+      "sortOrder": 34,
+      "countryIds": ["qatar"]
     },
     {
       "id": "occupation-035",
@@ -476,7 +510,8 @@
       "salaryMax": 2100,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 35
+      "sortOrder": 35,
+      "countryIds": ["qatar", "bahrain", "united-arab-emirates"]
     },
     {
       "id": "occupation-036",
@@ -488,7 +523,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 36
+      "sortOrder": 36,
+      "countryIds": ["kuwait", "saudi-arabia", "qatar"]
     },
     {
       "id": "occupation-037",
@@ -500,7 +536,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 37
+      "sortOrder": 37,
+      "countryIds": ["saudi-arabia", "bahrain", "qatar"]
     },
     {
       "id": "occupation-038",
@@ -512,7 +549,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 38
+      "sortOrder": 38,
+      "countryIds": ["kuwait", "united-arab-emirates", "oman"]
     },
     {
       "id": "occupation-039",
@@ -524,7 +562,8 @@
       "salaryMax": 2000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 39
+      "sortOrder": 39,
+      "countryIds": ["saudi-arabia"]
     },
     {
       "id": "occupation-040",
@@ -536,7 +575,8 @@
       "salaryMax": 2200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 40
+      "sortOrder": 40,
+      "countryIds": ["oman"]
     },
     {
       "id": "occupation-041",
@@ -548,7 +588,8 @@
       "salaryMax": 2150,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 41
+      "sortOrder": 41,
+      "countryIds": ["bahrain"]
     },
     {
       "id": "occupation-042",
@@ -560,7 +601,8 @@
       "salaryMax": 2100,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "B",
-      "sortOrder": 42
+      "sortOrder": 42,
+      "countryIds": ["oman", "bahrain", "kuwait"]
     },
     {
       "id": "occupation-043",
@@ -572,7 +614,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 43
+      "sortOrder": 43,
+      "countryIds": ["bahrain"]
     },
     {
       "id": "occupation-044",
@@ -584,7 +627,8 @@
       "salaryMax": 2800,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 44
+      "sortOrder": 44,
+      "countryIds": ["saudi-arabia"]
     },
     {
       "id": "occupation-045",
@@ -596,7 +640,8 @@
       "salaryMax": 2750,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 45
+      "sortOrder": 45,
+      "countryIds": ["united-arab-emirates"]
     },
     {
       "id": "occupation-046",
@@ -608,7 +653,8 @@
       "salaryMax": 2800,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 46
+      "sortOrder": 46,
+      "countryIds": ["oman"]
     },
     {
       "id": "occupation-047",
@@ -620,7 +666,8 @@
       "salaryMax": 2800,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 47
+      "sortOrder": 47,
+      "countryIds": ["united-arab-emirates"]
     },
     {
       "id": "occupation-048",
@@ -632,7 +679,8 @@
       "salaryMax": 4500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 48
+      "sortOrder": 48,
+      "countryIds": ["kuwait"]
     },
     {
       "id": "occupation-049",
@@ -644,7 +692,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 49
+      "sortOrder": 49,
+      "countryIds": ["oman"]
     },
     {
       "id": "occupation-050",
@@ -656,7 +705,8 @@
       "salaryMax": 6000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 50
+      "sortOrder": 50,
+      "countryIds": ["bahrain"]
     },
     {
       "id": "occupation-051",
@@ -668,7 +718,8 @@
       "salaryMax": 3000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "C",
-      "sortOrder": 51
+      "sortOrder": 51,
+      "countryIds": ["oman"]
     },
     {
       "id": "occupation-052",
@@ -680,7 +731,8 @@
       "salaryMax": 5000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 52
+      "sortOrder": 52,
+      "countryIds": ["qatar"]
     },
     {
       "id": "occupation-053",
@@ -692,7 +744,8 @@
       "salaryMax": 4500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 53
+      "sortOrder": 53,
+      "countryIds": ["oman"]
     },
     {
       "id": "occupation-054",
@@ -704,7 +757,8 @@
       "salaryMax": 6000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 54
+      "sortOrder": 54,
+      "countryIds": ["saudi-arabia", "united-arab-emirates", "qatar"]
     },
     {
       "id": "occupation-055",
@@ -716,7 +770,8 @@
       "salaryMax": 6000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 55
+      "sortOrder": 55,
+      "countryIds": ["saudi-arabia"]
     },
     {
       "id": "occupation-056",
@@ -728,7 +783,8 @@
       "salaryMax": 6000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 56
+      "sortOrder": 56,
+      "countryIds": ["bahrain", "qatar", "oman"]
     },
     {
       "id": "occupation-057",
@@ -740,7 +796,8 @@
       "salaryMax": 5500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 57
+      "sortOrder": 57,
+      "countryIds": ["qatar"]
     },
     {
       "id": "occupation-058",
@@ -752,7 +809,8 @@
       "salaryMax": 5500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 58
+      "sortOrder": 58,
+      "countryIds": ["united-arab-emirates", "bahrain", "qatar"]
     },
     {
       "id": "occupation-059",
@@ -764,7 +822,8 @@
       "salaryMax": 5000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 59
+      "sortOrder": 59,
+      "countryIds": ["united-arab-emirates"]
     },
     {
       "id": "occupation-060",
@@ -776,7 +835,8 @@
       "salaryMax": 5200,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 60
+      "sortOrder": 60,
+      "countryIds": ["saudi-arabia"]
     },
     {
       "id": "occupation-061",
@@ -788,7 +848,8 @@
       "salaryMax": 4500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 61
+      "sortOrder": 61,
+      "countryIds": ["united-arab-emirates"]
     },
     {
       "id": "occupation-062",
@@ -800,7 +861,8 @@
       "salaryMax": null,
       "salaryMaxOpenEnded": true,
       "salaryGroup": "D",
-      "sortOrder": 62
+      "sortOrder": 62,
+      "countryIds": ["qatar", "oman"]
     },
     {
       "id": "occupation-063",
@@ -812,7 +874,8 @@
       "salaryMax": 5000,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 63
+      "sortOrder": 63,
+      "countryIds": ["qatar", "saudi-arabia", "oman"]
     },
     {
       "id": "occupation-064",
@@ -824,7 +887,8 @@
       "salaryMax": 5500,
       "salaryMaxOpenEnded": false,
       "salaryGroup": "D",
-      "sortOrder": 64
+      "sortOrder": 64,
+      "countryIds": ["oman"]
     }
   ]
 }

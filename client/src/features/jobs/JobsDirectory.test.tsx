@@ -124,10 +124,10 @@ describe('JobsDirectory', () => {
     expect(screen.getByRole('option', { name: 'All categories (64)' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Monthly salary' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Designation' })).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Country' })).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: 'Country' })).toBeEnabled();
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /apply/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/country filtering will be enabled/i)).toBeInTheDocument();
+    expect(screen.getByText(/sample country assignments/i)).toBeInTheDocument();
   });
 
   it('loads URL-backed filters and updates salary selection', async () => {

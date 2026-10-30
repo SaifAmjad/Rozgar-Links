@@ -22,7 +22,7 @@ const DAY_IN_MS = 86_400_000;
 
 export interface JobsQuery {
   category?: string;
-  country?: string;
+  country?: OccupationDirectoryRecord['countryIds'][number];
   customMax?: number;
   customMin?: number;
   designation?: string;
@@ -217,7 +217,7 @@ export class JobsService {
         source: cache.provider.label,
         isStale,
         notice:
-          'Salary ranges are indicative monthly directory figures in SAR, not guaranteed employer offers or verified vacancies.',
+          'Country assignments are random samples. Salary ranges are indicative monthly figures in SAR, not verified vacancies or guaranteed employer offers.',
       },
     });
   }

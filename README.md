@@ -12,7 +12,7 @@ Build a mobile-first, accessible Gulf hiring-assistance portal for applicants, p
 | Route | Required experience |
 |---|---|
 | `/` | Logo/nav; English + Urdu tagline; Apply CTA; four summary cards; country, industry and seven-day charts; featured jobs; three-step explanation; trust, FAQ, disclaimer/footer. |
-| `/jobs` | Bilingual 64-occupation GCC directory; URL-backed search, category, designation and salary filters; stable sorting and pagination; country filtering remains disabled until verified associations exist. |
+| `/jobs` | Bilingual 64-occupation GCC directory; URL-backed search, category, designation and salary filters; stable sorting and pagination; country filtering uses explicitly labelled random sample associations across all six GCC countries. |
 | `/apply` | Five-step validated wizard: personal; preferences; documents; payment; review/submit. Persist in-memory wizard state across steps and guard navigation; optional sessionStorage draft excluding files and sensitive identifiers. |
 | `/success` | Reference ID and next steps. Render email-sent claim only if the API confirms confirmation-email delivery. Do not allow an unverified reference to be generated client-side. |
 | `/faq`, `/contact` | FAQ, legitimate business contact information/placeholders and service-process clarifications. |

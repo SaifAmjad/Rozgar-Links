@@ -3,6 +3,9 @@ export type Language = 'en' | 'ur';
 export const languageStorageKey = 'rozgar-links-language';
 
 const urdu: Record<string, string> = {
+  'Sample countries': 'نمونہ ممالک',
+  'Sample country assignments only; not verified vacancies.':
+    'ممالک کی تقسیم صرف نمونہ ہے؛ تصدیق شدہ آسامیاں نہیں۔',
   'About this directory': 'اس ڈائریکٹری کے بارے میں',
   'All categories': 'تمام زمرے',
   'All salary ranges': 'تمام تنخواہ کی حدود',

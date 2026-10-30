@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  CircleHelp,
   FileCheck2,
   X,
 } from 'lucide-react';
@@ -112,20 +111,20 @@ export function HowItWorksDialog() {
 
   const dialog = isOpen ? (
     <div
-      className="fixed inset-0 z-[90] flex justify-center overflow-y-auto bg-primary/70 p-4 backdrop-blur-sm"
+      className="how-guide-backdrop fixed inset-0 z-[90] flex justify-start bg-primary/50 backdrop-blur-sm"
       onMouseDown={closeDialog}
     >
       <section
         aria-describedby="how-it-works-description"
         aria-labelledby="how-it-works-title"
         aria-modal="true"
-        className="my-auto w-full max-w-xl overflow-hidden rounded-2xl border bg-bg shadow-2xl"
+        className="how-guide-panel flex h-dvh w-full max-w-md flex-col overflow-y-auto border-r bg-bg text-text shadow-2xl sm:rounded-r-3xl"
         onKeyDown={handleDialogKeyDown}
         onMouseDown={(event) => event.stopPropagation()}
         ref={dialogRef}
         role="dialog"
       >
-        <header className="flex items-start justify-between gap-4 border-b bg-surface p-5 sm:p-6">
+        <header className="flex items-start justify-between gap-4 border-b bg-surface p-5 sm:p-7">
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.16em] text-brand-green">
               {t('How it works')}
@@ -148,7 +147,7 @@ export function HowItWorksDialog() {
           </button>
         </header>
 
-        <div className="p-5 sm:p-6">
+        <div className="flex flex-1 flex-col p-5 sm:p-7">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-bold text-primary">
               {t('Step {current} of {total}', {
@@ -187,17 +186,24 @@ export function HowItWorksDialog() {
             />
           </div>
 
-          <div aria-live="polite" className="mt-6 rounded-2xl border bg-surface p-6 text-center">
-            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-soft">
+          <div
+            aria-live="polite"
+            className="relative mt-6 overflow-hidden rounded-2xl border bg-surface p-6"
+          >
+            <span
+              aria-hidden="true"
+              className="absolute right-5 top-3 text-7xl font-bold text-primary/10"
+            >
+              {String(currentStep + 1).padStart(2, '0')}
+            </span>
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-soft">
               <StepIcon aria-hidden="true" size={30} />
             </span>
             <h3 className="mt-5 text-2xl">{t(step.title)}</h3>
-            <p className="mx-auto mt-3 max-w-md text-base leading-7 text-muted">
-              {t(step.description)}
-            </p>
+            <p className="mt-3 text-base leading-7 text-muted">{t(step.description)}</p>
           </div>
 
-          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-auto flex gap-3 pt-8 sm:items-center sm:justify-between">
             <Button
               className="w-full sm:w-auto"
               disabled={currentStep === 0}
@@ -234,10 +240,21 @@ export function HowItWorksDialog() {
 
   return (
     <>
-      <Button className="w-full sm:w-auto" onClick={openDialog} ref={triggerRef} variant="outline">
-        <CircleHelp aria-hidden="true" size={18} />
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        className="group absolute left-0 top-5 z-10 inline-flex min-h-12 items-center gap-3 rounded-r-full border border-l-0 border-white/30 bg-white/10 py-3 pl-4 pr-5 text-sm font-semibold text-white shadow-soft backdrop-blur-md transition-colors hover:bg-white/20 lg:top-1/2 lg:-translate-y-1/2"
+        onClick={openDialog}
+        ref={triggerRef}
+        type="button"
+      >
         {t('How it works')}
-      </Button>
+        <ArrowRight
+          aria-hidden="true"
+          className="transition-transform group-hover:translate-x-1"
+          size={20}
+        />
+      </button>
       {dialog ? createPortal(dialog, document.body) : null}
     </>
   );

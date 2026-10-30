@@ -22,7 +22,8 @@ export function HomePage() {
           className="absolute -bottom-48 left-1/3 h-96 w-96 rounded-full bg-brand-green/20"
         />
 
-        <PageContainer className="relative py-12 sm:py-16 lg:py-20">
+        <HowItWorksDialog />
+        <PageContainer className="relative pb-12 pt-24 sm:pb-16 sm:pt-24 lg:py-20">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="text-4xl leading-[1.08] text-white sm:text-5xl lg:text-6xl">
               {t('Find your next Gulf opportunity.')}
@@ -46,7 +47,6 @@ export function HomePage() {
                 {t('Start application')}{' '}
                 <ArrowRight aria-hidden="true" className="rtl:rotate-180" size={18} />
               </ButtonLink>
-              <HowItWorksDialog />
             </div>
           </div>
           <HeroJobBar />

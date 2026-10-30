@@ -69,14 +69,15 @@ describe('JobsService', () => {
     expect(overlap.items.some((item) => item.slug === 'full-stack-software-engineer')).toBe(true);
   });
 
-  it('does not fabricate country availability', async () => {
+  it('filters sample country assignments', async () => {
     const service = await createService();
     const result = await service.getJobs({ ...defaults, country: 'saudi-arabia' });
 
-    expect(result.total).toBe(0);
-    expect(
-      result.facets.countries.every((country) => !country.enabled && country.count === 0),
-    ).toBe(true);
+    expect(result.total).toBeGreaterThan(0);
+    expect(result.items.every((job) => job.countryIds.includes('saudi-arabia'))).toBe(true);
+    expect(result.facets.countries.every((country) => country.enabled && country.count > 0)).toBe(
+      true,
+    );
   });
 
   it('returns a stale labelled cache when refresh fails', async () => {

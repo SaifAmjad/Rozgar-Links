@@ -1,4 +1,4 @@
-import { Banknote, BriefcaseBusiness, FolderTree } from 'lucide-react';
+import { Banknote, BriefcaseBusiness, FolderTree, MapPin } from 'lucide-react';
 
 import type { OccupationListing } from '@rozgar-links/shared';
 
@@ -6,6 +6,14 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { useLanguage } from '../../i18n/useLanguage';
 
+const countryNames: Record<string, string> = {
+  'saudi-arabia': 'Saudi Arabia',
+  'united-arab-emirates': 'United Arab Emirates',
+  qatar: 'Qatar',
+  kuwait: 'Kuwait',
+  oman: 'Oman',
+  bahrain: 'Bahrain',
+};
 interface JobCardProps {
   job: OccupationListing;
 }
@@ -40,6 +48,17 @@ export function JobCard({ job }: JobCardProps) {
       </div>
 
       <dl className="mt-5 space-y-4 text-sm">
+        <div className="flex items-start gap-3">
+          <MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-brand-green" size={18} />
+          <div>
+            <dt className="font-semibold text-muted">{t('Sample countries')}</dt>
+            <dd className="mt-1 flex flex-wrap gap-2">
+              {job.countryIds.map((id) => (
+                <Badge key={id}>{t(countryNames[id] ?? id)}</Badge>
+              ))}
+            </dd>
+          </div>
+        </div>
         <div className="flex items-start gap-3">
           <FolderTree aria-hidden="true" className="mt-0.5 shrink-0 text-brand-green" size={18} />
           <div>

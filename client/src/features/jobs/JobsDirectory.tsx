@@ -66,6 +66,7 @@ export function JobsDirectory() {
         .filter((value): value is SalaryBandId => salaryBandIds.includes(value as SalaryBandId)),
     [searchParams],
   );
+  const country = searchParams.get('country') ?? '';
   const category = searchParams.get('category') ?? '';
   const designation = searchParams.get('designation') ?? '';
   const sort = (searchParams.get('sort') as JobsSort | null) ?? 'directory-order';
@@ -103,6 +104,7 @@ export function JobsDirectory() {
       sort,
       ...(currentQuery ? { q: currentQuery } : {}),
       ...(category ? { category } : {}),
+      ...(country ? { country } : {}),
       ...(designation ? { designation } : {}),
       ...(selectedSalaryBands.length ? { salary: selectedSalaryBands } : {}),
       ...(customMin !== undefined ? { customMin } : {}),
@@ -123,6 +125,7 @@ export function JobsDirectory() {
     return () => controller.abort();
   }, [
     category,
+    country,
     currentQuery,
     customMax,
     customMin,
@@ -157,6 +160,7 @@ export function JobsDirectory() {
   const categoryLabel = jobs?.facets.categories.find((item) => item.id === category);
   const designationLabel = jobs?.facets.designations.find((item) => item.slug === designation);
   const activeFilterCount =
+    Number(Boolean(country)) +
     Number(Boolean(searchParams.get('q'))) +
     Number(Boolean(category)) +
     Number(Boolean(designation)) +
@@ -274,12 +278,12 @@ export function JobsDirectory() {
               <select
                 aria-describedby="country-filter-note"
                 className={selectClasses}
-                disabled
-                value=""
+                onChange={(event) => updateParameters({ country: event.target.value || undefined })}
+                value={country}
               >
-                <option>{t('Country availability not yet verified')}</option>
+                <option value="">{t('All Gulf countries')}</option>
                 {jobs?.facets.countries.map((countryOption) => (
-                  <option key={countryOption.id}>
+                  <option key={countryOption.id} value={countryOption.id}>
                     {language === 'ur' ? countryOption.nameUr : countryOption.nameEn}
                   </option>
                 ))}
@@ -287,7 +291,7 @@ export function JobsDirectory() {
             </label>
           </div>
           <p className="mt-3 text-xs leading-5 text-muted" id="country-filter-note">
-            {t('Country filtering will be enabled when verified associations are available.')}
+            {t('Sample country assignments only; not verified vacancies.')}
           </p>
         </div>
       </div>

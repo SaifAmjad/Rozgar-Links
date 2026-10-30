@@ -1,5 +1,6 @@
 import { RefreshCw, TrendingDown, TrendingUp } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import type { StatsResponse } from '@rozgar-links/shared';
 
@@ -160,7 +161,11 @@ export function HeroJobBar() {
           const TrendIcon = isIncrease ? TrendingUp : TrendingDown;
 
           return (
-            <div className="border-t px-3 py-3 sm:px-4 lg:border-l lg:border-t-0" key={country}>
+            <Link
+              className="border-t px-3 py-3 transition-colors hover:bg-surface focus-visible:relative focus-visible:z-10 focus-visible:ring-inset sm:px-4 lg:border-l lg:border-t-0"
+              key={country}
+              to={`/jobs?country=${country.toLowerCase().replaceAll(' ', '-')}`}
+            >
               <p
                 className="flex min-w-0 items-center gap-2 text-xs font-semibold text-muted"
                 title={country}
@@ -183,7 +188,7 @@ export function HeroJobBar() {
                   size={15}
                 />
               </p>
-            </div>
+            </Link>
           );
         })}
       </div>

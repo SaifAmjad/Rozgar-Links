@@ -11,12 +11,16 @@ describe('job providers', () => {
     expect(catalog.occupations).toHaveLength(64);
     expect(new Set(catalog.occupations.map((occupation) => occupation.id)).size).toBe(64);
     expect(new Set(catalog.occupations.map((occupation) => occupation.slug)).size).toBe(64);
+    expect(new Set(catalog.occupations.flatMap((occupation) => occupation.countryIds)).size).toBe(6);
+    expect(catalog.occupations.some((occupation) => occupation.countryIds.length > 1)).toBe(true);
     expect(
       catalog.occupations.every(
         (occupation) =>
           occupation.titleEn.length > 0 &&
           occupation.titleUr.length > 0 &&
-          occupation.countryIds.length === 0,
+          occupation.countryIds.length >= 1 &&
+          occupation.countryIds.length <= 3 &&
+          new Set(occupation.countryIds).size === occupation.countryIds.length,
       ),
     ).toBe(true);
   });

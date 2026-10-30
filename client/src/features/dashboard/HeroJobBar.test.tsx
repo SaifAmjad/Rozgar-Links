@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StatsResponse } from '@rozgar-links/shared';
@@ -32,7 +33,11 @@ describe('HeroJobBar', () => {
 
   it('shows compact country counts from the stats response', async () => {
     vi.mocked(fetchStats).mockResolvedValue(stats);
-    render(<HeroJobBar />);
+    render(
+      <MemoryRouter>
+        <HeroJobBar />
+      </MemoryRouter>,
+    );
     expect(
       screen.getByRole('status', { name: /loading indicative job counts/i }),
     ).toBeInTheDocument();
@@ -43,13 +48,24 @@ describe('HeroJobBar', () => {
     expect(screen.getByTestId('flag-saudi-arabia')).toBeInTheDocument();
     expect(screen.getByTestId('flag-united-arab-emirates')).toBeInTheDocument();
     expect(screen.getAllByText('jobs')).toHaveLength(6);
+    for (const { country } of stats.byCountry) {
+      const label = country === 'United Arab Emirates' ? 'UAE' : country;
+      expect(screen.getByRole('link', { name: new RegExp(label) })).toHaveAttribute(
+        'href',
+        `/jobs?country=${country.toLowerCase().replaceAll(' ', '-')}`,
+      );
+    }
     expect(screen.getAllByLabelText(/illustrative (increase|decrease) indicator/i)).toHaveLength(6);
     expect(screen.getByText(/Indicative figures, updated daily/)).toBeInTheDocument();
   });
 
   it('offers a retry when counts cannot be loaded', async () => {
     vi.mocked(fetchStats).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(stats);
-    render(<HeroJobBar />);
+    render(
+      <MemoryRouter>
+        <HeroJobBar />
+      </MemoryRouter>,
+    );
     expect(await screen.findByRole('alert')).toHaveTextContent(/temporarily unavailable/i);
     fireEvent.click(screen.getByRole('button', { name: /retry/i }));
     await waitFor(() => expect(fetchStats).toHaveBeenCalledTimes(2));
