@@ -7,17 +7,46 @@ import { HttpError } from './errors/httpError.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { createApiRouter, type ApiRouterOptions } from './routes/index.js';
 
+const vercelOriginKeys = [
+  'VERCEL_URL',
+  'VERCEL_BRANCH_URL',
+  'VERCEL_PROJECT_PRODUCTION_URL',
+] as const;
+
+function getAllowedBrowserOrigins() {
+  const allowedOrigins = new Set([new URL(env.CLIENT_URL).origin]);
+
+  for (const key of vercelOriginKeys) {
+    const hostname = process.env[key]?.trim();
+    if (!hostname) continue;
+
+    try {
+      const origin = new URL(hostname.includes('://') ? hostname : `https://${hostname}`);
+      if (origin.protocol === 'https:' && origin.hostname.endsWith('.vercel.app')) {
+        allowedOrigins.add(origin.origin);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return allowedOrigins;
+}
+
 export function createApp(options: ApiRouterOptions = {}) {
   const app = express();
+  const allowedOrigins = getAllowedBrowserOrigins();
+  const trustProxyHops =
+    env.TRUST_PROXY_HOPS > 0 ? env.TRUST_PROXY_HOPS : process.env.VERCEL === '1' ? 1 : 0;
 
   app.disable('x-powered-by');
-  if (env.TRUST_PROXY_HOPS > 0) app.set('trust proxy', env.TRUST_PROXY_HOPS);
+  if (trustProxyHops > 0) app.set('trust proxy', trustProxyHops);
   app.use(helmet());
   app.use(
     cors({
       methods: ['GET', 'POST'],
       origin(origin, callback) {
-        if (!origin || origin === env.CLIENT_URL) {
+        if (!origin || allowedOrigins.has(origin)) {
           callback(null, true);
           return;
         }

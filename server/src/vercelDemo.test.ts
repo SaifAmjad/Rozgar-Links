@@ -20,9 +20,12 @@ describe('Vercel adapter', () => {
     expect(stats.body.provenance).toBe('estimated');
     expect(jobs.status).toBe(200);
     expect(jobs.body.items).toHaveLength(3);
-    expect(jobs.body.items.every((job: { isSample?: unknown }) => job.isSample === true)).toBe(
-      true,
-    );
+    expect(
+      jobs.body.items.every(
+        (job: { recordType?: unknown }) => job.recordType === 'occupation_directory',
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(jobs.body)).not.toContain('salaryGroup');
   });
 
   it('restores API paths forwarded through the Vercel rewrite', async () => {
@@ -37,7 +40,7 @@ describe('Vercel adapter', () => {
     expect(jobsResponse.body.items).toHaveLength(3);
   });
 
-  it('removes Vercel\'s pre-parsed internal path query', () => {
+  it("removes Vercel's pre-parsed internal path query", () => {
     const vercelRequest = {
       query: { limit: '3', path: 'jobs' },
       url: '/api?path=jobs&limit=3',

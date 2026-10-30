@@ -45,6 +45,12 @@ export async function submitApplication(
     return applicationSubmissionResponseSchema.parse(response.data);
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response?.status === 413) {
+        throw new Error(
+          'The selected files are too large for this hosting service. Please choose smaller files and try again.',
+          { cause: error },
+        );
+      }
       const message = error.response?.data?.error?.message;
       if (typeof message === 'string') throw new Error(message, { cause: error });
     }

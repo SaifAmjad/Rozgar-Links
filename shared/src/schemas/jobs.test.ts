@@ -1,63 +1,53 @@
 import { describe, expect, it } from 'vitest';
 
-import { jobListingSchema, jobsResponseSchema } from './jobs.js';
+import { occupationListingSchema } from './jobs.js';
 
-const sampleJob = {
-  id: 'sample-001',
-  title: 'Site Mason',
-  company: 'Example Horizon Works',
-  country: 'Saudi Arabia',
-  city: 'Riyadh',
-  field: 'construction',
-  source: 'Sample listing',
-  sourceUrl: null,
-  isSample: true,
-  fetchedAt: '2026-10-13T00:00:00.000Z',
+const occupation = {
+  id: 'occupation-001',
+  slug: 'general-site-helper',
+  titleEn: 'General Site Helper',
+  titleUr: 'جنرل سائٹ ہیلپر',
+  category: {
+    id: 'construction',
+    nameEn: 'Construction',
+    nameUr: 'تعمیرات',
+    sortOrder: 1,
+  },
+  salaryMin: 1400,
+  salaryMax: 1550,
+  salaryMaxOpenEnded: false,
+  salaryCurrency: 'SAR',
+  salaryPeriod: 'monthly',
+  countryIds: [],
+  recordType: 'occupation_directory',
+  isActive: true,
+  sortOrder: 1,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-describe('job schemas', () => {
-  it('accepts an explicitly labelled sample without a source URL', () => {
-    expect(jobListingSchema.parse(sampleJob)).toEqual(sampleJob);
+describe('occupation directory schemas', () => {
+  it('accepts a localized occupation with numeric salary fields', () => {
+    expect(occupationListingSchema.parse(occupation)).toEqual(occupation);
   });
 
-  it('rejects source URLs and false source labels on samples', () => {
-    expect(() =>
-      jobListingSchema.parse({
-        ...sampleJob,
-        source: 'GulfTalent',
-        sourceUrl: 'https://example.com/job',
-      }),
-    ).toThrow(/sample source label/i);
+  it('represents an open-ended salary with a null maximum', () => {
+    const result = occupationListingSchema.parse({
+      ...occupation,
+      salaryMin: 4500,
+      salaryMax: null,
+      salaryMaxOpenEnded: true,
+    });
+    expect(result.salaryMax).toBeNull();
   });
 
-  it('requires HTTPS original URLs for authorized listings', () => {
+  it('rejects inconsistent salary bounds', () => {
     expect(() =>
-      jobListingSchema.parse({
-        ...sampleJob,
-        id: 'authorized-001',
-        isSample: false,
-        source: 'Authorized feed',
-        sourceUrl: null,
+      occupationListingSchema.parse({
+        ...occupation,
+        salaryMax: null,
+        salaryMaxOpenEnded: false,
       }),
-    ).toThrow(/https url/i);
-  });
-
-  it('rejects inconsistent pagination metadata', () => {
-    expect(() =>
-      jobsResponseSchema.parse({
-        items: [sampleJob],
-        page: 1,
-        limit: 12,
-        total: 40,
-        totalPages: 2,
-        lastUpdated: sampleJob.fetchedAt,
-        provenance: {
-          kind: 'sample',
-          source: 'Fictional sample catalog',
-          isStale: false,
-          notice: 'Fictional samples only.',
-        },
-      }),
-    ).toThrow(/total pages/i);
+    ).toThrow(/open-ended salaries/i);
   });
 });

@@ -82,7 +82,10 @@ export const uploadApplication: RequestHandler = (request, response, next) => {
   });
 };
 
-export type ValidatedApplicationFiles = Record<'cv' | 'paymentScreenshot', ValidatedApplicationFile>;
+export type ValidatedApplicationFiles = Record<
+  'cv' | 'paymentScreenshot',
+  ValidatedApplicationFile
+>;
 
 export function getValidatedApplicationFiles(request: Express.Request): ValidatedApplicationFiles {
   const uploaded = (request.files ?? {}) as Record<string, Express.Multer.File[]>;

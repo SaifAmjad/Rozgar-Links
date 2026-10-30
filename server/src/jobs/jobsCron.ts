@@ -18,7 +18,13 @@ export async function startJobsCron({
   if (activeTask) return activeTask;
 
   try {
-    await service.getJobs({ page: 1, limit: 1 });
+    await service.getJobs({
+      language: 'en',
+      page: 1,
+      limit: 1,
+      salaryBands: [],
+      sort: 'directory-order',
+    });
   } catch {
     console.error(
       'Job catalog initialization failed; a valid stale cache will be used if available.',

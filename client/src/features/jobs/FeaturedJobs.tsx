@@ -6,10 +6,12 @@ import type { JobsResponse } from '@rozgar-links/shared';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { ButtonLink } from '../../components/ui/ButtonLink';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { useLanguage } from '../../i18n/useLanguage';
 import { fetchJobs } from './api';
 import { JobCard } from './JobCard';
 
 export function FeaturedJobs() {
+  const { t } = useLanguage();
   const [jobs, setJobs] = useState<JobsResponse>();
   const [failed, setFailed] = useState(false);
 
@@ -33,25 +35,27 @@ export function FeaturedJobs() {
             <div className="flex items-center gap-3 text-primary">
               <BriefcaseBusiness aria-hidden="true" className="text-brand-green" size={24} />
               <span className="text-sm font-bold uppercase tracking-[0.18em]">
-                Opportunity directory
+                {t('Occupation directory')}
               </span>
             </div>
             <h2 className="mt-4 text-3xl" id="jobs-preview-title">
-              Featured job listings
+              {t('Featured occupations')}
             </h2>
             <p className="mt-3 leading-7 text-muted">
-              Explore recently added opportunities and confirm current role details before applying.
+              {t('Browse popular occupations and compare indicative monthly salary ranges.')}
             </p>
           </div>
           <ButtonLink to="/jobs" variant="outline">
-            View all jobs <ArrowRight aria-hidden="true" size={18} />
+            {t('View all occupations')}{' '}
+            <ArrowRight aria-hidden="true" className="rtl:rotate-180" size={18} />
           </ButtonLink>
         </div>
 
         {failed ? (
           <p className="mt-8 rounded-xl border bg-surface p-5 text-muted" role="status">
-            Featured jobs are temporarily unavailable. The full directory can be retried from the
-            jobs page.
+            {t(
+              'Featured occupations are temporarily unavailable. The full directory can be retried from the jobs page.',
+            )}
           </p>
         ) : null}
 
@@ -59,7 +63,7 @@ export function FeaturedJobs() {
           <div
             className="mt-8 grid gap-5 md:grid-cols-3"
             role="status"
-            aria-label="Loading featured jobs"
+            aria-label={t('Loading featured occupations')}
           >
             {Array.from({ length: 3 }, (_, index) => (
               <Skeleton className="h-80" key={index} />

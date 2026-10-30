@@ -4,7 +4,7 @@
 
 Rozgar Links is a **non-operational demonstration**. Do not accept real applicants, documents or
 fees until every owner gate below has independent written approval. The committed payment values
-are fake, all seeded jobs are labelled `Sample listing`, and generated dashboard numbers are
+are fake, the occupation directory is not presented as live vacancies, and generated dashboard numbers are
 labelled `Indicative`.
 
 ## Container architecture
@@ -29,7 +29,7 @@ JSON files with durable shared storage and move both schedules to one external s
 3. Run `docker compose up --build -d`.
 4. Check `docker compose ps`, `http://localhost:8080/healthz` and
    `http://localhost:8080/api/health`.
-5. Confirm the browser shows `Sample listing`, `Indicative figures`, fake-bank warnings and draft
+5. Confirm the browser shows indicative salary wording, `Indicative figures`, fake-bank warnings and draft
    legal notices.
 6. Stop with `docker compose down`. Do not add `--volumes` when cache history should be retained.
 
@@ -91,10 +91,15 @@ runtime JSON files.
 7. Submit files no larger than 5 MiB each and confirm exactly one administrator email arrives with the
    clean summary, CV and payment screenshot. Confirm SMTP failure returns a non-201 response.
 
+Vercel preview and branch deployments are accepted only through the exact origins supplied by
+Vercel's runtime environment. The API trusts one Vercel proxy hop so application rate limiting uses
+the forwarded client address; do not add a broader `*.vercel.app` CORS wildcard.
+
 The `shared` workspace is a build dependency, not a separately deployed service. Vercel builds it
 before the client and bundles the required contracts into both the browser assets and API function.
 The Vercel deployment has no durable stats/jobs history: function cold starts recreate in-memory
-data. The application allows uploads up to 5 MiB each, but Vercel Functions reject request bodies
+data, and its in-memory application rate limit is best-effort rather than a durable global limit
+across function instances. The application allows uploads up to 5 MiB each, but Vercel Functions reject request bodies
 above 4.5 MB before the application can process them. A Vercel deployment therefore cannot reliably
 receive the largest allowed files through this multipart endpoint. Use approved private object storage
 with signed browser uploads, or deploy the API to a host that supports at least the configured request

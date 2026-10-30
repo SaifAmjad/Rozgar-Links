@@ -14,32 +14,45 @@ describe('FeaturedJobs', () => {
     vi.mocked(fetchJobs).mockReset();
   });
 
-  it('renders only API-provided featured jobs', async () => {
+  it('renders API-provided occupations without presenting them as vacancies', async () => {
     const result: JobsResponse = {
       items: [
         {
-          id: 'sample-001',
-          title: 'Site Mason',
-          company: 'Example Horizon Works',
-          country: 'Saudi Arabia',
-          city: 'Riyadh',
-          field: 'construction',
-          source: 'Sample listing',
-          sourceUrl: null,
-          isSample: true,
-          fetchedAt: '2026-10-13T00:00:00.000Z',
+          id: 'occupation-011',
+          slug: 'house-building-electrician',
+          titleEn: 'House / Building Electrician',
+          titleUr: 'بلڈنگ الیکٹریشن',
+          category: {
+            id: 'electrical-mep-solar',
+            nameEn: 'Electrical, MEP & Solar Trades',
+            nameUr: 'الیکٹریکل، مکینیکل اور سولر ٹیکنیشنز',
+            sortOrder: 2,
+          },
+          salaryMin: 1800,
+          salaryMax: 2200,
+          salaryMaxOpenEnded: false,
+          salaryCurrency: 'SAR',
+          salaryPeriod: 'monthly',
+          countryIds: [],
+          recordType: 'occupation_directory',
+          isActive: true,
+          sortOrder: 11,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
         },
       ],
       page: 1,
       limit: 3,
-      total: 40,
-      totalPages: 14,
+      total: 64,
+      totalPages: 22,
       lastUpdated: '2026-10-13T00:00:00.000Z',
+      sort: 'directory-order',
+      facets: { categories: [], designations: [], salaryBands: [], countries: [] },
       provenance: {
-        kind: 'sample',
-        source: 'Fictional sample catalog',
+        kind: 'directory',
+        source: 'Rozgar Link directory',
         isStale: false,
-        notice: 'Fictional sample listings for interface demonstration only.',
+        notice: 'Indicative directory figures.',
       },
     };
     vi.mocked(fetchJobs).mockResolvedValue(result);
@@ -50,8 +63,11 @@ describe('FeaturedJobs', () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole('heading', { name: 'Site Mason' })).toBeInTheDocument();
-    expect(screen.getByText(/confirm current role details/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'House / Building Electrician' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/compare indicative monthly salary/i)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /apply/i })).not.toBeInTheDocument();
     expect(fetchJobs).toHaveBeenCalledWith({ limit: 3, page: 1 }, expect.any(AbortSignal));
   });
 });

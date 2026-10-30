@@ -1,12 +1,12 @@
-import type { JobListing, JobsProvenance } from '@rozgar-links/shared';
+import type { OccupationCatalog } from '../jobs/occupationDirectory.js';
 
 export interface JobProviderDescriptor {
   id: string;
-  kind: JobsProvenance['kind'];
+  kind: 'directory';
   label: string;
 }
 
 export interface JobProvider {
   readonly descriptor: JobProviderDescriptor;
-  fetchJobs(): Promise<JobListing[]>;
+  fetchJobs(): Promise<OccupationCatalog>;
 }

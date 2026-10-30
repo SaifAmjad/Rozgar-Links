@@ -120,7 +120,9 @@ describe('validateUploadedFile', () => {
     ],
     ['paymentScreenshot', 'payment.png', 'image/png', validPng()],
   ] as const)('accepts valid %s content in %s', (field, filename, mimeType, buffer) => {
-    expect(validateUploadedFile(field, uploadedFile(field, filename, mimeType, buffer))).toMatchObject({
+    expect(
+      validateUploadedFile(field, uploadedFile(field, filename, mimeType, buffer)),
+    ).toMatchObject({
       fieldName: field,
       mimeType,
     });
@@ -180,7 +182,12 @@ describe('validateUploadedFile', () => {
   it('normalizes attachment filenames', () => {
     const result = validateUploadedFile(
       'cv',
-      uploadedFile('cv', '../../résumé final.pdf', 'application/pdf', Buffer.from('%PDF-1.7\n%%EOF')),
+      uploadedFile(
+        'cv',
+        '../../résumé final.pdf',
+        'application/pdf',
+        Buffer.from('%PDF-1.7\n%%EOF'),
+      ),
     );
 
     expect(result.filename).toBe('r_sum_final.pdf');

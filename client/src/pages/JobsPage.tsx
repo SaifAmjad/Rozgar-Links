@@ -1,23 +1,21 @@
 import { PageIntro } from '../components/PageIntro';
 import { PageContainer } from '../components/layout/PageContainer';
 import { JobsDirectory } from '../features/jobs/JobsDirectory';
+import { useLanguage } from '../i18n/useLanguage';
 
 export function JobsPage() {
+  const { t } = useLanguage();
+
   return (
     <>
       <PageIntro
-        description="Explore job opportunities across six Gulf countries and filter them by country, work field or keyword."
-        eyebrow="Opportunity directory"
-        title="Jobs across the Gulf"
+        description={t(
+          'Search 64 occupations in English or Urdu and compare indicative monthly salary ranges.',
+        )}
+        eyebrow={t('GCC occupation directory')}
+        title={t('Find the right occupation')}
       />
-      <PageContainer className="py-12 sm:py-16">
-        <div className="mb-8 rounded-xl border border-warning/30 bg-warning/5 p-5 text-sm leading-6 text-muted">
-          <p className="font-bold text-primary">Confirm details before applying</p>
-          <p className="mt-2">
-            Job availability and requirements can change. Rozgar Links is independent and does not
-            claim affiliation with or endorsement by external job boards or employers.
-          </p>
-        </div>
+      <PageContainer className="py-8 sm:py-12 lg:py-16">
         <JobsDirectory />
       </PageContainer>
     </>

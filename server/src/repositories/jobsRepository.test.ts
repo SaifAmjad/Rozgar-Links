@@ -30,16 +30,16 @@ afterEach(async () => {
 describe('JobsRepository', () => {
   it('writes a validated cache atomically', async () => {
     const { directory, repository } = await createRepository();
-    const jobs = await new ManualProvider().fetchJobs();
+    const catalog = await new ManualProvider().fetchJobs();
     const cache = {
-      version: 1 as const,
+      version: 2 as const,
       provider: {
-        id: 'manual-sample-catalog',
-        kind: 'sample' as const,
-        label: 'Fictional sample catalog',
+        id: 'occupation-directory',
+        kind: 'directory' as const,
+        label: 'Occupation directory',
       },
       refreshedAt: '2026-10-13T00:00:00.000Z',
-      jobs,
+      catalog,
     };
 
     await Promise.all([repository.save(cache), repository.save(cache)]);
@@ -50,21 +50,21 @@ describe('JobsRepository', () => {
 
   it('uses the last valid in-memory cache after file corruption', async () => {
     const { file, repository } = await createRepository();
-    const jobs = await new ManualProvider().fetchJobs();
+    const catalog = await new ManualProvider().fetchJobs();
     await repository.save({
-      version: 1,
+      version: 2,
       provider: {
-        id: 'manual-sample-catalog',
-        kind: 'sample',
-        label: 'Fictional sample catalog',
+        id: 'occupation-directory',
+        kind: 'directory',
+        label: 'Occupation directory',
       },
       refreshedAt: '2026-10-13T00:00:00.000Z',
-      jobs,
+      catalog,
     });
     await writeFile(file, '{invalid-json', 'utf8');
 
     const recovered = await repository.read();
-    expect(recovered.cache?.jobs).toHaveLength(40);
+    expect(recovered.cache?.catalog.occupations).toHaveLength(64);
     expect(recovered.recoveredFromMemory).toBe(true);
   });
 });

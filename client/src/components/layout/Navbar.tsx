@@ -2,6 +2,8 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 
+import { LanguageSelect } from '../../i18n/LanguageSelect';
+import { useLanguage } from '../../i18n/useLanguage';
 import { cn } from '../../lib/cn';
 import { BrandLogo } from '../BrandLogo';
 import { Button } from '../ui/Button';
@@ -11,8 +13,6 @@ const navigationItems = [
   { label: 'Home', to: '/' },
   { label: 'Jobs', to: '/jobs' },
   { label: 'Apply Now', to: '/apply' },
-  { label: 'FAQ', to: '/faq' },
-  { label: 'Contact', to: '/contact' },
 ];
 
 function navLinkClasses(isActive: boolean) {
@@ -23,6 +23,7 @@ function navLinkClasses(isActive: boolean) {
 }
 
 export function Navbar() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const menuId = useId();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -60,11 +61,11 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b bg-bg/95 backdrop-blur">
       <PageContainer>
         <div className="flex min-h-18 items-center justify-between gap-4">
-          <Link className="rounded-xl" to="/" aria-label="Rozgar Links home">
+          <Link className="rounded-xl" to="/" aria-label={`Rozgar Links — ${t('Home')}`}>
             <BrandLogo />
           </Link>
 
-          <nav aria-label="Primary navigation" className="hidden items-center gap-1 md:flex">
+          <nav aria-label={t('Primary navigation')} className="hidden items-center gap-1 md:flex">
             {navigationItems.map((item) => (
               <NavLink
                 className={({ isActive }) => navLinkClasses(isActive)}
@@ -72,15 +73,16 @@ export function Navbar() {
                 key={item.to}
                 to={item.to}
               >
-                {item.label}
+                {t(item.label)}
               </NavLink>
             ))}
+            <LanguageSelect compact />
           </nav>
 
           <Button
             aria-controls={menuId}
             aria-expanded={isOpen}
-            aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-label={t(isOpen ? 'Close navigation menu' : 'Open navigation menu')}
             className="min-w-11 px-3 md:hidden"
             onClick={toggleMenu}
             ref={menuButtonRef}
@@ -91,7 +93,7 @@ export function Navbar() {
         </div>
 
         {isOpen ? (
-          <nav aria-label="Mobile navigation" className="border-t py-3 md:hidden" id={menuId}>
+          <nav aria-label={t('Mobile navigation')} className="border-t py-3 md:hidden" id={menuId}>
             <div className="grid gap-1">
               {navigationItems.map((item, index) => (
                 <NavLink
@@ -102,9 +104,12 @@ export function Navbar() {
                   ref={index === 0 ? firstMobileLinkRef : undefined}
                   to={item.to}
                 >
-                  {item.label}
+                  {t(item.label)}
                 </NavLink>
               ))}
+              <div className="mt-2 border-t pt-3">
+                <LanguageSelect />
+              </div>
             </div>
           </nav>
         ) : null}

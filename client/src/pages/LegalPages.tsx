@@ -2,6 +2,7 @@ import { PageIntro } from '../components/PageIntro';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
+import { useLanguage } from '../i18n/useLanguage';
 
 interface LegalSection {
   body: string;
@@ -15,17 +16,19 @@ interface LegalStubProps {
 }
 
 function LegalStub({ description, sections, title }: LegalStubProps) {
+  const { t } = useLanguage();
+
   return (
     <>
-      <PageIntro description={description} eyebrow="Draft policy" title={title} />
+      <PageIntro description={t(description)} eyebrow={t('Draft policy')} title={t(title)} />
       <PageContainer className="py-12 sm:py-16">
         <div className="mx-auto max-w-3xl">
-          <Badge tone="warning">Owner and legal approval required</Badge>
+          <Badge tone="warning">{t('Owner and legal approval required')}</Badge>
           <div className="mt-6 space-y-5">
             {sections.map((section) => (
               <Card key={section.heading}>
-                <h2 className="text-xl">{section.heading}</h2>
-                <p className="mt-3 leading-7 text-muted">{section.body}</p>
+                <h2 className="text-xl">{t(section.heading)}</h2>
+                <p className="mt-3 leading-7 text-muted">{t(section.body)}</p>
               </Card>
             ))}
           </div>

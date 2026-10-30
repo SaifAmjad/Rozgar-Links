@@ -9,14 +9,22 @@ import { HeroJobBar } from './HeroJobBar';
 vi.mock('./api', () => ({ fetchStats: vi.fn() }));
 
 const stats: StatsResponse = {
-  date: '2026-10-20', totalOpenings: 1480,
+  date: '2026-10-20',
+  totalOpenings: 1480,
   byCountry: [
-    { country: 'Saudi Arabia', count: 500 }, { country: 'United Arab Emirates', count: 400 },
-    { country: 'Oman', count: 100 }, { country: 'Qatar', count: 180 },
-    { country: 'Kuwait', count: 170 }, { country: 'Bahrain', count: 130 },
+    { country: 'Saudi Arabia', count: 500 },
+    { country: 'United Arab Emirates', count: 400 },
+    { country: 'Oman', count: 100 },
+    { country: 'Qatar', count: 180 },
+    { country: 'Kuwait', count: 170 },
+    { country: 'Bahrain', count: 130 },
   ],
-  byField: [], newToday: 90, last7Days: [], lastUpdated: '2026-10-19T19:05:00.000Z',
-  provenance: 'estimated', isStale: false,
+  byField: [],
+  newToday: 90,
+  last7Days: [],
+  lastUpdated: '2026-10-19T19:05:00.000Z',
+  provenance: 'estimated',
+  isStale: false,
 };
 
 describe('HeroJobBar', () => {
@@ -25,7 +33,9 @@ describe('HeroJobBar', () => {
   it('shows compact country counts from the stats response', async () => {
     vi.mocked(fetchStats).mockResolvedValue(stats);
     render(<HeroJobBar />);
-    expect(screen.getByRole('status', { name: /loading indicative job counts/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: /loading indicative job counts/i }),
+    ).toBeInTheDocument();
     expect(await screen.findByLabelText('Indicative jobs by country')).toBeInTheDocument();
     expect(screen.getByText('1,480')).toBeInTheDocument();
     expect(screen.getByText('Saudi Arabia')).toBeInTheDocument();

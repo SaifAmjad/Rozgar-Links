@@ -2,32 +2,24 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { jobListingSchema } from '@rozgar-links/shared';
 import { z } from 'zod';
 
-const jobsCacheSchema = z
+import { occupationCatalogSchema } from '../jobs/occupationDirectory.js';
+
+export const jobsCacheSchema = z
   .object({
-    version: z.literal(1),
+    version: z.literal(2),
     provider: z
       .object({
         id: z.string().trim().min(1).max(80),
-        kind: z.enum(['sample', 'authorized']),
+        kind: z.literal('directory'),
         label: z.string().trim().min(1).max(120),
       })
       .strict(),
     refreshedAt: z.string().datetime({ offset: true }),
-    jobs: z.array(jobListingSchema).max(500),
+    catalog: occupationCatalogSchema,
   })
-  .strict()
-  .superRefine((cache, context) => {
-    if (new Set(cache.jobs.map((job) => job.id)).size !== cache.jobs.length) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Cached job IDs must be unique.',
-        path: ['jobs'],
-      });
-    }
-  });
+  .strict();
 
 export type JobsCache = z.infer<typeof jobsCacheSchema>;
 

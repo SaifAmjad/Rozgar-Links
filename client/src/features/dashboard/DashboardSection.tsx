@@ -12,6 +12,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { fetchStats } from './api';
 import { ProvenanceLabel } from './ProvenanceLabel';
 import { SummaryCards } from './SummaryCards';
+import { useLanguage } from '../../i18n/useLanguage';
 
 const CountryChart = lazy(() =>
   import('./CountryChart').then((module) => ({ default: module.CountryChart })),
@@ -32,15 +33,17 @@ const dashboardViews = [
 ];
 
 function DashboardSkeleton() {
+  const { t } = useLanguage();
+
   return (
-    <div aria-label="Loading daily opportunity overview" role="status">
+    <div aria-label={t('Loading daily opportunity overview')} role="status">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
           <Skeleton className="h-28" key={index} />
         ))}
       </div>
       <ChartSkeleton />
-      <span className="sr-only">Loading indicative statistics</span>
+      <span className="sr-only">{t('Loading indicative statistics')}</span>
     </div>
   );
 }
@@ -56,6 +59,7 @@ function ActiveChart({ stats, view }: { stats: StatsResponse; view: DashboardVie
 }
 
 export function DashboardSection() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState<StatsResponse>();
   const [error, setError] = useState(false);
   const [requestVersion, setRequestVersion] = useState(0);
@@ -109,22 +113,22 @@ export function DashboardSection() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <Badge>
-              <BarChart3 aria-hidden="true" className="mr-1.5" size={14} />
-              Daily opportunity snapshot
+              <BarChart3 aria-hidden="true" className="me-1.5" size={14} />
+              {t('Daily opportunity snapshot')}
             </Badge>
             <h2 className="mt-3 text-2xl sm:text-3xl" id="dashboard-title">
-              Job market statistics
+              {t('Job market statistics')}
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-base">
-              A simple overview of estimated opportunities by country, trend and job field.
+              {t('A simple overview of estimated opportunities by country, trend and job field.')}
             </p>
           </div>
 
           <div className="flex max-w-md items-start gap-2 rounded-xl border bg-bg px-4 py-3 text-sm text-muted">
             <Info aria-hidden="true" className="mt-0.5 shrink-0 text-brand-green" size={17} />
             <p>
-              <strong className="text-primary">Indicative only.</strong> These estimates are not
-              verified vacancies.
+              <strong className="text-primary">{t('Indicative only.')}</strong>{' '}
+              {t('These estimates are not verified vacancies.')}
             </p>
           </div>
         </div>
@@ -134,13 +138,14 @@ export function DashboardSection() {
 
           {error ? (
             <Card className="text-center" role="alert">
-              <h3 className="text-xl">Dashboard temporarily unavailable</h3>
+              <h3 className="text-xl">{t('Dashboard temporarily unavailable')}</h3>
               <p className="mx-auto mt-3 max-w-xl leading-7 text-muted">
-                We could not load the indicative figures. No opening count has been invented or
-                substituted.
+                {t(
+                  'We could not load the indicative figures. No opening count has been invented or substituted.',
+                )}
               </p>
               <Button className="mt-5" onClick={retry} type="button" variant="outline">
-                <RefreshCw aria-hidden="true" size={18} /> Retry
+                <RefreshCw aria-hidden="true" size={18} /> {t('Retry')}
               </Button>
             </Card>
           ) : null}
@@ -149,12 +154,14 @@ export function DashboardSection() {
             <div aria-live="polite">
               <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <ProvenanceLabel isStale={stats.isStale} />
-                <p className="text-xs text-muted">Updated from one validated daily snapshot.</p>
+                <p className="text-xs text-muted">
+                  {t('Updated from one validated daily snapshot.')}
+                </p>
               </div>
 
               {stats.totalOpenings === 0 ? (
                 <p className="mb-5 rounded-xl border bg-bg p-4 font-semibold text-muted">
-                  No indicative openings are recorded for this update.
+                  {t('No indicative openings are recorded for this update.')}
                 </p>
               ) : null}
 
@@ -162,9 +169,11 @@ export function DashboardSection() {
 
               <div className="mt-4 overflow-hidden rounded-xl border bg-bg shadow-soft">
                 <div className="border-b bg-surface p-2.5 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
-                  <p className="px-1 text-sm font-bold text-primary">Explore the estimates</p>
+                  <p className="px-1 text-sm font-bold text-primary">
+                    {t('Explore the estimates')}
+                  </p>
                   <div
-                    aria-label="Opportunity insight views"
+                    aria-label={t('Opportunity insight views')}
                     className="mt-2 grid grid-cols-3 gap-1 rounded-lg border bg-bg p-1 sm:mt-0 sm:min-w-[22rem]"
                     role="tablist"
                   >
@@ -172,7 +181,7 @@ export function DashboardSection() {
                       <button
                         aria-controls={`dashboard-panel-${id}`}
                         aria-selected={activeView === id}
-                        className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-bold transition-colors sm:text-sm ${
+                        className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1.5 text-center text-xs font-bold leading-tight whitespace-normal transition-colors sm:px-2 sm:text-sm ${
                           activeView === id
                             ? 'bg-primary text-white shadow-soft'
                             : 'text-muted hover:bg-surface hover:text-primary'
@@ -185,8 +194,8 @@ export function DashboardSection() {
                         tabIndex={activeView === id ? 0 : -1}
                         type="button"
                       >
-                        <Icon aria-hidden="true" size={16} />
-                        {label}
+                        <Icon aria-hidden="true" className="shrink-0" size={16} />
+                        <span className="min-w-0">{t(label)}</span>
                       </button>
                     ))}
                   </div>

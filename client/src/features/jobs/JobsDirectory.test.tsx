@@ -2,40 +2,104 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { JobListing, JobsResponse } from '@rozgar-links/shared';
+import type { JobsResponse, OccupationListing } from '@rozgar-links/shared';
 
 import { fetchJobs } from './api';
-import { JobCard } from './JobCard';
 import { JobsDirectory } from './JobsDirectory';
 
 vi.mock('./api', () => ({ fetchJobs: vi.fn() }));
 
-const sampleJob: JobListing = {
-  id: 'sample-001',
-  title: 'Site Mason',
-  company: 'Example Horizon Works',
-  country: 'Saudi Arabia',
-  city: 'Riyadh',
-  field: 'construction',
-  source: 'Sample listing',
-  sourceUrl: null,
-  isSample: true,
-  fetchedAt: '2026-10-13T00:00:00.000Z',
+export const occupation: OccupationListing = {
+  id: 'occupation-011',
+  slug: 'house-building-electrician',
+  titleEn: 'House / Building Electrician',
+  titleUr: 'بلڈنگ الیکٹریشن',
+  category: {
+    id: 'electrical-mep-solar',
+    nameEn: 'Electrical, MEP & Solar Trades',
+    nameUr: 'الیکٹریکل، مکینیکل اور سولر ٹیکنیشنز',
+    sortOrder: 2,
+  },
+  salaryMin: 1800,
+  salaryMax: 2200,
+  salaryMaxOpenEnded: false,
+  salaryCurrency: 'SAR',
+  salaryPeriod: 'monthly',
+  countryIds: [],
+  recordType: 'occupation_directory',
+  isActive: true,
+  sortOrder: 11,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-function response(overrides: Partial<JobsResponse> = {}): JobsResponse {
+const categoryNames = [
+  'Construction',
+  'Electrical',
+  'Transport',
+  'Hospitality',
+  'Retail',
+  'Office',
+  'Engineering',
+  'Healthcare',
+  'Information Technology',
+];
+
+export function directoryResponse(overrides: Partial<JobsResponse> = {}): JobsResponse {
   return {
-    items: [sampleJob],
+    items: [occupation],
     page: 1,
     limit: 12,
     total: 1,
     totalPages: 1,
     lastUpdated: '2026-10-13T00:00:00.000Z',
+    sort: 'directory-order',
+    facets: {
+      categories: categoryNames.map((name, index) => ({
+        id: `category-${index + 1}`,
+        nameEn: name,
+        nameUr: `زمرہ ${index + 1}`,
+        sortOrder: index + 1,
+        count: index === 1 ? 10 : 0,
+      })),
+      designations: Array.from({ length: 64 }, (_, index) => ({
+        slug: index === 0 ? occupation.slug : `occupation-${index + 1}`,
+        titleEn: index === 0 ? occupation.titleEn : `Occupation ${index + 1}`,
+        titleUr: index === 0 ? occupation.titleUr : `پیشہ ${index + 1}`,
+        categoryId: index === 0 ? occupation.category.id : 'category-1',
+      })),
+      salaryBands: [
+        { id: 'sar-1400-1600', minimum: 1400, maximum: 1600, count: 6 },
+        { id: 'sar-1601-2200', minimum: 1601, maximum: 2200, count: 25 },
+        { id: 'sar-2201-3000', minimum: 2201, maximum: 3000, count: 17 },
+        { id: 'sar-3001-plus', minimum: 3001, maximum: null, count: 16 },
+      ],
+      countries: [
+        {
+          id: 'saudi-arabia',
+          nameEn: 'Saudi Arabia',
+          nameUr: 'سعودی عرب',
+          enabled: false,
+          count: 0,
+        },
+        {
+          id: 'united-arab-emirates',
+          nameEn: 'United Arab Emirates',
+          nameUr: 'متحدہ عرب امارات',
+          enabled: false,
+          count: 0,
+        },
+        { id: 'qatar', nameEn: 'Qatar', nameUr: 'قطر', enabled: false, count: 0 },
+        { id: 'kuwait', nameEn: 'Kuwait', nameUr: 'کویت', enabled: false, count: 0 },
+        { id: 'oman', nameEn: 'Oman', nameUr: 'عمان', enabled: false, count: 0 },
+      ],
+    },
     provenance: {
-      kind: 'sample',
-      source: 'Fictional sample catalog',
+      kind: 'directory',
+      source: 'Rozgar Link directory',
       isStale: false,
-      notice: 'Fictional sample listings for interface demonstration only.',
+      notice:
+        'Salary ranges are indicative monthly directory figures in SAR, not guaranteed employer offers or verified vacancies.',
     },
     ...overrides,
   };
@@ -44,100 +108,70 @@ function response(overrides: Partial<JobsResponse> = {}): JobsResponse {
 describe('JobsDirectory', () => {
   beforeEach(() => {
     vi.mocked(fetchJobs).mockReset();
+    vi.mocked(fetchJobs).mockResolvedValue(directoryResponse());
   });
 
-  it('renders a curated listing with no fabricated original-source link', async () => {
-    vi.mocked(fetchJobs).mockResolvedValue(response());
+  it('renders salary and category data without an application action', async () => {
     render(
       <MemoryRouter>
         <JobsDirectory />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('status', { name: /loading jobs/i })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'Site Mason' })).toBeInTheDocument();
-    expect(screen.getByText('Job listing')).toBeInTheDocument();
-    expect(screen.getAllByText('Rozgar Links').length).toBeGreaterThan(0);
-    expect(screen.queryByRole('link', { name: /original source/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /view application steps/i })).toHaveAttribute(
-      'href',
-      '/apply?country=Saudi%20Arabia&field=construction&job=sample-001',
-    );
+    expect(await screen.findByRole('heading', { name: occupation.titleEn })).toBeInTheDocument();
+    expect(screen.getByText(/SAR 1,800 – 2,200/)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Categories' })).toHaveValue('');
+    expect(screen.getByRole('option', { name: 'All categories (64)' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Monthly salary' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Designation' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Country' })).toBeDisabled();
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /apply/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/country filtering will be enabled/i)).toBeInTheDocument();
   });
 
-  it('submits validated country, field and case-preserving search filters', async () => {
-    vi.mocked(fetchJobs).mockResolvedValue(response());
+  it('loads URL-backed filters and updates salary selection', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/jobs?q=Electrician&salary=sar-1601-2200']}>
         <JobsDirectory />
       </MemoryRouter>,
     );
-    await screen.findByRole('heading', { name: 'Site Mason' });
 
-    fireEvent.change(screen.getByLabelText('Search jobs'), { target: { value: 'Mason' } });
-    fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'Saudi Arabia' } });
-    fireEvent.change(screen.getByLabelText('Field'), { target: { value: 'construction' } });
-    fireEvent.click(screen.getByRole('button', { name: /search listings/i }));
-
-    await waitFor(() => expect(fetchJobs).toHaveBeenCalledTimes(2));
-    expect(fetchJobs).toHaveBeenLastCalledWith(
-      {
-        country: 'Saudi Arabia',
-        field: 'construction',
-        limit: 12,
-        page: 1,
-        q: 'Mason',
-      },
+    await screen.findByRole('heading', { name: occupation.titleEn });
+    expect(fetchJobs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        q: 'Electrician',
+        salary: ['sar-1601-2200'],
+      }),
       expect.any(AbortSignal),
     );
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Monthly salary' }), {
+      target: { value: 'sar-1400-1600' },
+    });
+    await waitFor(() =>
+      expect(fetchJobs).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          salary: ['sar-1400-1600'],
+        }),
+        expect.any(AbortSignal),
+      ),
+    );
   });
 
-  it('announces stale cache and supports pagination', async () => {
-    vi.mocked(fetchJobs)
-      .mockResolvedValueOnce(
-        response({
-          limit: 12,
-          total: 13,
-          totalPages: 2,
-          provenance: { ...response().provenance, isStale: true },
-        }),
-      )
-      .mockResolvedValueOnce(response({ page: 2, total: 13, totalPages: 2 }));
+  it('shows a useful reset action for empty results', async () => {
+    vi.mocked(fetchJobs).mockResolvedValue(
+      directoryResponse({ items: [], total: 0, totalPages: 0 }),
+    );
     render(
       <MemoryRouter>
         <JobsDirectory />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText(/last valid cached catalog shown/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-
-    await waitFor(() => expect(fetchJobs).toHaveBeenCalledTimes(2));
-    expect(fetchJobs).toHaveBeenLastCalledWith({ limit: 12, page: 2 }, expect.any(AbortSignal));
-  });
-
-  it('uses safe external-link attributes only for authorized records', () => {
-    render(
-      <MemoryRouter>
-        <JobCard
-          job={{
-            ...sampleJob,
-            id: 'authorized-001',
-            isSample: false,
-            source: 'Authorized feed',
-            sourceUrl: 'https://jobs.example.com/authorized-001',
-          }}
-        />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByRole('link', { name: /original source/i })).toHaveAttribute(
-      'rel',
-      'noopener noreferrer',
-    );
-    expect(screen.getByRole('link', { name: /original source/i })).toHaveAttribute(
-      'target',
-      '_blank',
-    );
+    expect(
+      await screen.findByRole('heading', { name: 'No matching occupations found' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear all filters' })).toBeInTheDocument();
   });
 });

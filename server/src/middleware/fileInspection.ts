@@ -192,7 +192,9 @@ function readZipEntries(buffer: Buffer): Map<string, ZipEntry> | undefined {
     const localExtraLength = buffer.readUInt16LE(localOffset + 28);
     const localNameStart = localOffset + 30;
     const dataOffset = localNameStart + localNameLength + localExtraLength;
-    const localName = buffer.subarray(localNameStart, localNameStart + localNameLength).toString('utf8');
+    const localName = buffer
+      .subarray(localNameStart, localNameStart + localNameLength)
+      .toString('utf8');
     if (
       localMethod !== compressionMethod ||
       localName !== name ||

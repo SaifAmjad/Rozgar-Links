@@ -1,13 +1,25 @@
 export { healthResponseSchema, type HealthResponse } from './schemas/health.js';
 export {
-  jobCountrySchema,
-  jobFieldIdSchema,
+  designationFacetSchema,
+  directoryCountrySchema,
   jobListingSchema,
+  jobsFacetsSchema,
   jobsProvenanceSchema,
   jobsResponseSchema,
+  jobsSortSchema,
+  occupationCategorySchema,
+  occupationListingSchema,
+  salaryBandFacetSchema,
+  salaryBandIdSchema,
+  type DirectoryCountry,
   type JobListing,
+  type JobsFacets,
   type JobsProvenance,
   type JobsResponse,
+  type JobsSort,
+  type OccupationCategory,
+  type OccupationListing,
+  type SalaryBandId,
 } from './schemas/jobs.js';
 export {
   applicationFieldsSchema,

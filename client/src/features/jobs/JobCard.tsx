@@ -1,83 +1,68 @@
-import { BriefcaseBusiness, Building2, ExternalLink, MapPin } from 'lucide-react';
+import { Banknote, BriefcaseBusiness, FolderTree } from 'lucide-react';
 
-import { jobTaxonomy, type JobListing } from '@rozgar-links/shared';
+import type { OccupationListing } from '@rozgar-links/shared';
 
 import { Badge } from '../../components/ui/Badge';
-import { ButtonLink } from '../../components/ui/ButtonLink';
 import { Card } from '../../components/ui/Card';
-import { getButtonClasses } from '../../components/ui/buttonStyles';
-
-const fieldLabels = new Map(jobTaxonomy.fields.map((field) => [field.id, field.label]));
+import { useLanguage } from '../../i18n/useLanguage';
 
 interface JobCardProps {
-  job: JobListing;
+  job: OccupationListing;
 }
 
 export function JobCard({ job }: JobCardProps) {
-  const applicationUrl = `/apply?country=${encodeURIComponent(job.country)}&field=${encodeURIComponent(job.field)}&job=${encodeURIComponent(job.id)}`;
+  const { language, t } = useLanguage();
+  const title = language === 'ur' ? job.titleUr : job.titleEn;
+  const category = language === 'ur' ? job.category.nameUr : job.category.nameEn;
+  const numberFormatter = new Intl.NumberFormat(language === 'ur' ? 'ur-PK' : 'en-US');
+  const maximum = job.salaryMaxOpenEnded
+    ? `${numberFormatter.format(job.salaryMin)}+`
+    : `${numberFormatter.format(job.salaryMin)} – ${numberFormatter.format(job.salaryMax ?? 0)}`;
 
   return (
-    <Card className="flex h-full flex-col" role="article" aria-labelledby={`${job.id}-title`}>
+    <Card
+      className="flex h-full flex-col border-border bg-bg transition-shadow hover:shadow-soft"
+      role="article"
+      aria-labelledby={`${job.id}-title`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <Badge tone="green">Job listing</Badge>
-        <span className="text-xs font-semibold text-muted">
-          {job.isSample ? 'Rozgar Links' : job.source}
-        </span>
+        <Badge tone="green">{t('Occupation directory')}</Badge>
+        <span className="text-xs font-bold text-muted">#{job.sortOrder}</span>
       </div>
-      <h2 className="mt-5 text-xl" id={`${job.id}-title`}>
-        {job.title}
-      </h2>
-      <dl className="mt-4 space-y-3 text-sm text-muted">
-        <div className="flex gap-2">
-          <Building2 aria-hidden="true" className="mt-0.5 shrink-0 text-brand-green" size={17} />
+
+      <div className="mt-5 flex items-start gap-3">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary">
+          <BriefcaseBusiness aria-hidden="true" size={22} />
+        </span>
+        <h2 className="min-w-0 text-xl leading-snug" id={`${job.id}-title`}>
+          {title}
+        </h2>
+      </div>
+
+      <dl className="mt-5 space-y-4 text-sm">
+        <div className="flex items-start gap-3">
+          <FolderTree aria-hidden="true" className="mt-0.5 shrink-0 text-brand-green" size={18} />
           <div>
-            <dt className="sr-only">Company</dt>
-            <dd>{job.company}</dd>
+            <dt className="font-semibold text-muted">{t('Category')}</dt>
+            <dd className="mt-1 font-medium text-text">{category}</dd>
           </div>
         </div>
-        <div className="flex gap-2">
-          <MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-brand-blue" size={17} />
+        <div className="flex items-start gap-3 rounded-xl bg-surface p-4">
+          <Banknote aria-hidden="true" className="mt-0.5 shrink-0 text-brand-blue" size={19} />
           <div>
-            <dt className="sr-only">Location</dt>
-            <dd>
-              {job.city}, {job.country}
+            <dt className="font-semibold text-muted">{t('Indicative monthly salary')}</dt>
+            <dd className="mt-1 text-lg font-bold text-primary">
+              <bdi dir="ltr">
+                SAR {maximum} / {t('month')}
+              </bdi>
             </dd>
           </div>
         </div>
-        <div className="flex gap-2">
-          <BriefcaseBusiness
-            aria-hidden="true"
-            className="mt-0.5 shrink-0 text-primary"
-            size={17}
-          />
-          <div>
-            <dt className="sr-only">Job field</dt>
-            <dd>{fieldLabels.get(job.field) ?? job.field}</dd>
-          </div>
-        </div>
       </dl>
-      <div className="mt-auto pt-6">
-        <p className="mb-3 text-sm leading-6 text-muted">
-          {job.isSample
-            ? 'Continue with the country and work category already selected for you.'
-            : 'Review the guided application steps or visit the original source.'}
-        </p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <ButtonLink className="w-full sm:w-auto" to={applicationUrl}>
-            View application steps
-          </ButtonLink>
-          {!job.isSample && job.sourceUrl ? (
-            <a
-              className={getButtonClasses('outline')}
-              href={job.sourceUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              Original source <ExternalLink aria-hidden="true" size={16} />
-            </a>
-          ) : null}
-        </div>
-      </div>
+
+      <p className="mt-auto pt-5 text-xs leading-5 text-muted">
+        {t('Directory estimate only — not a vacancy or guaranteed employer offer.')}
+      </p>
     </Card>
   );
 }

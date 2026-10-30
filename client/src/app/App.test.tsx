@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
@@ -21,7 +21,7 @@ describe('App router', () => {
   });
 
   it.each([
-    ['/jobs', 'Jobs across the Gulf'],
+    ['/jobs', 'Find the right occupation'],
     ['/apply', 'Application form'],
     ['/success', 'Submission receipt unavailable'],
     ['/faq', 'Frequently asked questions'],
@@ -82,11 +82,21 @@ describe('App router', () => {
 
     const openButton = screen.getByRole('button', { name: 'Open navigation menu' });
     expect(openButton).toHaveAttribute('aria-expanded', 'false');
+    const primaryNavigation = screen.getByRole('navigation', { name: 'Primary navigation' });
+    expect(within(primaryNavigation).queryByRole('link', { name: 'FAQ' })).not.toBeInTheDocument();
+    expect(
+      within(primaryNavigation).queryByRole('link', { name: 'Contact' }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(openButton);
     const closeButton = screen.getByRole('button', { name: 'Close navigation menu' });
     expect(closeButton).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('navigation', { name: 'Mobile navigation' })).toBeInTheDocument();
+    const mobileNavigation = screen.getByRole('navigation', { name: 'Mobile navigation' });
+    expect(mobileNavigation).toBeInTheDocument();
+    expect(within(mobileNavigation).queryByRole('link', { name: 'FAQ' })).not.toBeInTheDocument();
+    expect(
+      within(mobileNavigation).queryByRole('link', { name: 'Contact' }),
+    ).not.toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveFocus();

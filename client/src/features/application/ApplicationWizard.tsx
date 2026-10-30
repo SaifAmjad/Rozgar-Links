@@ -30,6 +30,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { TextInput } from '../../components/ui/TextInput';
+import { useLanguage } from '../../i18n/useLanguage';
 import { fetchApplicationSetup, submitApplication } from './api';
 import { SelectField } from './FormControls';
 import { formatCnic, formatExperience, formatPakistaniMobile } from './inputFormatting';
@@ -144,32 +145,35 @@ function FileField({
   onChange,
   required,
 }: FileFieldProps) {
+  const { t } = useLanguage();
   const id = `application-${label.toLowerCase().replaceAll(' ', '-')}`;
   return (
     <div className="space-y-2 rounded-xl border bg-surface p-4">
       <label className="block text-sm font-bold text-primary" htmlFor={id}>
-        {label}
-        {required ? <span className="ml-1 text-error">*</span> : null}
+        {t(label)}
+        {required ? <span className="ms-1 text-error">*</span> : null}
       </label>
       <p className="text-sm text-muted" id={`${id}-description`}>
-        {description}
+        {t(description)}
       </p>
       <input
         accept={accept}
         aria-describedby={`${id}-description${error ? ` ${id}-error` : ''}`}
         aria-invalid={error ? true : undefined}
-        className="block min-h-11 w-full rounded-xl border bg-bg p-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:font-bold file:text-white"
+        className="block min-h-11 w-full rounded-xl border bg-bg p-2 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:font-bold file:text-white"
         id={id}
         onChange={(event) => onChange(event.target.files?.[0])}
         ref={inputRef}
         type="file"
       />
       {file ? (
-        <p className="text-sm font-semibold text-brand-green">Selected: {file.name}</p>
+        <p className="text-sm font-semibold text-brand-green">
+          {t('Selected: {file}', { file: file.name })}
+        </p>
       ) : null}
       {error ? (
         <p className="text-sm font-semibold text-error" id={`${id}-error`}>
-          {error}
+          {t(error)}
         </p>
       ) : null}
     </div>
@@ -182,6 +186,7 @@ interface SetupState {
 }
 
 export function ApplicationWizard() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedCountry = searchParams.get('country');
@@ -235,11 +240,11 @@ export function ApplicationWizard() {
       .then(setSetup)
       .catch(() => {
         if (!controller.signal.aborted) {
-          setSetupError('Application setup could not be loaded. Please retry.');
+          setSetupError(t('Application setup could not be loaded. Please retry.'));
         }
       });
     return () => controller.abort();
-  }, [setupAttempt]);
+  }, [setupAttempt, t]);
 
   useEffect(() => {
     if (
@@ -339,15 +344,15 @@ export function ApplicationWizard() {
   async function copyValue(label: string, value: string) {
     try {
       await navigator.clipboard.writeText(value);
-      setCopyStatus(`${label} copied.`);
+      setCopyStatus(t('{label} copied.', { label: t(label) }));
     } catch {
-      setCopyStatus(`Could not copy ${label.toLowerCase()}.`);
+      setCopyStatus(t('Could not copy {label}.', { label: t(label).toLocaleLowerCase() }));
     }
   }
 
   async function onValidSubmit(application: ApplicationFields) {
     if (!applicationSubmissionEnabled) {
-      setSubmissionError('Application submission is disabled in this hosted demo.');
+      setSubmissionError(t('Application submission is disabled in this hosted demo.'));
       return;
     }
     if (submissionLock.current) return;
@@ -362,7 +367,7 @@ export function ApplicationWizard() {
       setSubmissionError(
         error instanceof Error
           ? error.message
-          : 'The application could not be submitted. Please try again.',
+          : t('The application could not be submitted. Please try again.'),
       );
     } finally {
       setIsSubmitting(false);
@@ -407,8 +412,10 @@ export function ApplicationWizard() {
               id="demo-submission-notice"
               role="status"
             >
-              <strong className="text-primary">Demo only:</strong>{' '}
-              <span className="text-muted">nothing is submitted. Use test details and files.</span>
+              <strong className="text-primary">{t('Demo only:')}</strong>{' '}
+              <span className="text-muted">
+                {t('nothing is submitted. Use test details and files.')}
+              </span>
             </div>
           ) : null}
           {requestedJob ? (
@@ -419,8 +426,8 @@ export function ApplicationWizard() {
                 size={21}
               />
               <p className="text-muted">
-                <strong className="text-primary">Job selected.</strong> Preferences were filled when
-                available and can be changed.
+                <strong className="text-primary">{t('Job selected.')}</strong>{' '}
+                {t('Preferences were filled when available and can be changed.')}
               </p>
             </div>
           ) : null}
@@ -428,16 +435,22 @@ export function ApplicationWizard() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-brand-green">
-                  Step {currentStep + 1} of {steps.length}
+                  {t('Step {current} of {total}', {
+                    current: currentStep + 1,
+                    total: steps.length,
+                  })}
                 </p>
-                <p className="mt-1 font-bold text-primary">{steps[currentStep]}</p>
+                <p className="mt-1 font-bold text-primary">{t(steps[currentStep] ?? '')}</p>
               </div>
               <span className="text-sm font-bold text-muted">
                 {Math.round(((currentStep + 1) / steps.length) * 100)}%
               </span>
             </div>
             <div
-              aria-label={`Application progress: step ${currentStep + 1} of ${steps.length}`}
+              aria-label={t('Application progress: step {current} of {total}', {
+                current: currentStep + 1,
+                total: steps.length,
+              })}
               aria-valuemax={steps.length}
               aria-valuemin={1}
               aria-valuenow={currentStep + 1}
@@ -451,13 +464,13 @@ export function ApplicationWizard() {
             </div>
           </div>
 
-          <nav aria-label="Application progress" className="mb-6 hidden lg:block">
+          <nav aria-label={t('Application progress')} className="mb-6 hidden lg:block">
             <ol className="grid grid-cols-5 gap-2">
               {steps.map((step, index) => (
                 <li className="min-w-0 flex-1" key={step}>
                   <button
                     aria-current={index === currentStep ? 'step' : undefined}
-                    className={`flex min-h-12 w-full items-center gap-2 rounded-xl border px-3 text-left text-sm font-bold ${
+                    className={`flex min-h-12 w-full items-center gap-2 rounded-xl border px-3 text-start text-sm font-bold ${
                       index === currentStep
                         ? 'border-primary bg-primary text-white'
                         : index < currentStep
@@ -475,7 +488,7 @@ export function ApplicationWizard() {
                     >
                       {index < currentStep ? <Check aria-hidden="true" size={14} /> : index + 1}
                     </span>
-                    {step}
+                    {t(step)}
                   </button>
                 </li>
               ))}
@@ -484,22 +497,25 @@ export function ApplicationWizard() {
 
           <Card className="p-4 sm:p-6">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand-green">
-              Step {currentStep + 1} of {steps.length}
+              {t('Step {current} of {total}', {
+                current: currentStep + 1,
+                total: steps.length,
+              })}
             </p>
             <h2 className="mt-2 text-2xl" ref={stepHeadingRef} tabIndex={-1}>
-              {steps[currentStep]}
+              {t(steps[currentStep] ?? '')}
             </h2>
-            <p className="mt-2 text-sm text-muted">{stepDescriptions[currentStep]}</p>
+            <p className="mt-2 text-sm text-muted">{t(stepDescriptions[currentStep] ?? '')}</p>
             <p className="mt-2 text-xs font-semibold text-muted">
-              <span className="text-error">*</span> Required
+              <span className="text-error">*</span> {t('Required')}
             </p>
 
             {showErrorSummary && summaryErrors.length > 0 ? (
               <div className="mt-5 rounded-xl border border-error bg-red-50 p-4" role="alert">
-                <p className="font-bold text-error">Please fix the following:</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-error">
+                <p className="font-bold text-error">{t('Please fix the following:')}</p>
+                <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-error">
                   {summaryErrors.map((message) => (
-                    <li key={message}>{message}</li>
+                    <li key={message}>{t(message)}</li>
                   ))}
                 </ul>
               </div>
@@ -562,11 +578,12 @@ export function ApplicationWizard() {
                 onClick={() => setCurrentStep((step) => Math.max(0, step - 1))}
                 variant="outline"
               >
-                <ChevronLeft aria-hidden="true" size={18} /> Back
+                <ChevronLeft aria-hidden="true" className="rtl:rotate-180" size={18} /> {t('Back')}
               </Button>
               {currentStep < 4 ? (
                 <Button className="w-full sm:w-auto" onClick={() => void nextStep()}>
-                  Continue to {steps[currentStep + 1]} <ChevronRight aria-hidden="true" size={18} />
+                  {t('Continue to {step}', { step: t(steps[currentStep + 1] ?? '') })}{' '}
+                  <ChevronRight aria-hidden="true" className="rtl:rotate-180" size={18} />
                 </Button>
               ) : (
                 <Button
@@ -580,9 +597,11 @@ export function ApplicationWizard() {
                   {isSubmitting ? (
                     <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />
                   ) : null}
-                  {applicationSubmissionEnabled
-                    ? 'Submit application'
-                    : 'Submission disabled in demo'}
+                  {t(
+                    applicationSubmissionEnabled
+                      ? 'Submit application'
+                      : 'Submission disabled in demo',
+                  )}
                 </Button>
               )}
             </div>
@@ -590,7 +609,8 @@ export function ApplicationWizard() {
             <div aria-live="polite" className="mt-4 min-h-6 text-sm font-semibold">
               {submissionError ? (
                 <p className="rounded-xl border border-error bg-red-50 p-4 text-error" role="alert">
-                  {submissionError} Your information and selected files remain available for retry.
+                  {t(submissionError)}{' '}
+                  {t('Your information and selected files remain available for retry.')}
                 </p>
               ) : null}
             </div>
@@ -607,18 +627,19 @@ interface PersonalStepProps {
 }
 
 function PersonalStep({ errors, register }: PersonalStepProps) {
+  const { t } = useLanguage();
   const nationalIdRegistration = register('nationalId');
   const phoneRegistration = register('phone');
 
   return (
     <div className="space-y-8">
       <fieldset>
-        <legend className="text-lg font-bold text-primary">Basic details</legend>
+        <legend className="text-lg font-bold text-primary">{t('Basic details')}</legend>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <TextInput
             autoComplete="given-name"
             error={errorMessage(errors.firstName)}
-            label="First name"
+            label={t('First name')}
             maxLength={100}
             required
             {...register('firstName')}
@@ -626,33 +647,39 @@ function PersonalStep({ errors, register }: PersonalStepProps) {
           <TextInput
             autoComplete="family-name"
             error={errorMessage(errors.lastName)}
-            label="Last name"
+            label={t('Last name')}
             maxLength={100}
             required
             {...register('lastName')}
           />
           <TextInput
+            dir="ltr"
             error={errorMessage(errors.dateOfBirth)}
-            label="Date of birth"
+            label={t('Date of birth')}
             required
             type="date"
             {...register('dateOfBirth')}
           />
-          <SelectField error={errorMessage(errors.gender)} label="Gender" {...register('gender')}>
-            <option value="">Prefer not to say</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-            <option value="other">Other</option>
+          <SelectField
+            error={errorMessage(errors.gender)}
+            label={t('Gender')}
+            {...register('gender')}
+          >
+            <option value="">{t('Prefer not to say')}</option>
+            <option value="female">{t('Female')}</option>
+            <option value="male">{t('Male')}</option>
+            <option value="other">{t('Other')}</option>
           </SelectField>
         </div>
       </fieldset>
 
       <fieldset className="border-t pt-7">
-        <legend className="text-lg font-bold text-primary">Identification</legend>
+        <legend className="text-lg font-bold text-primary">{t('Identification')}</legend>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <TextInput
             {...nationalIdRegistration}
-            description="Pakistan CNIC format: 12345-1234567-1."
+            description={t('Pakistan CNIC format: 12345-1234567-1.')}
+            dir="ltr"
             error={errorMessage(errors.nationalId)}
             inputMode="numeric"
             label="CNIC"
@@ -669,13 +696,14 @@ function PersonalStep({ errors, register }: PersonalStepProps) {
       </fieldset>
 
       <fieldset className="border-t pt-7">
-        <legend className="text-lg font-bold text-primary">Contact details</legend>
+        <legend className="text-lg font-bold text-primary">{t('Contact details')}</legend>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <TextInput
             autoComplete="email"
-            description="We will use this for application updates."
+            description={t('We will use this for application updates.')}
+            dir="ltr"
             error={errorMessage(errors.email)}
-            label="Email address"
+            label={t('Email address')}
             maxLength={254}
             placeholder="name@example.com"
             required
@@ -685,10 +713,11 @@ function PersonalStep({ errors, register }: PersonalStepProps) {
           <TextInput
             {...phoneRegistration}
             autoComplete="tel"
-            description="11 digits, starting with 03."
+            description={t('11 digits, starting with 03.')}
+            dir="ltr"
             error={errorMessage(errors.phone)}
             inputMode="numeric"
-            label="Phone / WhatsApp"
+            label={t('Phone / WhatsApp')}
             maxLength={11}
             onChange={(event) => {
               event.target.value = formatPakistaniMobile(event.target.value);
@@ -702,7 +731,7 @@ function PersonalStep({ errors, register }: PersonalStepProps) {
           <TextInput
             autoComplete="address-level2"
             error={errorMessage(errors.currentCity)}
-            label="Current city"
+            label={t('Current city')}
             maxLength={100}
             required
             {...register('currentCity')}
@@ -721,12 +750,15 @@ interface PreferencesStepProps {
 }
 
 function PreferencesStep({ control, errors, register, taxonomy }: PreferencesStepProps) {
+  const { t } = useLanguage();
   const yearsExperienceRegistration = register('yearsExperience');
 
   return (
     <div className="space-y-7">
       <fieldset>
-        <legend className="text-sm font-bold text-primary">Preferred Gulf countries *</legend>
+        <legend className="text-sm font-bold text-primary">
+          {t('Preferred Gulf countries')} *
+        </legend>
         <Controller
           control={control}
           name="countries"
@@ -739,7 +771,7 @@ function PreferencesStep({ control, errors, register, taxonomy }: PreferencesSte
                   onChange={(event) => field.onChange(event.target.checked ? ['all-gulf'] : [])}
                   type="checkbox"
                 />
-                All Gulf countries
+                {t('All Gulf countries')}
               </label>
               {gulfCountries.map((country) => (
                 <label
@@ -762,7 +794,7 @@ function PreferencesStep({ control, errors, register, taxonomy }: PreferencesSte
                     }}
                     type="checkbox"
                   />
-                  {countryLabels[country]}
+                  {t(countryLabels[country])}
                 </label>
               ))}
             </div>
@@ -776,22 +808,23 @@ function PreferencesStep({ control, errors, register, taxonomy }: PreferencesSte
       <div className="grid gap-5 sm:grid-cols-2">
         <SelectField
           error={errorMessage(errors.field)}
-          label="Job field"
+          label={t('Job field')}
           required
           {...register('field')}
         >
-          <option value="">Select a field</option>
+          <option value="">{t('Select a field')}</option>
           {taxonomy.fields.map((field) => (
             <option key={field.id} value={field.id}>
-              {field.label}
+              {t(field.label)}
             </option>
           ))}
         </SelectField>
         <TextInput
           {...yearsExperienceRegistration}
+          dir="ltr"
           error={errorMessage(errors.yearsExperience)}
           inputMode="decimal"
-          label="Years of experience"
+          label={t('Years of experience')}
           maxLength={4}
           onChange={(event) => {
             event.target.value = formatExperience(event.target.value);
@@ -851,6 +884,7 @@ function PaymentStep({
   paymentFile,
   paymentPreviewUrl,
 }: PaymentStepProps) {
+  const { t } = useLanguage();
   const paymentDetails = [
     ['Bank', config.bankName],
     ['Account title', config.bankAccountTitle],
@@ -861,9 +895,9 @@ function PaymentStep({
     <div className="space-y-6">
       <div className="rounded-xl border-2 border-warning bg-amber-50 p-5">
         <p className="text-sm font-black uppercase tracking-[0.16em] text-warning">
-          Test payment details — do not pay
+          {t('Test payment details — do not pay')}
         </p>
-        <p className="mt-2 text-sm text-muted">Demo values only. Payment is not active.</p>
+        <p className="mt-2 text-sm text-muted">{t('Demo values only. Payment is not active.')}</p>
         <dl className="mt-4 space-y-3">
           {paymentDetails.map(([label, value]) => (
             <div
@@ -871,21 +905,23 @@ function PaymentStep({
               key={label}
             >
               <div>
-                <dt className="text-xs font-bold uppercase text-muted">{label}</dt>
-                <dd className="font-semibold text-primary">{value}</dd>
+                <dt className="text-xs font-bold uppercase text-muted">{t(label)}</dt>
+                <dd className="font-semibold text-primary" dir="ltr">
+                  {value}
+                </dd>
               </div>
               <Button
-                aria-label={`Copy ${label}`}
+                aria-label={t('Copy {label}', { label: t(label) })}
                 onClick={() => void onCopy(label, value)}
                 variant="ghost"
               >
-                <Copy aria-hidden="true" size={16} /> Copy
+                <Copy aria-hidden="true" size={16} /> {t('Copy')}
               </Button>
             </div>
           ))}
         </dl>
         <p className="mt-4 font-bold text-primary">
-          Demo fee: {config.serviceFeeCurrency} {config.serviceFeeAmount.toLocaleString()}
+          {t('Demo fee:')} {config.serviceFeeCurrency} {config.serviceFeeAmount.toLocaleString()}
         </p>
         <p aria-live="polite" className="mt-2 min-h-5 text-sm font-semibold text-brand-green">
           {copyStatus}
@@ -904,7 +940,7 @@ function PaymentStep({
       />
       {paymentPreviewUrl ? (
         <img
-          alt="Payment screenshot preview"
+          alt={t('Payment screenshot preview')}
           className="max-h-72 rounded-xl border object-contain"
           src={paymentPreviewUrl}
         />
@@ -914,14 +950,16 @@ function PaymentStep({
 }
 
 function SetupUnavailable({ error, onRetry }: { error: string; onRetry: () => void }) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-xl border bg-surface p-5" role={error ? 'alert' : 'status'}>
       <p className="font-semibold text-primary">
-        {error || 'Loading validated application options…'}
+        {t(error || 'Loading validated application options…')}
       </p>
       {error ? (
         <Button className="mt-4" onClick={onRetry} variant="outline">
-          Retry setup
+          {t('Retry setup')}
         </Button>
       ) : null}
     </div>
@@ -939,16 +977,17 @@ function ReviewStep({
   taxonomy?: JobTaxonomy | undefined;
   values: Record<string, unknown>;
 }) {
+  const { t } = useLanguage();
   const textValue = (key: string) => (typeof values[key] === 'string' ? values[key] : '');
   const selectedCountries = Array.isArray(values.countries)
     ? values.countries.filter((value): value is string => typeof value === 'string')
     : [];
   const field = taxonomy?.fields.find((item) => item.id === textValue('field'));
   const countries = selectedCountries.includes('all-gulf')
-    ? 'All Gulf countries'
+    ? t('All Gulf countries')
     : selectedCountries
         .filter((country): country is (typeof gulfCountries)[number] => country in countryLabels)
-        .map((country) => countryLabels[country])
+        .map((country) => t(countryLabels[country]))
         .join(', ');
   const sections: { title: string; step: number; items: [string, string | undefined][] }[] = [
     {
@@ -968,8 +1007,8 @@ function ReviewStep({
       step: 1,
       items: [
         ['Countries', countries],
-        ['Field', field?.label],
-        ['Experience', `${textValue('yearsExperience')} years`],
+        ['Field', field ? t(field.label) : undefined],
+        ['Experience', t('{years} years', { years: textValue('yearsExperience') })],
       ],
     },
     {
@@ -989,14 +1028,14 @@ function ReviewStep({
   return (
     <div className="space-y-5">
       <p className="rounded-xl bg-surface p-3 text-sm text-muted">
-        Check your details. Sensitive identifiers are masked.
+        {t('Check your details. Sensitive identifiers are masked.')}
       </p>
       {sections.map((section) => (
         <section className="rounded-xl border p-5" key={section.title}>
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-lg">{section.title}</h3>
+            <h3 className="text-lg">{t(section.title)}</h3>
             <Button onClick={() => onEdit(section.step)} variant="ghost">
-              Edit
+              {t('Edit')}
             </Button>
           </div>
           <dl className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -1004,8 +1043,10 @@ function ReviewStep({
               .filter(([, value]) => value !== undefined && value !== '')
               .map(([label, value]) => (
                 <div key={label}>
-                  <dt className="text-xs font-bold uppercase tracking-wide text-muted">{label}</dt>
-                  <dd className="mt-1 break-words font-semibold text-text">{String(value)}</dd>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-muted">
+                    {t(label)}
+                  </dt>
+                  <dd className="mt-1 break-words font-semibold text-text">{t(String(value))}</dd>
                 </div>
               ))}
           </dl>

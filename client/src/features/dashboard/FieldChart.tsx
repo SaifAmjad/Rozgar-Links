@@ -15,30 +15,34 @@ import { Card } from '../../components/ui/Card';
 import { ChartTable } from './ChartTable';
 import { formatCount } from './format';
 import { ProvenanceLabel } from './ProvenanceLabel';
+import { useLanguage } from '../../i18n/useLanguage';
 
 interface FieldChartProps {
   stats: StatsResponse;
 }
 
 export function FieldChart({ stats }: FieldChartProps) {
-  const chartData = [...stats.byField].sort((left, right) => left.count - right.count);
+  const { language, t } = useLanguage();
+  const chartData = [...stats.byField]
+    .sort((left, right) => left.count - right.count)
+    .map((entry) => ({ ...entry, displayField: t(entry.field) }));
   const rows = [...stats.byField]
     .sort((left, right) => right.count - left.count)
-    .map((entry) => ({ count: entry.count, label: entry.field }));
+    .map((entry) => ({ count: entry.count, label: t(entry.field) }));
 
   return (
     <Card className="min-w-0 border-0 p-4 shadow-none sm:p-5">
       <figure aria-labelledby="field-chart-title">
         <figcaption>
           <h3 className="text-lg" id="field-chart-title">
-            Openings by job field
+            {t('Openings by job field')}
           </h3>
           <div className="mt-2">
             <ProvenanceLabel isStale={stats.isStale} />
           </div>
         </figcaption>
         <div
-          aria-label="Bar chart of indicative openings by job field"
+          aria-label={t('Bar chart of indicative openings by job field')}
           className="mt-3 hidden h-[28rem] w-full md:block"
           role="img"
         >
@@ -47,17 +51,17 @@ export function FieldChart({ stats }: FieldChartProps) {
               <CartesianGrid horizontal={false} stroke="#e2e8f0" strokeDasharray="4 4" />
               <XAxis allowDecimals={false} tick={{ fill: '#475569', fontSize: 12 }} type="number" />
               <YAxis
-                dataKey="field"
+                dataKey="displayField"
                 tick={{ fill: '#475569', fontSize: 11 }}
                 type="category"
                 width={118}
               />
-              <Tooltip formatter={(value) => formatCount(Number(value))} />
+              <Tooltip formatter={(value) => formatCount(Number(value), language)} />
               <Legend />
               <Bar
                 dataKey="count"
                 fill="#2e8b57"
-                name="Indicative openings"
+                name={t('Indicative openings')}
                 radius={[0, 6, 6, 0]}
               />
             </BarChart>

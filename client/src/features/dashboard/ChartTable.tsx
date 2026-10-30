@@ -1,6 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 
 import { formatCount } from './format';
+import { useLanguage } from '../../i18n/useLanguage';
 
 interface ChartTableProps {
   labelHeader: string;
@@ -9,10 +10,12 @@ interface ChartTableProps {
 }
 
 export function ChartTable({ labelHeader, rows, valueHeader }: ChartTableProps) {
+  const { language, t } = useLanguage();
+
   return (
     <details className="group mt-3 overflow-hidden rounded-lg border bg-surface">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-primary">
-        View exact values
+        {t('View exact values')}
         <ChevronDown
           aria-hidden="true"
           className="shrink-0 transition-transform group-open:rotate-180"
@@ -20,14 +23,14 @@ export function ChartTable({ labelHeader, rows, valueHeader }: ChartTableProps) 
         />
       </summary>
       <div className="max-h-72 overflow-auto border-t bg-bg">
-        <table className="w-full border-collapse text-left text-sm">
+        <table className="w-full border-collapse text-start text-sm">
           <thead className="sticky top-0 bg-surface text-primary">
             <tr>
               <th className="px-4 py-3 font-bold" scope="col">
-                {labelHeader}
+                {t(labelHeader)}
               </th>
-              <th className="px-4 py-3 text-right font-bold" scope="col">
-                {valueHeader}
+              <th className="px-4 py-3 text-end font-bold" scope="col">
+                {t(valueHeader)}
               </th>
             </tr>
           </thead>
@@ -35,10 +38,10 @@ export function ChartTable({ labelHeader, rows, valueHeader }: ChartTableProps) 
             {rows.map((row) => (
               <tr className="border-t" key={row.label}>
                 <th className="px-4 py-3 font-medium text-text" scope="row">
-                  {row.label}
+                  {t(row.label)}
                 </th>
-                <td className="px-4 py-3 text-right tabular-nums text-muted">
-                  {formatCount(row.count)}
+                <td className="px-4 py-3 text-end tabular-nums text-muted">
+                  {formatCount(row.count, language)}
                 </td>
               </tr>
             ))}

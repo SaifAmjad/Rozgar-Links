@@ -15,19 +15,21 @@ import { Card } from '../../components/ui/Card';
 import { ChartTable } from './ChartTable';
 import { formatCount, formatDate } from './format';
 import { ProvenanceLabel } from './ProvenanceLabel';
+import { useLanguage } from '../../i18n/useLanguage';
 
 interface TrendChartProps {
   stats: StatsResponse;
 }
 
 export function TrendChart({ stats }: TrendChartProps) {
+  const { language, t } = useLanguage();
   const chartData = stats.last7Days.map((entry) => ({
     ...entry,
-    displayDate: formatDate(entry.date),
+    displayDate: formatDate(entry.date, language),
   }));
   const rows = stats.last7Days.map((entry) => ({
     count: entry.totalOpenings,
-    label: formatDate(entry.date),
+    label: formatDate(entry.date, language),
   }));
 
   return (
@@ -35,14 +37,14 @@ export function TrendChart({ stats }: TrendChartProps) {
       <figure aria-labelledby="trend-chart-title">
         <figcaption>
           <h3 className="text-lg" id="trend-chart-title">
-            Seven-day trend
+            {t('Seven-day trend')}
           </h3>
           <div className="mt-2">
             <ProvenanceLabel isStale={stats.isStale} />
           </div>
         </figcaption>
         <div
-          aria-label="Line chart of indicative openings over seven days"
+          aria-label={t('Line chart of indicative openings over seven days')}
           className="mt-3 hidden h-56 w-full sm:block lg:h-64"
           role="img"
         >
@@ -56,12 +58,12 @@ export function TrendChart({ stats }: TrendChartProps) {
                 tick={{ fill: '#475569', fontSize: 12 }}
                 width={48}
               />
-              <Tooltip formatter={(value) => formatCount(Number(value))} />
+              <Tooltip formatter={(value) => formatCount(Number(value), language)} />
               <Legend />
               <Line
                 dataKey="totalOpenings"
                 dot={{ fill: '#1565a8', r: 4 }}
-                name="Indicative openings"
+                name={t('Indicative openings')}
                 stroke="#1565a8"
                 strokeWidth={3}
                 type="monotone"

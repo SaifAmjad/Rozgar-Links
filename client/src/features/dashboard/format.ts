@@ -1,16 +1,22 @@
-export function formatCount(value: number) {
-  return new Intl.NumberFormat().format(value);
+import type { Language } from '../../i18n/translations';
+
+function locale(language: Language) {
+  return language === 'ur' ? 'ur-PK' : 'en-PK';
 }
 
-export function formatDate(date: string) {
-  return new Intl.DateTimeFormat(undefined, {
+export function formatCount(value: number, language: Language = 'en') {
+  return new Intl.NumberFormat(locale(language)).format(value);
+}
+
+export function formatDate(date: string, language: Language = 'en') {
+  return new Intl.DateTimeFormat(locale(language), {
     day: 'numeric',
     month: 'short',
   }).format(new Date(`${date}T12:00:00Z`));
 }
 
-export function formatUpdatedAt(timestamp: string) {
-  return new Intl.DateTimeFormat(undefined, {
+export function formatUpdatedAt(timestamp: string, language: Language = 'en') {
+  return new Intl.DateTimeFormat(locale(language), {
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',

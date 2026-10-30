@@ -39,6 +39,14 @@
     @apply m-0 min-h-screen min-w-0 bg-bg text-text antialiased;
   }
 
+  html[dir='rtl'] body {
+    font-family: 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', Tahoma, Arial, sans-serif;
+  }
+
+  html[dir='rtl'] body {
+    line-height: 1.8;
+  }
+
   h1,
   h2,
   h3 {

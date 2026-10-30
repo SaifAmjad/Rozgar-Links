@@ -73,4 +73,39 @@ describe('API security middleware', () => {
     expect(blocked.status).toBe(403);
     expect(blocked.body.error.code).toBe('origin_not_allowed');
   });
+
+  it('allows only the exact Vercel deployment origins supplied by the platform', async () => {
+    const previousVercelUrl = process.env.VERCEL_URL;
+    process.env.VERCEL_URL = 'rozgar-links-preview.vercel.app';
+
+    try {
+      const allowed = await request(createApp())
+        .get('/api/health')
+        .set('Origin', 'https://rozgar-links-preview.vercel.app');
+      const lookalike = await request(createApp())
+        .get('/api/health')
+        .set('Origin', 'https://rozgar-links-preview.vercel.app.evil.example');
+
+      expect(allowed.status).toBe(200);
+      expect(allowed.headers['access-control-allow-origin']).toBe(
+        'https://rozgar-links-preview.vercel.app',
+      );
+      expect(lookalike.status).toBe(403);
+    } finally {
+      if (previousVercelUrl === undefined) delete process.env.VERCEL_URL;
+      else process.env.VERCEL_URL = previousVercelUrl;
+    }
+  });
+
+  it('trusts one platform proxy when running as a Vercel function', () => {
+    const previousVercel = process.env.VERCEL;
+    process.env.VERCEL = '1';
+
+    try {
+      expect(createApp().get('trust proxy')).toBe(1);
+    } finally {
+      if (previousVercel === undefined) delete process.env.VERCEL;
+      else process.env.VERCEL = previousVercel;
+    }
+  });
 });

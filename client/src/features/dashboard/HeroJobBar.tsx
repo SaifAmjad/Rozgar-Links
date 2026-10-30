@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { StatsResponse } from '@rozgar-links/shared';
 
 import { Button } from '../../components/ui/Button';
+import { useLanguage } from '../../i18n/useLanguage';
 import { fetchStats } from './api';
 import { formatCount } from './format';
 
@@ -51,7 +52,10 @@ function CountryFlag({ country }: { country: string }) {
     return (
       <svg {...commonProps}>
         <rect fill="#8A1538" height="16" width="24" />
-        <path d="M0 0h7l3 1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1H0z" fill="white" />
+        <path
+          d="M0 0h7l3 1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1 3 1.1-3 1.1H0z"
+          fill="white"
+        />
       </svg>
     );
   }
@@ -71,7 +75,10 @@ function CountryFlag({ country }: { country: string }) {
     return (
       <svg {...commonProps}>
         <rect fill="#CE1126" height="16" width="24" />
-        <path d="M0 0h7l3 1.6L7 3.2l3 1.6-3 1.6L10 8 7 9.6l3 1.6-3 1.6 3 1.6L7 16H0z" fill="white" />
+        <path
+          d="M0 0h7l3 1.6L7 3.2l3 1.6-3 1.6L10 8 7 9.6l3 1.6-3 1.6 3 1.6L7 16H0z"
+          fill="white"
+        />
       </svg>
     );
   }
@@ -85,6 +92,7 @@ function hasIllustrativeIncrease(date: string, country: string, count: number) {
 }
 
 export function HeroJobBar() {
+  const { language, t } = useLanguage();
   const [stats, setStats] = useState<StatsResponse>();
   const [error, setError] = useState(false);
   const [requestVersion, setRequestVersion] = useState(0);
@@ -107,18 +115,25 @@ export function HeroJobBar() {
 
   if (!stats && !error) {
     return (
-      <div aria-label="Loading indicative job counts" className="mt-9 h-28 animate-pulse rounded-xl border border-white/20 bg-white/10 sm:h-20" role="status">
-        <span className="sr-only">Loading indicative job counts</span>
+      <div
+        aria-label={t('Loading indicative job counts')}
+        className="mt-9 h-28 animate-pulse rounded-xl border border-white/20 bg-white/10 sm:h-20"
+        role="status"
+      >
+        <span className="sr-only">{t('Loading indicative job counts')}</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="mt-9 flex min-h-20 flex-col items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm sm:flex-row" role="alert">
-        <p className="text-white/90">Indicative job counts are temporarily unavailable.</p>
+      <div
+        className="mt-9 flex min-h-20 flex-col items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm sm:flex-row"
+        role="alert"
+      >
+        <p className="text-white/90">{t('Indicative job counts are temporarily unavailable.')}</p>
         <Button className="shrink-0" onClick={retry} type="button" variant="outline">
-          <RefreshCw aria-hidden="true" size={16} /> Retry
+          <RefreshCw aria-hidden="true" size={16} /> {t('Retry')}
         </Button>
       </div>
     );
@@ -127,11 +142,18 @@ export function HeroJobBar() {
   if (!stats) return null;
 
   return (
-    <div aria-label="Indicative jobs by country" className="mt-9 overflow-hidden rounded-xl border border-white/20 bg-white text-text shadow-soft">
+    <div
+      aria-label={t('Indicative jobs by country')}
+      className="mt-9 overflow-hidden rounded-xl border border-white/20 bg-white text-text shadow-soft"
+    >
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
         <div className="col-span-2 flex items-center justify-between gap-3 bg-primary px-4 py-3 text-white sm:col-span-3 lg:col-span-1 lg:block">
-          <p className="text-xs font-bold uppercase tracking-wider text-white/75">Total jobs</p>
-          <p className="text-xl font-black text-white lg:mt-1">{formatCount(stats.totalOpenings)}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-white/75">
+            {t('Total jobs')}
+          </p>
+          <p className="text-xl font-black text-white lg:mt-1">
+            {formatCount(stats.totalOpenings, language)}
+          </p>
         </div>
         {stats.byCountry.map(({ country, count }) => {
           const isIncrease = hasIllustrativeIncrease(stats.date, country, count);
@@ -145,15 +167,19 @@ export function HeroJobBar() {
               >
                 <CountryFlag country={country} />
                 <span className="truncate">
-                  {country === 'United Arab Emirates' ? 'UAE' : country}
+                  {country === 'United Arab Emirates' && language === 'en' ? 'UAE' : t(country)}
                 </span>
               </p>
               <p className="mt-0.5 flex items-center gap-1 text-primary">
-                <span className="text-lg font-black">{formatCount(count)}</span>
-                <span className="text-[11px] font-semibold text-muted">jobs</span>
+                <span className="text-lg font-black">{formatCount(count, language)}</span>
+                <span className="text-[11px] font-semibold text-muted">{t('jobs')}</span>
                 <TrendIcon
-                  aria-label={`Illustrative ${isIncrease ? 'increase' : 'decrease'} indicator`}
-                  className={isIncrease ? 'ml-0.5 text-brand-green' : 'ml-0.5 text-error'}
+                  aria-label={t(
+                    isIncrease
+                      ? 'Illustrative increase indicator'
+                      : 'Illustrative decrease indicator',
+                  )}
+                  className={isIncrease ? 'ms-0.5 text-brand-green' : 'ms-0.5 text-error'}
                   size={15}
                 />
               </p>
@@ -162,7 +188,9 @@ export function HeroJobBar() {
         })}
       </div>
       <p className="sr-only">
-        Indicative figures, updated daily. Direction arrows are illustrative, not verified trends.
+        {t(
+          'Indicative figures, updated daily. Direction arrows are illustrative, not verified trends.',
+        )}
       </p>
     </div>
   );

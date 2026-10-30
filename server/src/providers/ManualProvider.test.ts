@@ -1,26 +1,37 @@
 import { describe, expect, it } from 'vitest';
 
-import { gccCountryNames, jobTaxonomy } from '@rozgar-links/shared';
-
 import { ManualProvider } from './ManualProvider.js';
 import { ScraperProvider } from './ScraperProvider.js';
 
 describe('job providers', () => {
-  it('loads 40 honest fictional samples spanning all countries and fields', async () => {
-    const jobs = await new ManualProvider(
-      undefined,
-      () => new Date('2026-10-13T00:00:00.000Z'),
-    ).fetchJobs();
+  it('loads exactly 64 bilingual occupations in nine categories', async () => {
+    const catalog = await new ManualProvider().fetchJobs();
 
-    expect(jobs).toHaveLength(40);
-    expect(new Set(jobs.map((job) => job.country))).toEqual(new Set(gccCountryNames));
-    expect(new Set(jobs.map((job) => job.field))).toEqual(
-      new Set(jobTaxonomy.fields.map((field) => field.id)),
+    expect(catalog.categories).toHaveLength(9);
+    expect(catalog.occupations).toHaveLength(64);
+    expect(new Set(catalog.occupations.map((occupation) => occupation.id)).size).toBe(64);
+    expect(new Set(catalog.occupations.map((occupation) => occupation.slug)).size).toBe(64);
+    expect(
+      catalog.occupations.every(
+        (occupation) =>
+          occupation.titleEn.length > 0 &&
+          occupation.titleUr.length > 0 &&
+          occupation.countryIds.length === 0,
+      ),
+    ).toBe(true);
+  });
+
+  it('preserves the Full-Stack Software Engineer open-ended ceiling', async () => {
+    const catalog = await new ManualProvider().fetchJobs();
+    const occupation = catalog.occupations.find(
+      (item) => item.slug === 'full-stack-software-engineer',
     );
-    expect(jobs.every((job) => job.isSample)).toBe(true);
-    expect(jobs.every((job) => job.source === 'Sample listing')).toBe(true);
-    expect(jobs.every((job) => job.sourceUrl === null)).toBe(true);
-    expect(JSON.stringify(jobs)).not.toMatch(/gulftalent|naukrigulf/i);
+
+    expect(occupation).toMatchObject({
+      salaryMin: 4500,
+      salaryMax: null,
+      salaryMaxOpenEnded: true,
+    });
   });
 
   it('keeps the scraper stub disabled', async () => {
