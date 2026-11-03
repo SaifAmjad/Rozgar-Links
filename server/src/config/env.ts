@@ -5,8 +5,6 @@ import dotenv from 'dotenv';
 import { validate as validateCron } from 'node-cron';
 import { z } from 'zod';
 
-import { supportedCurrencySchema } from '@rozgar-links/shared';
-
 const rootEnvPath = fileURLToPath(new URL('../../../.env', import.meta.url));
 const serverEnvPath = fileURLToPath(new URL('../../.env', import.meta.url));
 const selectedEnvPath = existsSync(rootEnvPath) ? rootEnvPath : serverEnvPath;
@@ -20,6 +18,13 @@ const singleEmailAddressSchema = z
   .refine((value) => !/[,;\r\n]/.test(value), 'Enter exactly one email address.');
 
 const envSchema = z.object({
+  CV_SIGNING_SECRET: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z
+      .string()
+      .regex(/^[a-fA-F0-9]{64}$/, 'Use a random 32-byte hex key.')
+      .optional(),
+  ),
   ADMIN_EMAIL: singleEmailAddressSchema.default('admin@example.invalid'),
   APP_TIME_ZONE: z
     .string()
@@ -55,8 +60,8 @@ const envSchema = z.object({
     .default('true')
     .transform(() => true as const),
   PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
-  SERVICE_FEE_AMOUNT: z.coerce.number().finite().nonnegative().default(5000),
-  SERVICE_FEE_CURRENCY: supportedCurrencySchema.default('PKR'),
+  SERVICE_FEE_AMOUNT: z.coerce.number().finite().nonnegative().default(250),
+  SERVICE_FEE_CURRENCY: z.literal('PKR').default('PKR'),
   SMTP_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).default(10_000),
   SMTP_HOST: z.string().trim().min(1).default('smtp.example.invalid'),
   SMTP_PASS: z.string().min(1).default('replace-me'),

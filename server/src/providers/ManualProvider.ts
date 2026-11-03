@@ -1,10 +1,8 @@
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { occupationDirectorySeed } from '@rozgar-links/shared';
 
 import { parseOccupationSeed, type OccupationCatalog } from '../jobs/occupationDirectory.js';
 import type { JobProvider } from './JobProvider.js';
-
-const defaultSeedFile = fileURLToPath(new URL('../../data/occupations.seed.json', import.meta.url));
 
 export class ManualProvider implements JobProvider {
   readonly descriptor = {
@@ -13,10 +11,11 @@ export class ManualProvider implements JobProvider {
     label: 'Rozgar Link Master GCC Occupations & Salary Directory (2026)',
   };
 
-  constructor(private readonly filePath = defaultSeedFile) {}
+  constructor(private readonly filePath?: string) {}
 
   async fetchJobs(): Promise<OccupationCatalog> {
-    const serialized = await readFile(this.filePath, 'utf8');
-    return parseOccupationSeed(JSON.parse(serialized));
+    return parseOccupationSeed(
+      this.filePath ? JSON.parse(await readFile(this.filePath, 'utf8')) : occupationDirectorySeed,
+    );
   }
 }

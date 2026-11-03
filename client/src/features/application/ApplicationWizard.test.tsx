@@ -1,195 +1,331 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { jobTaxonomy, type PublicConfigResponse } from '@rozgar-links/shared';
-
-import { fetchApplicationSetup, submitApplication } from './api';
+import {
+  jobTaxonomy,
+  applicationOccupations,
+  type PublicConfigResponse,
+  type CvVerificationResponse,
+} from '@rozgar-links/shared';
+import { fetchApplicationSetup, submitApplication, verifyCv } from './api';
 import { ApplicationWizard } from './ApplicationWizard';
+import { browserSubmissionKey } from './browserSubmission';
 import { SuccessPage } from '../../pages/SuccessPage';
+import { LanguageProvider } from '../../i18n/LanguageProvider';
+import { languageStorageKey, translate, type Language } from '../../i18n/translations';
 
-vi.mock('./api', () => ({ fetchApplicationSetup: vi.fn(), submitApplication: vi.fn() }));
-
+vi.mock('./api', () => ({
+  fetchApplicationSetup: vi.fn(),
+  submitApplication: vi.fn(),
+  verifyCv: vi.fn(),
+}));
 const config: PublicConfigResponse = {
   bankAccountTitle: 'Rozgar Links Demo',
   bankName: 'Demo Bank',
   bankAccountNumber: 'DEMO-0000',
   bankIban: 'PK00DEMO0000000000000000',
-  serviceFeeAmount: 2500,
+  serviceFeeAmount: 250,
   serviceFeeCurrency: 'PKR',
   taxonomyVersion: jobTaxonomy.version,
   isDemoPayment: true,
   applicationSubmissionEnabled: true,
 };
-
-function renderWizard(route = '/apply') {
-  return render(
-    <MemoryRouter initialEntries={[route]}>
-      <Routes>
-        <Route path="/apply" element={<ApplicationWizard />} />
-        <Route path="/success" element={<SuccessPage />} />
-      </Routes>
-    </MemoryRouter>,
+const cvReference = 'RL-CV-2026-ABCDEFGH2345';
+const pdf = () => new File(['test CV'], 'official.pdf', { type: 'application/pdf' });
+const screenshot = () => new File(['test image'], 'payment.png', { type: 'image/png' });
+let language: Language = 'en';
+const t = (message: string, values?: Record<string, string | number>) =>
+  translate(language, message, values);
+const jobLabel = (index = 0) => {
+  const job = applicationOccupations[index];
+  if (!job) throw new Error('Test occupation missing.');
+  return language === 'ur' ? job.titleUr : job.titleEn;
+};
+async function renderWizard(lang: Language = 'en', route = '/apply') {
+  language = lang;
+  window.localStorage.setItem(languageStorageKey, lang);
+  render(
+    <LanguageProvider>
+      <MemoryRouter initialEntries={[route]}>
+        <Routes>
+          <Route path="/apply" element={<ApplicationWizard />} />
+          <Route path="/success" element={<SuccessPage />} />
+        </Routes>
+      </MemoryRouter>
+    </LanguageProvider>,
+  );
+  await screen.findByRole('option', { name: t('Construction') });
+}
+function change(name: string, value: string) {
+  fireEvent.change(screen.getByLabelText(new RegExp(`^${t(name)}`)), { target: { value } });
+}
+async function proceed(name: string) {
+  fireEvent.click(screen.getByRole('button', { name: t('Continue to {step}', { step: t(name) }) }));
+  await screen.findByRole('heading', { level: 2, name: t(name) });
+}
+async function reachPreferences(lang: Language = 'en') {
+  await renderWizard(lang);
+  change('First name', 'Test');
+  change('Last name', 'Applicant');
+  change('Email address', 'test@example.invalid');
+  change('WhatsApp number', '03001234567');
+  change('Job field', 'construction');
+  await proceed('Preferences');
+}
+async function reachCv(lang: Language = 'en') {
+  await reachPreferences(lang);
+  fireEvent.click(screen.getByLabelText(t('Saudi Arabia')));
+  fireEvent.click(screen.getByRole('checkbox', { name: jobLabel() }));
+  await proceed('CV Status');
+}
+async function chooseReturning() {
+  fireEvent.click(
+    screen.getByRole('radio', { name: new RegExp(t('Yes, I already have a Rozgar Links CV')) }),
+  );
+  fireEvent.change(screen.getByLabelText(new RegExp(`^${t('Official Rozgar Links CV')}`)), {
+    target: { files: [pdf()] },
+  });
+  await screen.findByText(
+    t(
+      'Your Rozgar Links CV has been verified. You can submit your application without paying the CV preparation fee again.',
+    ),
   );
 }
-
-function fillPersonalDetails() {
-  fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'Ayesha' } });
-  fireEvent.change(screen.getByLabelText(/last name/i), { target: { value: 'Khan' } });
-  fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: '1992-04-10' } });
-  fireEvent.change(screen.getByLabelText(/^cnic/i), { target: { value: '12345-1234567-1' } });
-  fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'ayesha@example.com' } });
-  fireEvent.change(screen.getByLabelText(/phone \/ whatsapp/i), {
-    target: { value: '03001234567' },
+async function reachNewReview(lang: Language = 'en') {
+  await reachCv(lang);
+  fireEvent.click(screen.getByRole('radio', { name: new RegExp(t('No, I need a new CV')) }));
+  expect(
+    screen.queryByLabelText(new RegExp(`^${t('Official Rozgar Links CV')}`)),
+  ).not.toBeInTheDocument();
+  await proceed('Payment');
+  fireEvent.change(screen.getByLabelText(new RegExp(`^${t('Payment screenshot')}`)), {
+    target: { files: [screenshot()] },
   });
-  fireEvent.change(screen.getByLabelText(/current city/i), { target: { value: 'Lahore' } });
+  await proceed('Review');
 }
 
-async function reachPreferences(route = '/apply') {
-  renderWizard(route);
-  fillPersonalDetails();
-  fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-  expect(await screen.findByRole('heading', { name: 'Preferences' })).toBeInTheDocument();
-}
-
-async function fillPreferences() {
-  if (!(screen.getByLabelText('Saudi Arabia') as HTMLInputElement).checked) {
-    fireEvent.click(screen.getByLabelText('Saudi Arabia'));
-  }
-  fireEvent.change(screen.getByLabelText(/job field/i), {
-    target: { value: jobTaxonomy.fields[0]?.id },
-  });
-  fireEvent.change(screen.getByLabelText(/years of experience/i), { target: { value: '4' } });
-  fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-  expect(await screen.findByRole('heading', { name: 'Documents' })).toBeInTheDocument();
-}
-
-async function reachReview() {
-  await reachPreferences();
-  await fillPreferences();
-
-  const cv = new File(['demo cv'], 'demo-resume.pdf', { type: 'application/pdf' });
-  fireEvent.change(screen.getByLabelText(/^cv/i), { target: { files: [cv] } });
-  fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-  expect(await screen.findByRole('heading', { name: 'Payment' })).toBeInTheDocument();
-  expect(screen.getByText(/test payment details/i)).toBeInTheDocument();
-
-  const screenshot = new File(['demo payment'], 'demo-payment.png', { type: 'image/png' });
-  fireEvent.change(screen.getByLabelText(/payment screenshot/i), {
-    target: { files: [screenshot] },
-  });
-  expect(screen.queryByLabelText(/transaction reference/i)).not.toBeInTheDocument();
-  expect(screen.queryByLabelText(/payment date/i)).not.toBeInTheDocument();
-  expect(screen.queryByText(/required confirmations/i)).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-  expect(await screen.findByRole('heading', { name: 'Review' })).toBeInTheDocument();
-}
-
-describe('ApplicationWizard', () => {
+describe('conditional application wizard', () => {
   beforeEach(() => {
-    vi.mocked(fetchApplicationSetup).mockResolvedValue({ config, taxonomy: jobTaxonomy });
-    vi.mocked(submitApplication).mockReset();
-    vi.mocked(submitApplication).mockResolvedValue({
-      success: true,
-      referenceId: 'RL-2026-ABC234',
-    });
+    language = 'en';
+    vi.mocked(fetchApplicationSetup)
+      .mockReset()
+      .mockResolvedValue({ config, taxonomy: jobTaxonomy });
+    vi.mocked(submitApplication)
+      .mockReset()
+      .mockResolvedValue({ success: true, referenceId: 'RL-2026-ABC234' });
+    vi.mocked(verifyCv).mockReset().mockResolvedValue({ valid: true, cvReference });
   });
-
-  it('blocks incomplete personal details and announces errors', async () => {
-    renderWizard();
+  it('requires personal fields including job field, omits removed fields and formats WhatsApp', async () => {
+    await renderWizard();
+    expect(
+      screen.queryByLabelText(/cnic|date of birth|current city|passport|years of experience/i),
+    ).not.toBeInTheDocument();
+    change('WhatsApp number', '03ab001-23456789');
+    expect(screen.getByLabelText(/^WhatsApp/)).toHaveValue('03001234567');
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-
     expect(await screen.findByRole('alert')).toHaveTextContent('First name is required.');
-    expect(screen.getByRole('heading', { name: 'Personal' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /job field/i })).toBeInTheDocument();
   });
-
-  it('formats CNIC and removes non-digits from Pakistani phone input', () => {
-    renderWizard();
-
-    const cnic = screen.getByLabelText(/^cnic/i);
-    const phone = screen.getByLabelText(/phone \/ whatsapp/i);
-    fireEvent.change(cnic, { target: { value: '12345abc1234567z1' } });
-    fireEvent.change(phone, { target: { value: '03ab001-23456789' } });
-
-    expect(cnic).toHaveValue('12345-1234567-1');
-    expect(phone).toHaveValue('03001234567');
-    expect(phone).toHaveAttribute('maxlength', '11');
-  });
-
-  it('removes non-numeric characters from experience', async () => {
+  it('requires occupations and limits selections to three removable jobs', async () => {
     await reachPreferences();
-
-    const experience = screen.getByLabelText(/years of experience/i);
-    fireEvent.change(experience, { target: { value: '4years' } });
-
-    expect(experience).toHaveValue('4');
+    fireEvent.click(screen.getByLabelText('Saudi Arabia'));
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/at least one occupation/i);
+    for (let index = 0; index < 3; index++)
+      fireEvent.click(screen.getByRole('checkbox', { name: jobLabel(index) }));
+    expect(screen.getByText('3 of 3 jobs selected')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: jobLabel(3) })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: `Remove ${jobLabel()}` }));
+    expect(screen.getByRole('checkbox', { name: jobLabel(3) })).toBeEnabled();
+    change('Search occupations', applicationOccupations[3]?.titleEn ?? '');
+    expect(
+      screen.getAllByRole('checkbox').some((element) => element.getAttribute('disabled') === ''),
+    ).toBe(false);
   });
-
-  it('prefills recognized job choices and explains they can be changed', async () => {
-    const field = jobTaxonomy.fields[0];
-    if (!field) throw new Error('Expected a taxonomy field.');
-
-    await reachPreferences(
-      `/apply?country=Saudi%20Arabia&field=${encodeURIComponent(field.id)}&job=sample-001`,
-    );
+  it('reconciles job selections when changing field while preserving countries', async () => {
+    await reachCv();
+    fireEvent.click(screen.getByRole('button', { name: 'Personal' }));
+    change('Job field', 'healthcare');
+    await proceed('Preferences');
     expect(screen.getByLabelText('Saudi Arabia')).toBeChecked();
-    expect(screen.getByLabelText(/job field/i)).toHaveValue(field.id);
-    expect(screen.getByText(/job selected/i)).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 jobs selected')).toBeInTheDocument();
+    expect(screen.getByText(/selected jobs were removed/i)).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: jobLabel() })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Registered Staff Nurse' })).toBeInTheDocument();
   });
-
-  it('shows a compact accessible progress indicator', () => {
-    renderWizard();
-
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
+  it('offers education occupations, explains the chosen field and preserves All Gulf expansion', async () => {
+    await reachPreferences();
+    fireEvent.click(screen.getByLabelText('All Gulf countries'));
+    expect(screen.getByLabelText('Saudi Arabia')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Personal' }));
+    change('Job field', 'education');
+    await proceed('Preferences');
     expect(
-      screen.getAllByText(/tell us who you are and how to contact you/i).length,
-    ).toBeGreaterThan(0);
-  });
-
-  it('submits valid multipart data once and shows the server reference', async () => {
-    await reachReview();
-    expect(screen.getByText('••••5671')).toBeInTheDocument();
-    expect(screen.getByText('Unverified demo evidence')).toBeInTheDocument();
-
-    const submitButton = screen.getByRole('button', { name: /submit application/i });
-    await waitFor(() => expect(submitButton).toBeEnabled());
-    fireEvent.click(submitButton);
-    fireEvent.click(submitButton);
-
-    expect(
-      await screen.findByRole('heading', { name: /application submitted/i }),
+      screen.getByText('You selected Education in step 1. These occupations match your job field.'),
     ).toBeInTheDocument();
-    expect(screen.getByText('RL-2026-ABC234')).toBeInTheDocument();
-    expect(submitApplication).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(/No matching occupations/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Primary School Teacher' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Teaching Assistant' }));
+    expect(screen.getByText('2 of 3 jobs selected')).toBeInTheDocument();
+    expect(screen.getByLabelText('All Gulf countries')).toBeChecked();
+    await proceed('CV Status');
   });
-
-  it('preserves selected files and allows retry after a submission failure', async () => {
+  it('shows the chosen field and education labels in Urdu', async () => {
+    await reachPreferences('ur');
+    fireEvent.click(screen.getByRole('button', { name: t('Personal') }));
+    change('Job field', 'education');
+    await proceed('Preferences');
+    expect(
+      screen.getByText(
+        t('You selected {field} in step 1. These occupations match your job field.', {
+          field: t('Education'),
+        }),
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'پرائمری اسکول ٹیچر' })).toBeInTheDocument();
+  });
+  it.each(['en', 'ur'] as const)(
+    'submits a new-CV request with payment only in %s',
+    async (lang) => {
+      await reachNewReview(lang);
+      expect(document.documentElement.dir).toBe(lang === 'ur' ? 'rtl' : 'ltr');
+      expect(screen.getByText('PKR 250')).toBeInTheDocument();
+      expect(screen.getByText(t('Attached, awaiting manual verification'))).toBeInTheDocument();
+      const button = screen.getByRole('button', { name: t('Submit application') });
+      await waitFor(() => expect(button).toBeEnabled());
+      fireEvent.click(button);
+      fireEvent.click(button);
+      await screen.findByRole('heading', { name: t('Application submitted') });
+      expect(submitApplication).toHaveBeenCalledTimes(1);
+      const [fields, files] = vi.mocked(submitApplication).mock.calls[0] ?? [];
+      expect(fields).toMatchObject({
+        selectedJobIds: ['occupation-001'],
+        cvPathType: 'new_cv_required',
+      });
+      expect(files?.cv).toBeUndefined();
+      expect(files?.paymentScreenshot?.name).toBe('payment.png');
+    },
+  );
+  it.each(['en', 'ur'] as const)(
+    'verifies an official CV and skips payment in %s',
+    async (lang) => {
+      await reachCv(lang);
+      await chooseReturning();
+      await proceed('Review');
+      expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '4');
+      expect(screen.queryByRole('button', { name: t('Payment') })).not.toBeInTheDocument();
+      expect(screen.getByText(cvReference)).toBeInTheDocument();
+      expect(screen.getByText('PKR 0')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: t('Back') }));
+      await screen.findByRole('heading', { level: 2, name: t('CV Status') });
+      await proceed('Review');
+      fireEvent.click(screen.getByRole('button', { name: t('Submit application') }));
+      await screen.findByRole('heading', { name: t('Application submitted') });
+      const [fields, files] = vi.mocked(submitApplication).mock.calls[0] ?? [];
+      expect(fields?.cvPathType).toBe('existing_rozgar_cv');
+      expect(files?.cv?.name).toBe('official.pdf');
+      expect(files?.paymentScreenshot).toBeUndefined();
+    },
+  );
+  it('blocks invalid CVs and never grants payment exemption', async () => {
+    vi.mocked(verifyCv).mockResolvedValue({
+      valid: false,
+      message: 'This document could not be verified as an official Rozgar Links CV.',
+    });
+    await reachCv();
+    fireEvent.click(screen.getByRole('radio', { name: /Yes, I already/ }));
+    fireEvent.change(screen.getByLabelText(/^Official Rozgar Links CV/), {
+      target: { files: [pdf()] },
+    });
+    await screen.findByText(/This document could not be verified/);
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/verified official PDF/);
+    expect(submitApplication).not.toHaveBeenCalled();
+  });
+  it('clears payment state on switching journeys and ignores late verification results', async () => {
+    await reachNewReview();
+    fireEvent.click(screen.getByRole('button', { name: 'CV Status' }));
+    let resolveVerification!: (value: CvVerificationResponse) => void;
+    vi.mocked(verifyCv).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveVerification = resolve;
+        }),
+    );
+    fireEvent.click(screen.getByRole('radio', { name: /Yes, I already/ }));
+    fireEvent.change(screen.getByLabelText(/^Official Rozgar Links CV/), {
+      target: { files: [pdf()] },
+    });
+    expect(await screen.findByText(/Checking your official/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: /No, I need/ }));
+    await act(async () => resolveVerification({ valid: true, cvReference }));
+    await proceed('Payment');
+    expect(screen.queryByText(/Selected: payment.png/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Payment screenshot is required/);
+  });
+  it('retains files for retry after SMTP failure', async () => {
     vi.mocked(submitApplication).mockRejectedValueOnce(
       new Error('Application email was not accepted.'),
     );
-    await reachReview();
-
-    const submitButton = screen.getByRole('button', { name: /submit application/i });
-    await waitFor(() => expect(submitButton).toBeEnabled());
-    fireEvent.click(submitButton);
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(/remain available for retry/i);
-    expect(submitButton).toBeEnabled();
-    const documentEditButton = screen.getAllByRole('button', { name: 'Edit' })[2];
-    if (!documentEditButton) throw new Error('Expected the documents edit button.');
-    fireEvent.click(documentEditButton);
-    expect(await screen.findByText('Selected: demo-resume.pdf')).toBeInTheDocument();
+    await reachNewReview();
+    fireEvent.click(screen.getByRole('button', { name: 'Submit application' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/remain available for retry/);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit payment screenshot' }));
+    expect(screen.getByText('Selected: payment.png')).toBeInTheDocument();
   });
-
-  it('clearly disables submission in hosted demo mode', async () => {
+  it('keeps demo submission disabled', async () => {
     vi.mocked(fetchApplicationSetup).mockResolvedValue({
       config: { ...config, applicationSubmissionEnabled: false },
       taxonomy: jobTaxonomy,
     });
-    await reachReview();
-
-    expect(screen.getByRole('status')).toHaveTextContent(/nothing is submitted/i);
-    expect(screen.getByRole('button', { name: /submission disabled in demo/i })).toBeDisabled();
+    await reachNewReview();
+    expect(screen.getByRole('button', { name: 'Submission disabled in demo' })).toBeDisabled();
+    expect(submitApplication).not.toHaveBeenCalled();
+  });
+  it('blocks the form on a later visit from a submitted browser', async () => {
+    await reachNewReview();
+    fireEvent.click(screen.getByRole('button', { name: 'Submit application' }));
+    await screen.findByRole('heading', { name: 'Application submitted' });
+    expect(window.localStorage.getItem(browserSubmissionKey)).toBe('true');
+    render(
+      <MemoryRouter>
+        <ApplicationWizard />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Application already submitted' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/first name/i)).not.toBeInTheDocument();
+    expect(submitApplication).toHaveBeenCalledTimes(1);
+  });
+  it('blocks an open form when another tab records a successful submission', async () => {
+    await reachNewReview();
+    act(() => {
+      window.localStorage.setItem(browserSubmissionKey, 'true');
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: browserSubmissionKey, newValue: 'true' }),
+      );
+    });
+    expect(
+      screen.getByRole('heading', { name: 'Application already submitted' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Submit application' })).not.toBeInTheDocument();
+    expect(submitApplication).not.toHaveBeenCalled();
+  });
+  it('shows the browser submission notice in Urdu', async () => {
+    window.localStorage.setItem(browserSubmissionKey, 'true');
+    window.localStorage.setItem(languageStorageKey, 'ur');
+    render(
+      <LanguageProvider>
+        <MemoryRouter>
+          <ApplicationWizard />
+        </MemoryRouter>
+      </LanguageProvider>,
+    );
+    expect(
+      screen.getByRole('heading', { name: translate('ur', 'Application already submitted') }),
+    ).toBeInTheDocument();
     expect(submitApplication).not.toHaveBeenCalled();
   });
 });

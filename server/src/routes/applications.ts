@@ -14,6 +14,7 @@ import { SmtpUnavailableError } from '../email/transport.js';
 import { HttpError } from '../errors/httpError.js';
 import { getValidatedApplicationFiles, uploadApplication } from '../middleware/upload.js';
 import { createApplicationReference } from '../services/applicationReference.js';
+import { verifyIssuedCv } from '../services/cvIdentity.js';
 import {
   writeApplicationAuditEvent,
   type ApplicationAuditLogger,
@@ -108,9 +109,17 @@ export function createApplicationsRouter(options: ApplicationsRouterOptions = {}
       }
 
       const application = parseApplicationFields(request.body.fields);
-      const files = getValidatedApplicationFiles(request);
+      const files = getValidatedApplicationFiles(request, application.cvPathType);
+      const verifiedCv = files.cv ? verifyIssuedCv(files.cv.buffer) : undefined;
+      if (application.cvPathType === 'existing_rozgar_cv' && !verifiedCv) {
+        throw new HttpError(
+          400,
+          'cv_not_verified',
+          'This document could not be verified as an official Rozgar Links CV.',
+        );
+      }
       const referenceId = createApplicationReference();
-      await deliver({ application, files, referenceId });
+      await deliver({ application, files, referenceId, cvReference: verifiedCv?.cvReference });
 
       response.status(201).json({
         success: true,

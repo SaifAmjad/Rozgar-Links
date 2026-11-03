@@ -4,6 +4,7 @@ import {
   applicationSubmissionResponseSchema,
   jobTaxonomySchema,
   publicConfigResponseSchema,
+  cvVerificationResponseSchema,
   type ApplicationFields,
   type ApplicationSubmissionResponse,
   type JobTaxonomy,
@@ -13,6 +14,17 @@ import {
 import type { ApplicationFiles } from './fileValidation';
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/$/, '');
+
+export async function verifyCv(file: File, signal?: AbortSignal) {
+  const data = new FormData();
+  data.append('cv', file);
+  const response = await axios.post(
+    `${apiBaseUrl}/cv/verify`,
+    data,
+    signal ? { signal } : undefined,
+  );
+  return cvVerificationResponseSchema.parse(response.data);
+}
 
 export async function fetchApplicationSetup(
   signal?: AbortSignal,
@@ -37,8 +49,9 @@ export async function submitApplication(
   const formData = new FormData();
   formData.append('fields', JSON.stringify(fields));
   formData.append('website', website);
-  if (files.cv) formData.append('cv', files.cv);
-  if (files.paymentScreenshot) formData.append('paymentScreenshot', files.paymentScreenshot);
+  if (fields.cvPathType === 'existing_rozgar_cv' && files.cv) formData.append('cv', files.cv);
+  if (fields.cvPathType === 'new_cv_required' && files.paymentScreenshot)
+    formData.append('paymentScreenshot', files.paymentScreenshot);
 
   try {
     const response = await axios.post(`${apiBaseUrl}/applications`, formData);

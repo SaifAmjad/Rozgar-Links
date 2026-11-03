@@ -1,0 +1,50 @@
+[
+  {
+    "id": "occupation-065",
+    "titleEn": "Primary School Teacher",
+    "titleUr": "پرائمری اسکول ٹیچر",
+    "categoryId": "education"
+  },
+  {
+    "id": "occupation-066",
+    "titleEn": "Secondary School Teacher",
+    "titleUr": "سیکنڈری اسکول ٹیچر",
+    "categoryId": "education"
+  },
+  {
+    "id": "occupation-067",
+    "titleEn": "Mathematics Teacher",
+    "titleUr": "ریاضی کے استاد",
+    "categoryId": "education"
+  },
+  {
+    "id": "occupation-068",
+    "titleEn": "English Language Teacher",
+    "titleUr": "انگریزی زبان کے استاد",
+    "categoryId": "education"
+  },
+  {
+    "id": "occupation-069",
+    "titleEn": "Early Childhood Teacher",
+    "titleUr": "ابتدائی بچپن کی تعلیم کے استاد",
+    "categoryId": "education"
+  },
+  {
+    "id": "occupation-070",
+    "titleEn": "Teaching Assistant",
+    "titleUr": "معاون استاد",
+    "categoryId": "education"
+  },
+  {
+    "id": "occupation-071",
+    "titleEn": "Special Education Teacher",
+    "titleUr": "خصوصی تعلیم کے استاد",
+    "categoryId": "education"
+  },
+  {
+    "id": "occupation-072",
+    "titleEn": "School Librarian",
+    "titleUr": "اسکول لائبریرین",
+    "categoryId": "education"
+  }
+]

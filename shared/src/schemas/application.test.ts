@@ -6,20 +6,17 @@ import {
   type ApplicationFieldsInput,
 } from './application.js';
 
-const referenceDate = new Date('2026-10-13T12:00:00.000Z');
-const applicationSchema = createApplicationFieldsSchema({ now: () => referenceDate });
+const applicationSchema = createApplicationFieldsSchema();
 
 const validApplication: ApplicationFieldsInput = {
   firstName: 'Test',
   lastName: 'Applicant',
-  dateOfBirth: '2000-01-15',
-  nationalId: '12345-1234567-1',
   email: 'applicant@example.invalid',
   phone: '03001234567',
-  currentCity: 'Test City',
   countries: ['saudi-arabia'],
   field: 'construction',
-  yearsExperience: 4,
+  selectedJobIds: ['occupation-001'],
+  cvPathType: 'new_cv_required',
 };
 
 function parseWith(overrides: Partial<ApplicationFieldsInput> = {}) {
@@ -32,9 +29,8 @@ function issuePaths(result: ReturnType<typeof parseWith>) {
 }
 
 describe('applicationFieldsSchema', () => {
-  it('accepts an applicant on their eighteenth birthday and expands All Gulf', () => {
+  it('accepts the reduced personal details and expands All Gulf', () => {
     const result = parseWith({
-      dateOfBirth: '2008-10-13',
       countries: ['all-gulf', 'qatar'],
     });
 
@@ -44,12 +40,6 @@ describe('applicationFieldsSchema', () => {
     }
   });
 
-  it('rejects an applicant who is still 17', () => {
-    const result = parseWith({ dateOfBirth: '2008-10-14' });
-
-    expect(issuePaths(result)).toContain('dateOfBirth');
-  });
-
   it('accepts only an 11-digit Pakistani mobile number starting with 03', () => {
     expect(parseWith({ phone: '03001234567' }).success).toBe(true);
     expect(issuePaths(parseWith({ phone: '+923001234567' }))).toContain('phone');
@@ -57,21 +47,50 @@ describe('applicationFieldsSchema', () => {
     expect(issuePaths(parseWith({ phone: '04001234567' }))).toContain('phone');
   });
 
-  it('requires the standard CNIC structure', () => {
-    expect(parseWith({ nationalId: '12345-1234567-1' }).success).toBe(true);
-    expect(issuePaths(parseWith({ nationalId: '1234512345671' }))).toContain('nationalId');
-    expect(issuePaths(parseWith({ nationalId: '12345-1234567-A' }))).toContain('nationalId');
-  });
-
   it('rejects an unknown field', () => {
     const result = parseWith({ field: 'unknown-field' });
 
     expect(issuePaths(result)).toContain('field');
   });
+  it('accepts education occupations only for the education field', () => {
+    expect(
+      parseWith({ field: 'education', selectedJobIds: ['occupation-065', 'occupation-070'] })
+        .success,
+    ).toBe(true);
+    expect(
+      issuePaths(parseWith({ field: 'construction', selectedJobIds: ['occupation-065'] })),
+    ).toContain('selectedJobIds');
+    expect(
+      issuePaths(parseWith({ field: 'education', selectedJobIds: ['occupation-001'] })),
+    ).toContain('selectedJobIds');
+  });
 
-  it('does not coerce an empty experience value to zero', () => {
-    const result = parseWith({ yearsExperience: '' });
-
-    expect(issuePaths(result)).toContain('yearsExperience');
+  it('requires one to three unique matching occupations', () => {
+    expect(
+      parseWith({ selectedJobIds: ['occupation-001', 'occupation-002', 'occupation-003'] }).success,
+    ).toBe(true);
+    for (const selectedJobIds of [
+      [],
+      ['occupation-001', 'occupation-001'],
+      ['occupation-999'],
+      ['occupation-058'],
+      ['occupation-001', 'occupation-002', 'occupation-003', 'occupation-004'],
+    ]) {
+      expect(issuePaths(parseWith({ selectedJobIds }))).toContain('selectedJobIds');
+    }
+  });
+  it('rejects unsupported journeys, frontend verification claims and removed fields', () => {
+    expect(parseWith({ cvPathType: 'existing_rozgar_cv' }).success).toBe(true);
+    expect(applicationSchema.safeParse({ ...validApplication, cvPathType: 'free' }).success).toBe(
+      false,
+    );
+    for (const extra of [
+      { verified: true },
+      { cvReference: 'forged' },
+      { yearsExperience: 4 },
+      { nationalId: 'removed' },
+    ]) {
+      expect(applicationSchema.safeParse({ ...validApplication, ...extra }).success).toBe(false);
+    }
   });
 });

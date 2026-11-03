@@ -151,3 +151,7 @@ Production go-live remains blocked until all items have evidence and named appro
 
 Legal and policy text in the app remains a draft until these gates are closed. This checklist is
 operational guidance, not legal advice.
+
+## Conditional CV applications
+
+See [CV workflow and admin issuance](cv-workflow.md) for the new/returning journeys, dedicated signing key, configurable PKR 250 default fee and private admin CLI. The canonical directory seed is now shared/occupations.seed.json and ships in the shared build. Each journey uploads one relevant attachment; the hosting body-size limitation still applies.

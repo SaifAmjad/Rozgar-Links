@@ -1,57 +1,49 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  BriefcaseBusiness,
   Check,
   ChevronLeft,
   ChevronRight,
-  Copy,
   LoaderCircle,
+  X,
+  FileCheck2,
+  FilePlus2,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Controller,
-  FormProvider,
-  useForm,
-  useWatch,
-  type FieldErrors,
-  type FieldPath,
-} from 'react-hook-form';
+import { FormProvider, useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-
 import {
   applicationFieldsSchema,
+  applicationOccupations,
   gulfCountries,
+  occupationsForField,
   type ApplicationFields,
   type ApplicationFieldsInput,
-  type JobTaxonomy,
-  type PublicConfigResponse,
+  type CvVerificationResponse,
 } from '@rozgar-links/shared';
-
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { ButtonLink } from '../../components/ui/ButtonLink';
 import { TextInput } from '../../components/ui/TextInput';
 import { useLanguage } from '../../i18n/useLanguage';
-import { fetchApplicationSetup, submitApplication } from './api';
+import { fetchApplicationSetup, submitApplication, verifyCv } from './api';
 import { SelectField } from './FormControls';
-import { formatCnic, formatExperience, formatPakistaniMobile } from './inputFormatting';
+import { formatPakistaniMobile } from './inputFormatting';
 import {
   validateApplicationFile,
   validateApplicationFiles,
-  type ApplicationFileKey,
   type ApplicationFiles,
+  type ApplicationFileKey,
 } from './fileValidation';
+import { FileField, PaymentStep } from './WizardControls';
+import {
+  BrowserAlreadySubmittedError,
+  browserSubmissionKey,
+  hasBrowserSubmitted,
+  submitOncePerBrowser,
+} from './browserSubmission';
 
-const steps = ['Personal', 'Preferences', 'Documents', 'Payment', 'Review'] as const;
-
-const stepDescriptions = [
-  'Tell us who you are and how to contact you.',
-  'Choose the countries and types of work you prefer.',
-  'Select the test documents needed for this demonstration.',
-  'Review the test payment example and upload the payment screenshot.',
-  'Check every section before the final action.',
-] as const;
-
-const countryLabels: Record<(typeof gulfCountries)[number], string> = {
+const steps = ['Personal', 'Preferences', 'CV Status', 'Payment', 'Review'] as const;
+const countryLabels: Record<string, string> = {
   'saudi-arabia': 'Saudi Arabia',
   'united-arab-emirates': 'United Arab Emirates',
   oman: 'Oman',
@@ -59,999 +51,850 @@ const countryLabels: Record<(typeof gulfCountries)[number], string> = {
   kuwait: 'Kuwait',
   bahrain: 'Bahrain',
 };
-
 const personalFields: FieldPath<ApplicationFieldsInput>[] = [
   'firstName',
   'lastName',
-  'dateOfBirth',
-  'nationalId',
+  'gender',
   'email',
   'phone',
-  'currentCity',
-];
-
-const preferenceFields: FieldPath<ApplicationFieldsInput>[] = [
-  'countries',
   'field',
-  'yearsExperience',
 ];
-
-const defaultValues: ApplicationFieldsInput = {
-  firstName: '',
-  lastName: '',
-  dateOfBirth: '',
-  gender: '',
-  nationalId: '',
-  email: '',
-  phone: '',
-  currentCity: '',
-  countries: [],
-  field: '',
-  yearsExperience: '',
-};
-
-type FileErrors = Partial<Record<ApplicationFileKey, string>>;
-
-function errorMessage(error: unknown) {
-  if (error && typeof error === 'object' && 'message' in error) {
-    const message = (error as { message?: unknown }).message;
-    return typeof message === 'string' ? message : undefined;
-  }
-  return undefined;
-}
-
-function collectErrorMessages(errors: FieldErrors<ApplicationFieldsInput>): string[] {
-  const messages: string[] = [];
-  const visit = (value: unknown) => {
-    if (!value || typeof value !== 'object') return;
-    const directMessage = errorMessage(value);
-    if (directMessage) {
-      messages.push(directMessage);
-      return;
-    }
-    Object.values(value).forEach(visit);
-  };
-  visit(errors);
-  return [...new Set(messages)];
-}
-
-function maskIdentifier(value: unknown) {
-  const text = typeof value === 'string' ? value : '';
-  return text ? `••••${text.replace(/[^a-z0-9]/gi, '').slice(-4)}` : 'Not provided';
-}
-
-function checkboxClasses() {
-  return 'h-5 w-5 rounded border-border text-brand-blue';
-}
-
-interface FileFieldProps {
-  accept: string;
-  description: string;
-  error?: string | undefined;
-  file?: File | undefined;
-  inputRef: (element: HTMLInputElement | null) => void;
-  label: string;
-  onChange: (file?: File) => void;
-  required?: boolean | undefined;
-}
-
-function FileField({
-  accept,
-  description,
-  error,
-  file,
-  inputRef,
-  label,
-  onChange,
-  required,
-}: FileFieldProps) {
-  const { t } = useLanguage();
-  const id = `application-${label.toLowerCase().replaceAll(' ', '-')}`;
-  return (
-    <div className="space-y-2 rounded-xl border bg-surface p-4">
-      <label className="block text-sm font-bold text-primary" htmlFor={id}>
-        {t(label)}
-        {required ? <span className="ms-1 text-error">*</span> : null}
-      </label>
-      <p className="text-sm text-muted" id={`${id}-description`}>
-        {t(description)}
-      </p>
-      <input
-        accept={accept}
-        aria-describedby={`${id}-description${error ? ` ${id}-error` : ''}`}
-        aria-invalid={error ? true : undefined}
-        className="block min-h-11 w-full rounded-xl border bg-bg p-2 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:font-bold file:text-white"
-        id={id}
-        onChange={(event) => onChange(event.target.files?.[0])}
-        ref={inputRef}
-        type="file"
-      />
-      {file ? (
-        <p className="text-sm font-semibold text-brand-green">
-          {t('Selected: {file}', { file: file.name })}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="text-sm font-semibold text-error" id={`${id}-error`}>
-          {t(error)}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-interface SetupState {
-  config: PublicConfigResponse;
-  taxonomy: JobTaxonomy;
-}
+const preferenceFields: FieldPath<ApplicationFieldsInput>[] = ['countries', 'selectedJobIds'];
 
 export function ApplicationWizard() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const requestedCountry = searchParams.get('country');
-  const requestedField = searchParams.get('field');
-  const requestedJob = searchParams.get('job');
-  const prefilledCountry = (
-    Object.entries(countryLabels) as [(typeof gulfCountries)[number], string][]
-  ).find(([slug, label]) => requestedCountry === slug || requestedCountry === label)?.[0];
+  const [params] = useSearchParams();
+  const [alreadySubmitted, setAlreadySubmitted] = useState(hasBrowserSubmitted);
+  const requestedCountry = gulfCountries.find(
+    (id) => params.get('country') === id || params.get('country') === countryLabels[id],
+  );
   const methods = useForm<ApplicationFieldsInput, unknown, ApplicationFields>({
     defaultValues: {
-      ...defaultValues,
-      countries: prefilledCountry ? [prefilledCountry] : [],
+      firstName: '',
+      lastName: '',
+      gender: '',
+      email: '',
+      phone: '',
+      field: '',
+      countries: requestedCountry ? [requestedCountry] : [],
+      selectedJobIds: [],
     },
-    mode: 'onChange',
     resolver: zodResolver(applicationFieldsSchema),
+    mode: 'onChange',
     shouldUnregister: false,
   });
   const {
-    control,
-    formState: { errors },
-    getFieldState,
-    handleSubmit,
     register,
+    control,
     setValue,
     trigger,
+    getFieldState,
+    handleSubmit,
+    formState: { errors },
   } = methods;
-  const [currentStep, setCurrentStep] = useState(0);
-  const [setup, setSetup] = useState<SetupState>();
-  const [setupError, setSetupError] = useState('');
-  const [setupAttempt, setSetupAttempt] = useState(0);
+  const values = useWatch({ control });
+  const field = values.field ?? '';
+  const countries = values.countries ?? [];
+  const selected = values.selectedJobIds ?? [];
+  const returning = values.cvPathType === 'existing_rozgar_cv';
+  const [setup, setSetup] = useState<Awaited<ReturnType<typeof fetchApplicationSetup>>>();
+  const [setupError, setSetupError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [step, setStep] = useState(0);
   const [files, setFiles] = useState<ApplicationFiles>({});
-  const [fileErrors, setFileErrors] = useState<FileErrors>({});
-  const [showErrorSummary, setShowErrorSummary] = useState(false);
-  const [copyStatus, setCopyStatus] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fileErrors, setFileErrors] = useState<Partial<Record<ApplicationFileKey, string>>>({});
+  const [verification, setVerification] = useState<CvVerificationResponse>();
+  const [checking, setChecking] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectionNotice, setSelectionNotice] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [website, setWebsite] = useState('');
-  const [paymentPreviewUrl, setPaymentPreviewUrl] = useState('');
-  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
-  const fileInputRefs = useRef<Partial<Record<ApplicationFileKey, HTMLInputElement | null>>>({});
-  const paymentPreviewUrlRef = useRef('');
+  const [copyStatus, setCopyStatus] = useState('');
+  const [preview, setPreview] = useState('');
+  const previewRef = useRef('');
+  const heading = useRef<HTMLHeadingElement>(null);
+  const verificationRequest = useRef<AbortController | null>(null);
   const submissionLock = useRef(false);
-
-  const selectedField = useWatch({ control, name: 'field' });
-  const allValues = useWatch({ control });
-  const applicationSubmissionEnabled = setup?.config.applicationSubmissionEnabled ?? false;
+  const prefilled = useRef(false);
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  const journeyInput = useRef<HTMLInputElement>(null);
+  const countryInput = useRef<HTMLInputElement>(null);
+  const occupationSearch = useRef<HTMLInputElement>(null);
+  const activeSteps = returning ? [0, 1, 2, 4] : [0, 1, 2, 3, 4];
+  const activeIndex = activeSteps.indexOf(step);
+  const enabled = setup?.config.applicationSubmissionEnabled ?? false;
+  const available = occupationsForField(field);
+  const label = (job: { titleEn: string; titleUr: string }) =>
+    language === 'ur' ? job.titleUr : job.titleEn;
 
   useEffect(() => {
+    if (alreadySubmitted) return;
     const controller = new AbortController();
-    fetchApplicationSetup(controller.signal)
-      .then(setSetup)
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setSetupError(t('Application setup could not be loaded. Please retry.'));
+    void fetchApplicationSetup(controller.signal)
+      .then((result) => {
+        setSetup(result);
+        setSetupError(false);
+        if (!prefilled.current) {
+          prefilled.current = true;
+          const requested = params.get('field');
+          if (result.taxonomy.fields.some((item) => item.id === requested))
+            setValue('field', requested ?? '');
         }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setSetupError(true);
       });
     return () => controller.abort();
-  }, [setupAttempt, t]);
-
+  }, [alreadySubmitted, attempt, params, setValue]);
   useEffect(() => {
-    if (
-      setup &&
-      requestedField &&
-      !selectedField &&
-      setup.taxonomy.fields.some((field) => field.id === requestedField)
-    ) {
-      setValue('field', requestedField, { shouldDirty: true, shouldValidate: true });
-    }
-  }, [requestedField, selectedField, setValue, setup]);
-
-  useEffect(() => {
+    const sync = () => setAlreadySubmitted(hasBrowserSubmitted());
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === browserSubmissionKey || event.key === null) sync();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', sync);
+    window.addEventListener('pageshow', sync);
     return () => {
-      if (paymentPreviewUrlRef.current) URL.revokeObjectURL(paymentPreviewUrlRef.current);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', sync);
+      window.removeEventListener('pageshow', sync);
     };
   }, []);
-
   useEffect(() => {
-    stepHeadingRef.current?.focus();
-  }, [currentStep]);
-
-  useEffect(() => {
-    if (currentStep !== 4) return;
-
-    void trigger(undefined, { shouldFocus: false }).then((valid) => {
-      if (!valid) setShowErrorSummary(true);
-    });
-  }, [currentStep, trigger]);
-
-  const currentFormErrors = collectErrorMessages(errors);
-  const currentFileErrors = Object.values(fileErrors).filter((message): message is string =>
-    Boolean(message),
+    heading.current?.focus();
+  }, [step]);
+  useEffect(
+    () => () => {
+      verificationRequest.current?.abort();
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    },
+    [],
   );
-  const summaryErrors = [...new Set([...currentFormErrors, ...currentFileErrors])];
 
-  function changeFile(key: ApplicationFileKey, file?: File) {
+  function resetVerification() {
+    verificationRequest.current?.abort();
+    verificationRequest.current = null;
+    setVerification(undefined);
+    setChecking(false);
+  }
+  function switchJourney(value: ApplicationFields['cvPathType']) {
+    if (values.cvPathType === value) return;
+    resetVerification();
+    setFiles({});
+    setFileErrors({});
+    setSubmissionError('');
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = '';
+    setPreview('');
+    setValue('cvPathType', value, { shouldValidate: true });
+  }
+  async function changeFile(key: ApplicationFileKey, file?: File) {
     setSubmissionError('');
     setFiles((current) => ({ ...current, [key]: file }));
-    setFileErrors((current) => ({ ...current, [key]: validateApplicationFile(key, file) }));
+    let error = validateApplicationFile(key, file);
+    if (key === 'cv' && file && (file.type !== 'application/pdf' || !/\.pdf$/i.test(file.name)))
+      error = 'Upload your official CV as a PDF.';
+    setFileErrors((current) => ({ ...current, [key]: error }));
     if (key === 'paymentScreenshot') {
-      if (paymentPreviewUrlRef.current) URL.revokeObjectURL(paymentPreviewUrlRef.current);
-      const nextUrl =
-        file && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
-      paymentPreviewUrlRef.current = nextUrl;
-      setPaymentPreviewUrl(nextUrl);
-    }
-  }
-
-  function retrySetup() {
-    setSetup(undefined);
-    setSetupError('');
-    setSetupAttempt((value) => value + 1);
-  }
-
-  async function validateFileStep(keys: ApplicationFileKey[]) {
-    const nextErrors = keys.reduce<FileErrors>((result, key) => {
-      const message = validateApplicationFile(key, files[key]);
-      if (message) result[key] = message;
-      return result;
-    }, {});
-    setFileErrors((current) => ({ ...current, ...nextErrors }));
-    const firstInvalid = keys.find((key) => nextErrors[key]);
-    if (firstInvalid) fileInputRefs.current[firstInvalid]?.focus();
-    return !firstInvalid;
-  }
-
-  async function validateFields(fields: FieldPath<ApplicationFieldsInput>[]) {
-    await trigger(fields, { shouldFocus: true });
-    return fields.every((field) => !getFieldState(field).invalid);
-  }
-
-  async function nextStep() {
-    setShowErrorSummary(true);
-    setSubmissionError('');
-    let valid = true;
-
-    if (currentStep === 0) valid = await validateFields(personalFields);
-    if (currentStep === 1) valid = await validateFields(preferenceFields);
-    if (currentStep === 2) valid = await validateFileStep(['cv']);
-    if (currentStep === 3) {
-      valid = (await validateFileStep(['paymentScreenshot'])) && Boolean(setup);
-    }
-
-    if (!valid) return;
-    setShowErrorSummary(false);
-    setCurrentStep((step) => Math.min(step + 1, steps.length - 1));
-  }
-
-  function goToStep(step: number) {
-    if (step <= currentStep) {
-      setShowErrorSummary(false);
-      setCurrentStep(step);
-    }
-  }
-
-  async function copyValue(label: string, value: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopyStatus(t('{label} copied.', { label: t(label) }));
-    } catch {
-      setCopyStatus(t('Could not copy {label}.', { label: t(label).toLocaleLowerCase() }));
-    }
-  }
-
-  async function onValidSubmit(application: ApplicationFields) {
-    if (!applicationSubmissionEnabled) {
-      setSubmissionError(t('Application submission is disabled in this hosted demo.'));
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+      previewRef.current =
+        file && !error && typeof URL.createObjectURL === 'function'
+          ? URL.createObjectURL(file)
+          : '';
+      setPreview(previewRef.current);
       return;
     }
-    if (submissionLock.current) return;
+    resetVerification();
+    if (!file || error) return;
+    const controller = new AbortController();
+    verificationRequest.current = controller;
+    setChecking(true);
+    try {
+      const result = await verifyCv(file, controller.signal);
+      if (!controller.signal.aborted) setVerification(result);
+    } catch {
+      if (!controller.signal.aborted)
+        setVerification({
+          valid: false,
+          message: 'CV verification could not be completed. Please retry.',
+        });
+    } finally {
+      if (!controller.signal.aborted) setChecking(false);
+    }
+  }
+  function changeField(next: string) {
+    setValue('field', next, { shouldValidate: true });
+    const allowed = new Set(occupationsForField(next).map((job) => job.id));
+    const reconciled = selected.filter((id) => allowed.has(id));
+    if (reconciled.length !== selected.length) {
+      setValue('selectedJobIds', reconciled, { shouldValidate: true });
+      setSelectionNotice(true);
+    }
+    setSearch('');
+  }
+  async function next() {
+    setShowErrors(true);
+    setSubmissionError('');
+    const fields: FieldPath<ApplicationFieldsInput>[] =
+      step === 0 ? personalFields : step === 1 ? preferenceFields : ['cvPathType'];
+    await trigger(fields, { shouldFocus: true });
+    if (fields.some((name) => getFieldState(name).invalid)) {
+      if (step === 1) {
+        if (getFieldState('countries').invalid) countryInput.current?.focus();
+        else occupationSearch.current?.focus();
+      }
+      if (step === 2) journeyInput.current?.focus();
+      return;
+    }
+    if (!setup) return;
+    if (step === 2 && returning && (!verification?.valid || !files.cv || checking)) {
+      setFileErrors({ cv: 'A verified official PDF CV is required.' });
+      fileInput.current?.focus();
+      return;
+    }
+    if (step === 3) {
+      const error = validateApplicationFile('paymentScreenshot', files.paymentScreenshot);
+      if (error) {
+        setFileErrors({ paymentScreenshot: error });
+        fileInput.current?.focus();
+        return;
+      }
+    }
+    setShowErrors(false);
+    setStep(step === 2 && returning ? 4 : step + 1);
+  }
+  async function onSubmit(application: ApplicationFields) {
+    if (submissionLock.current || !enabled) return;
+    const uploadErrors = validateApplicationFiles(files, application.cvPathType);
+    if (Object.keys(uploadErrors).length || (returning && !verification?.valid)) {
+      setFileErrors(uploadErrors);
+      setSubmissionError('Please check your required uploads.');
+      return;
+    }
     submissionLock.current = true;
     setIsSubmitting(true);
     setSubmissionError('');
-    setShowErrorSummary(false);
     try {
-      const result = await submitApplication(application, files, website);
+      const result = await submitOncePerBrowser(() =>
+        submitApplication(application, files, website),
+      );
       navigate('/success', { replace: true, state: result });
     } catch (error) {
+      if (error instanceof BrowserAlreadySubmittedError) {
+        setAlreadySubmitted(true);
+        return;
+      }
       setSubmissionError(
         error instanceof Error
           ? error.message
-          : t('The application could not be submitted. Please try again.'),
+          : 'The application could not be submitted. Please try again.',
       );
     } finally {
-      setIsSubmitting(false);
       submissionLock.current = false;
+      setIsSubmitting(false);
     }
   }
-
-  function onInvalidSubmit() {
-    setShowErrorSummary(true);
-  }
-
-  const allFilesValid = Object.keys(validateApplicationFiles(files)).length === 0;
-  const allFieldsValid = applicationFieldsSchema.safeParse(allValues).success;
+  const errorMessages = Object.values(errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => typeof message === 'string');
   const canSubmit =
-    currentStep === 4 && allFieldsValid && allFilesValid && applicationSubmissionEnabled;
-
-  return (
-    <FormProvider {...methods}>
-      <div className="mx-auto max-w-4xl">
-        <form
-          className="min-w-0"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleSubmit(onValidSubmit, onInvalidSubmit)(event);
-          }}
-        >
-          <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
-            <label htmlFor="application-website">Website</label>
-            <input
-              autoComplete="off"
-              id="application-website"
-              onChange={(event) => setWebsite(event.target.value)}
-              tabIndex={-1}
-              type="text"
-              value={website}
-            />
-          </div>
-          {setup && !applicationSubmissionEnabled ? (
-            <div
-              className="mb-5 rounded-xl border border-warning/40 bg-amber-50 px-4 py-3 text-sm text-text"
-              id="demo-submission-notice"
-              role="status"
-            >
-              <strong className="text-primary">{t('Demo only:')}</strong>{' '}
-              <span className="text-muted">
-                {t('nothing is submitted. Use test details and files.')}
-              </span>
-            </div>
-          ) : null}
-          {requestedJob ? (
-            <div className="mb-5 flex gap-3 rounded-xl border bg-surface p-4 text-sm leading-6">
-              <BriefcaseBusiness
-                aria-hidden="true"
-                className="mt-0.5 shrink-0 text-brand-green"
-                size={21}
-              />
-              <p className="text-muted">
-                <strong className="text-primary">{t('Job selected.')}</strong>{' '}
-                {t('Preferences were filled when available and can be changed.')}
-              </p>
-            </div>
-          ) : null}
-          <div className="mb-5 rounded-xl border bg-surface p-4 lg:hidden">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-brand-green">
-                  {t('Step {current} of {total}', {
-                    current: currentStep + 1,
-                    total: steps.length,
-                  })}
-                </p>
-                <p className="mt-1 font-bold text-primary">{t(steps[currentStep] ?? '')}</p>
-              </div>
-              <span className="text-sm font-bold text-muted">
-                {Math.round(((currentStep + 1) / steps.length) * 100)}%
-              </span>
-            </div>
-            <div
-              aria-label={t('Application progress: step {current} of {total}', {
-                current: currentStep + 1,
-                total: steps.length,
-              })}
-              aria-valuemax={steps.length}
-              aria-valuemin={1}
-              aria-valuenow={currentStep + 1}
-              className="mt-3 h-2 overflow-hidden rounded-full bg-border"
-              role="progressbar"
-            >
-              <div
-                className="h-full rounded-full bg-brand-green transition-[width]"
-                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          <nav aria-label={t('Application progress')} className="mb-6 hidden lg:block">
-            <ol className="grid grid-cols-5 gap-2">
-              {steps.map((step, index) => (
-                <li className="min-w-0 flex-1" key={step}>
-                  <button
-                    aria-current={index === currentStep ? 'step' : undefined}
-                    className={`flex min-h-12 w-full items-center gap-2 rounded-xl border px-3 text-start text-sm font-bold ${
-                      index === currentStep
-                        ? 'border-primary bg-primary text-white'
-                        : index < currentStep
-                          ? 'bg-surface text-primary'
-                          : 'cursor-not-allowed bg-bg text-muted'
-                    }`}
-                    disabled={index > currentStep}
-                    onClick={() => goToStep(index)}
-                    type="button"
-                  >
-                    <span
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
-                        index === currentStep ? 'bg-white text-primary' : 'bg-border text-primary'
-                      }`}
-                    >
-                      {index < currentStep ? <Check aria-hidden="true" size={14} /> : index + 1}
-                    </span>
-                    {t(step)}
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </nav>
-
-          <Card className="p-4 sm:p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand-green">
-              {t('Step {current} of {total}', {
-                current: currentStep + 1,
-                total: steps.length,
-              })}
-            </p>
-            <h2 className="mt-2 text-2xl" ref={stepHeadingRef} tabIndex={-1}>
-              {t(steps[currentStep] ?? '')}
-            </h2>
-            <p className="mt-2 text-sm text-muted">{t(stepDescriptions[currentStep] ?? '')}</p>
-            <p className="mt-2 text-xs font-semibold text-muted">
-              <span className="text-error">*</span> {t('Required')}
-            </p>
-
-            {showErrorSummary && summaryErrors.length > 0 ? (
-              <div className="mt-5 rounded-xl border border-error bg-red-50 p-4" role="alert">
-                <p className="font-bold text-error">{t('Please fix the following:')}</p>
-                <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-error">
-                  {summaryErrors.map((message) => (
-                    <li key={message}>{t(message)}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            <div className="mt-6">
-              {currentStep === 0 ? <PersonalStep errors={errors} register={register} /> : null}
-              {currentStep === 1 && setup ? (
-                <PreferencesStep
-                  control={control}
-                  errors={errors}
-                  register={register}
-                  taxonomy={setup.taxonomy}
-                />
-              ) : null}
-              {currentStep === 1 && !setup ? (
-                <SetupUnavailable error={setupError} onRetry={retrySetup} />
-              ) : null}
-              {currentStep === 2 ? (
-                <DocumentsStep
-                  errors={fileErrors}
-                  files={files}
-                  setInputRef={(key, element) => {
-                    fileInputRefs.current[key] = element;
-                  }}
-                  onChange={changeFile}
-                />
-              ) : null}
-              {currentStep === 3 && setup ? (
-                <PaymentStep
-                  config={setup.config}
-                  copyStatus={copyStatus}
-                  fileError={fileErrors.paymentScreenshot}
-                  fileInputRef={(element) => {
-                    fileInputRefs.current.paymentScreenshot = element;
-                  }}
-                  onCopy={copyValue}
-                  onFileChange={(file) => changeFile('paymentScreenshot', file)}
-                  paymentFile={files.paymentScreenshot}
-                  paymentPreviewUrl={paymentPreviewUrl}
-                />
-              ) : null}
-              {currentStep === 3 && !setup ? (
-                <SetupUnavailable error={setupError} onRetry={retrySetup} />
-              ) : null}
-              {currentStep === 4 ? (
-                <ReviewStep
-                  files={files}
-                  onEdit={goToStep}
-                  taxonomy={setup?.taxonomy}
-                  values={allValues as Record<string, unknown>}
-                />
-              ) : null}
-            </div>
-
-            <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <Button
-                className="w-full sm:w-auto"
-                disabled={currentStep === 0 || isSubmitting}
-                onClick={() => setCurrentStep((step) => Math.max(0, step - 1))}
-                variant="outline"
-              >
-                <ChevronLeft aria-hidden="true" className="rtl:rotate-180" size={18} /> {t('Back')}
-              </Button>
-              {currentStep < 4 ? (
-                <Button className="w-full sm:w-auto" onClick={() => void nextStep()}>
-                  {t('Continue to {step}', { step: t(steps[currentStep + 1] ?? '') })}{' '}
-                  <ChevronRight aria-hidden="true" className="rtl:rotate-180" size={18} />
-                </Button>
-              ) : (
-                <Button
-                  aria-describedby={
-                    applicationSubmissionEnabled ? undefined : 'demo-submission-notice'
-                  }
-                  disabled={!canSubmit || isSubmitting}
-                  className="w-full sm:w-auto"
-                  type="submit"
-                >
-                  {isSubmitting ? (
-                    <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />
-                  ) : null}
-                  {t(
-                    applicationSubmissionEnabled
-                      ? 'Submit application'
-                      : 'Submission disabled in demo',
-                  )}
-                </Button>
-              )}
-            </div>
-
-            <div aria-live="polite" className="mt-4 min-h-6 text-sm font-semibold">
-              {submissionError ? (
-                <p className="rounded-xl border border-error bg-red-50 p-4 text-error" role="alert">
-                  {t(submissionError)}{' '}
-                  {t('Your information and selected files remain available for retry.')}
-                </p>
-              ) : null}
-            </div>
-          </Card>
-        </form>
-      </div>
-    </FormProvider>
-  );
-}
-
-interface PersonalStepProps {
-  errors: FieldErrors<ApplicationFieldsInput>;
-  register: ReturnType<typeof useForm<ApplicationFieldsInput>>['register'];
-}
-
-function PersonalStep({ errors, register }: PersonalStepProps) {
-  const { t } = useLanguage();
-  const nationalIdRegistration = register('nationalId');
+    step === 4 &&
+    enabled &&
+    applicationFieldsSchema.safeParse(values).success &&
+    Object.keys(validateApplicationFiles(files, values.cvPathType)).length === 0 &&
+    (!returning || verification?.valid === true) &&
+    !checking;
   const phoneRegistration = register('phone');
-
-  return (
-    <div className="space-y-8">
-      <fieldset>
-        <legend className="text-lg font-bold text-primary">{t('Basic details')}</legend>
-        <div className="mt-4 grid gap-5 sm:grid-cols-2">
-          <TextInput
-            autoComplete="given-name"
-            error={errorMessage(errors.firstName)}
-            label={t('First name')}
-            maxLength={100}
-            required
-            {...register('firstName')}
-          />
-          <TextInput
-            autoComplete="family-name"
-            error={errorMessage(errors.lastName)}
-            label={t('Last name')}
-            maxLength={100}
-            required
-            {...register('lastName')}
-          />
-          <TextInput
-            dir="ltr"
-            error={errorMessage(errors.dateOfBirth)}
-            label={t('Date of birth')}
-            required
-            type="date"
-            {...register('dateOfBirth')}
-          />
-          <SelectField
-            error={errorMessage(errors.gender)}
-            label={t('Gender')}
-            {...register('gender')}
-          >
-            <option value="">{t('Prefer not to say')}</option>
-            <option value="female">{t('Female')}</option>
-            <option value="male">{t('Male')}</option>
-            <option value="other">{t('Other')}</option>
-          </SelectField>
-        </div>
-      </fieldset>
-
-      <fieldset className="border-t pt-7">
-        <legend className="text-lg font-bold text-primary">{t('Identification')}</legend>
-        <div className="mt-4 grid gap-5 sm:grid-cols-2">
-          <TextInput
-            {...nationalIdRegistration}
-            description={t('Pakistan CNIC format: 12345-1234567-1.')}
-            dir="ltr"
-            error={errorMessage(errors.nationalId)}
-            inputMode="numeric"
-            label="CNIC"
-            maxLength={15}
-            onChange={(event) => {
-              event.target.value = formatCnic(event.target.value);
-              void nationalIdRegistration.onChange(event);
-            }}
-            pattern="[0-9]{5}-[0-9]{7}-[0-9]"
-            placeholder="12345-1234567-1"
-            required
-          />
-        </div>
-      </fieldset>
-
-      <fieldset className="border-t pt-7">
-        <legend className="text-lg font-bold text-primary">{t('Contact details')}</legend>
-        <div className="mt-4 grid gap-5 sm:grid-cols-2">
-          <TextInput
-            autoComplete="email"
-            description={t('We will use this for application updates.')}
-            dir="ltr"
-            error={errorMessage(errors.email)}
-            label={t('Email address')}
-            maxLength={254}
-            placeholder="name@example.com"
-            required
-            type="email"
-            {...register('email')}
-          />
-          <TextInput
-            {...phoneRegistration}
-            autoComplete="tel"
-            description={t('11 digits, starting with 03.')}
-            dir="ltr"
-            error={errorMessage(errors.phone)}
-            inputMode="numeric"
-            label={t('Phone / WhatsApp')}
-            maxLength={11}
-            onChange={(event) => {
-              event.target.value = formatPakistaniMobile(event.target.value);
-              void phoneRegistration.onChange(event);
-            }}
-            pattern="03[0-9]{9}"
-            placeholder="03001234567"
-            required
-            type="tel"
-          />
-          <TextInput
-            autoComplete="address-level2"
-            error={errorMessage(errors.currentCity)}
-            label={t('Current city')}
-            maxLength={100}
-            required
-            {...register('currentCity')}
-          />
-        </div>
-      </fieldset>
-    </div>
-  );
-}
-
-interface PreferencesStepProps {
-  control: ReturnType<typeof useForm<ApplicationFieldsInput>>['control'];
-  errors: FieldErrors<ApplicationFieldsInput>;
-  register: ReturnType<typeof useForm<ApplicationFieldsInput>>['register'];
-  taxonomy: JobTaxonomy;
-}
-
-function PreferencesStep({ control, errors, register, taxonomy }: PreferencesStepProps) {
-  const { t } = useLanguage();
-  const yearsExperienceRegistration = register('yearsExperience');
-
-  return (
-    <div className="space-y-7">
-      <fieldset>
-        <legend className="text-sm font-bold text-primary">
-          {t('Preferred Gulf countries')} *
-        </legend>
-        <Controller
-          control={control}
-          name="countries"
-          render={({ field }) => (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="flex min-h-11 items-center gap-3 rounded-xl border bg-surface px-4 py-2 font-semibold">
-                <input
-                  checked={field.value?.includes('all-gulf') ?? false}
-                  className={checkboxClasses()}
-                  onChange={(event) => field.onChange(event.target.checked ? ['all-gulf'] : [])}
-                  type="checkbox"
-                />
-                {t('All Gulf countries')}
-              </label>
-              {gulfCountries.map((country) => (
-                <label
-                  className="flex min-h-11 items-center gap-3 rounded-xl border px-4 py-2"
-                  key={country}
-                >
-                  <input
-                    checked={field.value?.includes(country) ?? false}
-                    className={checkboxClasses()}
-                    disabled={field.value?.includes('all-gulf')}
-                    onChange={(event) => {
-                      const withoutAll = (field.value ?? []).filter(
-                        (value) => value !== 'all-gulf',
-                      );
-                      field.onChange(
-                        event.target.checked
-                          ? [...withoutAll, country]
-                          : withoutAll.filter((value) => value !== country),
-                      );
-                    }}
-                    type="checkbox"
-                  />
-                  {t(countryLabels[country])}
-                </label>
-              ))}
-            </div>
-          )}
-        />
-        {errorMessage(errors.countries) ? (
-          <p className="mt-2 text-sm font-semibold text-error">{errorMessage(errors.countries)}</p>
-        ) : null}
-      </fieldset>
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <SelectField
-          error={errorMessage(errors.field)}
-          label={t('Job field')}
-          required
-          {...register('field')}
-        >
-          <option value="">{t('Select a field')}</option>
-          {taxonomy.fields.map((field) => (
-            <option key={field.id} value={field.id}>
-              {t(field.label)}
-            </option>
-          ))}
-        </SelectField>
-        <TextInput
-          {...yearsExperienceRegistration}
-          dir="ltr"
-          error={errorMessage(errors.yearsExperience)}
-          inputMode="decimal"
-          label={t('Years of experience')}
-          maxLength={4}
-          onChange={(event) => {
-            event.target.value = formatExperience(event.target.value);
-            void yearsExperienceRegistration.onChange(event);
-          }}
-          pattern="[0-9]{1,2}(\.[0-9])?"
-          required
-          type="text"
-        />
-      </div>
-    </div>
-  );
-}
-
-interface DocumentsStepProps {
-  errors: FileErrors;
-  files: ApplicationFiles;
-  onChange: (key: ApplicationFileKey, file?: File) => void;
-  setInputRef: (key: ApplicationFileKey, element: HTMLInputElement | null) => void;
-}
-
-function DocumentsStep({ errors, files, onChange, setInputRef }: DocumentsStepProps) {
-  return (
-    <div className="space-y-4">
-      <FileField
-        accept=".pdf,.doc,.docx"
-        description="PDF, DOC or DOCX; maximum 5 MiB."
-        error={errors.cv}
-        file={files.cv}
-        inputRef={(element) => setInputRef('cv', element)}
-        label="CV"
-        onChange={(file) => onChange('cv', file)}
-        required
-      />
-    </div>
-  );
-}
-
-interface PaymentStepProps {
-  config: PublicConfigResponse;
-  copyStatus: string;
-  fileError?: string | undefined;
-  fileInputRef: (element: HTMLInputElement | null) => void;
-  onCopy: (label: string, value: string) => void;
-  onFileChange: (file?: File) => void;
-  paymentFile?: File | undefined;
-  paymentPreviewUrl: string;
-}
-
-function PaymentStep({
-  config,
-  copyStatus,
-  fileError,
-  fileInputRef,
-  onCopy,
-  onFileChange,
-  paymentFile,
-  paymentPreviewUrl,
-}: PaymentStepProps) {
-  const { t } = useLanguage();
-  const paymentDetails = [
-    ['Bank', config.bankName],
-    ['Account title', config.bankAccountTitle],
-    ['Account number', config.bankAccountNumber],
-    ['IBAN', config.bankIban],
-  ] as const;
-  return (
-    <div className="space-y-6">
-      <div className="rounded-xl border-2 border-warning bg-amber-50 p-5">
-        <p className="text-sm font-black uppercase tracking-[0.16em] text-warning">
-          {t('Test payment details — do not pay')}
-        </p>
-        <p className="mt-2 text-sm text-muted">{t('Demo values only. Payment is not active.')}</p>
-        <dl className="mt-4 space-y-3">
-          {paymentDetails.map(([label, value]) => (
-            <div
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-bg p-3"
-              key={label}
-            >
-              <div>
-                <dt className="text-xs font-bold uppercase text-muted">{t(label)}</dt>
-                <dd className="font-semibold text-primary" dir="ltr">
-                  {value}
-                </dd>
-              </div>
-              <Button
-                aria-label={t('Copy {label}', { label: t(label) })}
-                onClick={() => void onCopy(label, value)}
-                variant="ghost"
-              >
-                <Copy aria-hidden="true" size={16} /> {t('Copy')}
-              </Button>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-4 font-bold text-primary">
-          {t('Demo fee:')} {config.serviceFeeCurrency} {config.serviceFeeAmount.toLocaleString()}
-        </p>
-        <p aria-live="polite" className="mt-2 min-h-5 text-sm font-semibold text-brand-green">
-          {copyStatus}
-        </p>
-      </div>
-
-      <FileField
-        accept=".jpg,.jpeg,.png"
-        description="Required JPEG or PNG; maximum 5 MiB. The secure server validates its file signature again."
-        error={fileError}
-        file={paymentFile}
-        inputRef={fileInputRef}
-        label="Payment screenshot"
-        onChange={onFileChange}
-        required
-      />
-      {paymentPreviewUrl ? (
-        <img
-          alt={t('Payment screenshot preview')}
-          className="max-h-72 rounded-xl border object-contain"
-          src={paymentPreviewUrl}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function SetupUnavailable({ error, onRetry }: { error: string; onRetry: () => void }) {
-  const { t } = useLanguage();
-
-  return (
-    <div className="rounded-xl border bg-surface p-5" role={error ? 'alert' : 'status'}>
-      <p className="font-semibold text-primary">
-        {t(error || 'Loading validated application options…')}
-      </p>
-      {error ? (
-        <Button className="mt-4" onClick={onRetry} variant="outline">
-          {t('Retry setup')}
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-function ReviewStep({
-  files,
-  onEdit,
-  taxonomy,
-  values,
-}: {
-  files: ApplicationFiles;
-  onEdit: (step: number) => void;
-  taxonomy?: JobTaxonomy | undefined;
-  values: Record<string, unknown>;
-}) {
-  const { t } = useLanguage();
-  const textValue = (key: string) => (typeof values[key] === 'string' ? values[key] : '');
-  const selectedCountries = Array.isArray(values.countries)
-    ? values.countries.filter((value): value is string => typeof value === 'string')
-    : [];
-  const field = taxonomy?.fields.find((item) => item.id === textValue('field'));
-  const countries = selectedCountries.includes('all-gulf')
-    ? t('All Gulf countries')
-    : selectedCountries
-        .filter((country): country is (typeof gulfCountries)[number] => country in countryLabels)
-        .map((country) => t(countryLabels[country]))
-        .join(', ');
-  const sections: { title: string; step: number; items: [string, string | undefined][] }[] = [
+  const fee = `${setup?.config.serviceFeeCurrency ?? 'PKR'} ${setup?.config.serviceFeeAmount ?? 250}`;
+  const gender = typeof values.gender === 'string' ? values.gender : '';
+  const reviewSections = [
     {
       title: 'Personal',
-      step: 0,
-      items: [
-        ['Name', `${textValue('firstName')} ${textValue('lastName')}`.trim()],
-        ['Date of birth', textValue('dateOfBirth')],
-        ['National ID', maskIdentifier(values.nationalId)],
-        ['Email', textValue('email')],
-        ['Phone', textValue('phone')],
-        ['Current city', textValue('currentCity')],
+      index: 0,
+      rows: [
+        ['Name', `${values.firstName ?? ''} ${values.lastName ?? ''}`],
+        ['Gender', gender ? t(gender.charAt(0).toUpperCase() + gender.slice(1)) : ''],
+        ['Email', values.email],
+        ['WhatsApp number', values.phone],
+        ['Job field', t(setup?.taxonomy.fields.find((item) => item.id === field)?.label ?? '')],
       ],
     },
     {
       title: 'Preferences',
-      step: 1,
-      items: [
-        ['Countries', countries],
-        ['Field', field ? t(field.label) : undefined],
-        ['Experience', t('{years} years', { years: textValue('yearsExperience') })],
+      index: 1,
+      rows: [
+        [
+          'Countries',
+          countries.includes('all-gulf')
+            ? t('All Gulf countries')
+            : countries.map((id) => t(countryLabels[id] ?? id)).join(', '),
+        ],
+        [
+          'Jobs to apply for',
+          selected
+            .map((id) => applicationOccupations.find((job) => job.id === id))
+            .filter((job) => job !== undefined)
+            .map(label)
+            .join(', '),
+        ],
       ],
     },
     {
-      title: 'Documents',
-      step: 2,
-      items: [['CV', files.cv?.name]],
-    },
-    {
-      title: 'Payment evidence',
-      step: 3,
-      items: [
-        ['Screenshot', files.paymentScreenshot?.name],
-        ['Status', 'Unverified demo evidence'],
+      title: 'CV Status',
+      index: 2,
+      rows: [
+        [
+          'Status',
+          t(returning ? 'Official Rozgar Links CV: Verified' : 'CV preparation requested'),
+        ],
+        ['CV reference ID', verification?.valid ? verification.cvReference : ''],
+        ['CV', files.cv?.name],
+        ['CV preparation fee', returning ? 'PKR 0' : fee],
+        ['Payment screenshot', returning ? t('Not required') : files.paymentScreenshot?.name],
+        [
+          'Payment verification',
+          returning ? t('Not required') : t('Attached, awaiting manual verification'),
+        ],
       ],
     },
   ];
+
+  if (alreadySubmitted)
+    return (
+      <Card className="mx-auto max-w-2xl p-6 text-center sm:p-8">
+        <Check aria-hidden="true" size={40} className="mx-auto text-brand-green" />
+        <h2 className="mt-4 text-2xl">{t('Application already submitted')}</h2>
+        <p className="mt-4 leading-7 text-muted">
+          {t(
+            'An application has already been submitted from this browser. You can submit only once from this browser. Our team will contact you about the next steps.',
+          )}
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <ButtonLink to="/contact">{t('Contact information')}</ButtonLink>
+          <ButtonLink to="/" variant="outline">
+            {t('Home')}
+          </ButtonLink>
+        </div>
+      </Card>
+    );
+
   return (
-    <div className="space-y-5">
-      <p className="rounded-xl bg-surface p-3 text-sm text-muted">
-        {t('Check your details. Sensitive identifiers are masked.')}
-      </p>
-      {sections.map((section) => (
-        <section className="rounded-xl border p-5" key={section.title}>
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-lg">{t(section.title)}</h3>
-            <Button onClick={() => onEdit(section.step)} variant="ghost">
-              {t('Edit')}
-            </Button>
+    <FormProvider {...methods}>
+      <form
+        className="mx-auto max-w-4xl"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (step === 4) void handleSubmit(onSubmit, () => setShowErrors(true))(event);
+        }}
+      >
+        <div className="absolute -left-[10000px] h-px w-px overflow-hidden" aria-hidden="true">
+          <label htmlFor="application-website">Website</label>
+          <input
+            id="application-website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(event) => setWebsite(event.target.value)}
+          />
+        </div>
+        {setup && !enabled && (
+          <p
+            id="demo-submission-notice"
+            role="status"
+            className="mb-5 rounded-xl border border-warning bg-surface p-4 text-sm"
+          >
+            {t('Demo only:')} {t('nothing is submitted. Use test details and files.')}
+          </p>
+        )}
+        <nav aria-label={t('Application progress')} className="mb-5 overflow-x-auto">
+          <ol className="flex min-w-max gap-2">
+            {activeSteps.map((index, position) => (
+              <li key={index}>
+                <Button
+                  variant={index === step ? 'primary' : 'outline'}
+                  disabled={index > step || isSubmitting}
+                  aria-current={index === step ? 'step' : undefined}
+                  onClick={() => {
+                    setShowErrors(false);
+                    setStep(index);
+                  }}
+                >
+                  {index < step ? <Check aria-hidden="true" size={16} /> : position + 1}{' '}
+                  {t(steps[index] ?? '')}
+                </Button>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        <Card className="p-5 sm:p-8">
+          <div
+            role="progressbar"
+            aria-label={t('Application progress')}
+            aria-valuemin={1}
+            aria-valuemax={activeSteps.length}
+            aria-valuenow={activeIndex + 1}
+            className="mb-5 h-2 overflow-hidden rounded-full bg-surface"
+          >
+            <div
+              className="h-full bg-brand-green transition-[width]"
+              style={{ width: `${((activeIndex + 1) / activeSteps.length) * 100}%` }}
+            />
           </div>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-            {section.items
-              .filter(([, value]) => value !== undefined && value !== '')
-              .map(([label, value]) => (
-                <div key={label}>
-                  <dt className="text-xs font-bold uppercase tracking-wide text-muted">
-                    {t(label)}
-                  </dt>
-                  <dd className="mt-1 break-words font-semibold text-text">{t(String(value))}</dd>
-                </div>
-              ))}
-          </dl>
-        </section>
-      ))}
-    </div>
+          <p className="text-sm font-bold text-brand-green">
+            {t('Step {current} of {total}', {
+              current: activeIndex + 1,
+              total: activeSteps.length,
+            })}
+          </p>
+          <h2 className="mt-2 text-2xl" tabIndex={-1} ref={heading}>
+            {t(steps[step] ?? '')}
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            {t('Required fields are marked with an asterisk.')}
+          </p>
+          {showErrors && errorMessages.length > 0 && (
+            <div role="alert" className="mt-4 rounded-xl border border-error p-4 text-error">
+              <p>{t('Please fix the following:')}</p>
+              <ul className="list-inside list-disc">
+                {errorMessages.map((message) => (
+                  <li key={message}>{t(message)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {!setup && (
+            <div className="mt-4 rounded-xl bg-surface p-4" role={setupError ? 'alert' : 'status'}>
+              {t(
+                setupError
+                  ? 'Application setup could not be loaded. Please retry.'
+                  : 'Loading validated application options…',
+              )}
+              {setupError && (
+                <Button onClick={() => setAttempt((value) => value + 1)}>{t('Retry setup')}</Button>
+              )}
+            </div>
+          )}
+          <fieldset disabled={isSubmitting} className="mt-6 min-w-0">
+            {step === 0 && (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <TextInput
+                  label={t('First name')}
+                  required
+                  maxLength={100}
+                  autoComplete="given-name"
+                  error={errors.firstName?.message}
+                  {...register('firstName')}
+                />
+                <TextInput
+                  label={t('Last name')}
+                  required
+                  maxLength={100}
+                  autoComplete="family-name"
+                  error={errors.lastName?.message}
+                  {...register('lastName')}
+                />
+                <SelectField
+                  label={t('Gender')}
+                  error={errors.gender?.message}
+                  {...register('gender')}
+                >
+                  <option value="">{t('Prefer not to say')}</option>
+                  <option value="female">{t('Female')}</option>
+                  <option value="male">{t('Male')}</option>
+                  <option value="other">{t('Other')}</option>
+                </SelectField>
+                <TextInput
+                  label={t('Email address')}
+                  type="email"
+                  required
+                  maxLength={254}
+                  dir="ltr"
+                  autoComplete="email"
+                  error={errors.email?.message}
+                  {...register('email')}
+                />
+                <TextInput
+                  {...phoneRegistration}
+                  label={t('WhatsApp number')}
+                  type="tel"
+                  inputMode="numeric"
+                  required
+                  dir="ltr"
+                  autoComplete="tel"
+                  maxLength={11}
+                  pattern="03[0-9]{9}"
+                  description={t('11 digits, starting with 03.')}
+                  error={errors.phone?.message}
+                  onChange={(event) => {
+                    event.target.value = formatPakistaniMobile(event.target.value);
+                    void phoneRegistration.onChange(event);
+                  }}
+                />
+                <SelectField
+                  {...register('field')}
+                  label={t('Job field')}
+                  required
+                  disabled={!setup}
+                  error={errors.field?.message}
+                  onChange={(event) => changeField(event.target.value)}
+                >
+                  <option value="">{t('Select a field')}</option>
+                  {setup?.taxonomy.fields.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {t(item.label)}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+            )}
+            {step === 1 && (
+              <div className="space-y-7">
+                <fieldset>
+                  <legend className="font-bold text-primary">
+                    {t('Preferred Gulf countries')} *
+                  </legend>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {(['all-gulf', ...gulfCountries] as const).map((country) => (
+                      <label
+                        key={country}
+                        className="flex min-h-12 items-center gap-3 rounded-xl border p-3"
+                      >
+                        <input
+                          type="checkbox"
+                          ref={country === 'all-gulf' ? countryInput : undefined}
+                          className="size-5"
+                          checked={countries.includes(country)}
+                          disabled={country !== 'all-gulf' && countries.includes('all-gulf')}
+                          onChange={(event) =>
+                            setValue(
+                              'countries',
+                              country === 'all-gulf'
+                                ? event.target.checked
+                                  ? ['all-gulf']
+                                  : []
+                                : event.target.checked
+                                  ? [...countries, country]
+                                  : countries.filter((id) => id !== country),
+                              { shouldValidate: true },
+                            )
+                          }
+                        />
+                        {t(
+                          country === 'all-gulf'
+                            ? 'All Gulf countries'
+                            : (countryLabels[country] ?? country),
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <section aria-labelledby="jobs-to-apply">
+                  <h3 id="jobs-to-apply" className="text-lg">
+                    {t('Jobs to apply for')} *
+                  </h3>
+                  <p className="mt-3 rounded-xl bg-surface p-4 text-sm leading-6 text-primary">
+                    {t('You selected {field} in step 1. These occupations match your job field.', {
+                      field: t(
+                        setup?.taxonomy.fields.find((item) => item.id === field)?.label ?? '',
+                      ),
+                    })}
+                  </p>
+                  {selectionNotice && (
+                    <p role="status" className="mt-2 text-sm text-muted">
+                      {t('Some selected jobs were removed because your job field changed.')}
+                    </p>
+                  )}
+                  <p aria-live="polite" className="my-3 text-sm font-bold text-brand-green">
+                    {t('{count} of 3 jobs selected', { count: selected.length })}
+                  </p>
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {selected.map((id) => {
+                      const job = applicationOccupations.find((item) => item.id === id);
+                      return (
+                        job && (
+                          <button
+                            type="button"
+                            key={id}
+                            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm font-semibold text-primary"
+                            aria-label={t('Remove {job}', { job: label(job) })}
+                            onClick={() =>
+                              setValue(
+                                'selectedJobIds',
+                                selected.filter((value) => value !== id),
+                                { shouldValidate: true },
+                              )
+                            }
+                          >
+                            {label(job)}
+                            <X aria-hidden="true" size={16} />
+                          </button>
+                        )
+                      );
+                    })}
+                  </div>
+                  <TextInput
+                    label={t('Search occupations')}
+                    ref={occupationSearch}
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    type="search"
+                  />
+                  {!available.length && (
+                    <p role="status" className="mt-4 rounded-xl bg-surface p-4 text-sm">
+                      {t(
+                        'No matching occupations are currently listed for this field. Choose another relevant field or contact us for guidance.',
+                      )}
+                    </p>
+                  )}
+                  <div className="mt-4 max-h-80 space-y-2 overflow-y-auto rounded-xl border p-3">
+                    {available
+                      .filter((job) =>
+                        `${job.titleEn} ${job.titleUr}`
+                          .toLocaleLowerCase()
+                          .includes(search.trim().toLocaleLowerCase()),
+                      )
+                      .map((job) => (
+                        <label
+                          key={job.id}
+                          className="flex min-h-12 items-center gap-3 rounded-lg bg-surface p-3 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            className="size-5 shrink-0"
+                            checked={selected.includes(job.id)}
+                            disabled={!selected.includes(job.id) && selected.length >= 3}
+                            onChange={(event) =>
+                              setValue(
+                                'selectedJobIds',
+                                event.target.checked
+                                  ? [...selected, job.id]
+                                  : selected.filter((id) => id !== job.id),
+                                { shouldValidate: true },
+                              )
+                            }
+                          />
+                          {label(job)}
+                        </label>
+                      ))}
+                  </div>
+                </section>
+              </div>
+            )}
+            {step === 2 && (
+              <div className="space-y-5">
+                <fieldset>
+                  <legend className="text-xl font-bold text-primary">
+                    {t('Do you already have a Rozgar Links CV?')}
+                  </legend>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {(['existing_rozgar_cv', 'new_cv_required'] as const).map((path, index) => {
+                      const Icon = index === 0 ? FileCheck2 : FilePlus2;
+                      return (
+                        <label
+                          key={path}
+                          className={`cursor-pointer rounded-2xl border-2 p-5 ${values.cvPathType === path ? 'border-brand-blue bg-surface' : 'border-border'}`}
+                        >
+                          <input
+                            ref={index === 0 ? journeyInput : undefined}
+                            type="radio"
+                            name="cv-journey"
+                            checked={values.cvPathType === path}
+                            onChange={() => switchJourney(path)}
+                            className="me-3 size-5"
+                          />
+                          <Icon className="my-3 text-brand-green" aria-hidden="true" size={28} />
+                          <span className="block font-bold text-primary">
+                            {t(
+                              index === 0
+                                ? 'Yes, I already have a Rozgar Links CV'
+                                : 'No, I need a new CV',
+                            )}
+                          </span>
+                          <span className="mt-2 block text-sm leading-6 text-muted">
+                            {index === 0
+                              ? t(
+                                  'I already have a CV prepared by Rozgar Links and want to use it to apply for more opportunities.',
+                                )
+                              : t(
+                                  'Our team can prepare your CV for a one-time fee of {fee}, after submission and manual payment verification.',
+                                  { fee },
+                                )}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                {returning && (
+                  <>
+                    <p className="text-sm leading-6 text-muted">
+                      {t(
+                        'Your CV is sent to the server for temporary verification, even in demo mode. Use test files only during this demonstration.',
+                      )}
+                    </p>
+                    <FileField
+                      accept=".pdf"
+                      label="Official Rozgar Links CV"
+                      description="PDF only; maximum 5 MiB. Upload the original issued file without editing or re-saving it."
+                      file={files.cv}
+                      error={fileErrors.cv}
+                      required
+                      inputRef={(element) => {
+                        fileInput.current = element;
+                      }}
+                      onChange={(file) => void changeFile('cv', file)}
+                    />
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-xl bg-surface p-4 text-sm"
+                    >
+                      {checking ? (
+                        <span className="flex items-center gap-2">
+                          <LoaderCircle aria-hidden="true" size={18} className="animate-spin" />
+                          {t('Checking your official CV…')}
+                        </span>
+                      ) : verification?.valid ? (
+                        <>
+                          <p className="font-bold text-brand-green">
+                            {t(
+                              'Your Rozgar Links CV has been verified. You can submit your application without paying the CV preparation fee again.',
+                            )}
+                          </p>
+                          <p className="mt-2" dir="ltr">
+                            {verification.cvReference}
+                          </p>
+                        </>
+                      ) : verification ? (
+                        <p className="text-error">{t(verification.message)}</p>
+                      ) : (
+                        t('Upload your official PDF CV to verify it.')
+                      )}
+                    </div>
+                    {files.cv && !checking && !verification?.valid && (
+                      <Button variant="outline" onClick={() => void changeFile('cv', files.cv)}>
+                        {t('Retry verification')}
+                      </Button>
+                    )}
+                  </>
+                )}
+                {values.cvPathType === 'new_cv_required' && (
+                  <p className="rounded-xl bg-surface p-4 text-sm leading-7">
+                    {t(
+                      'No existing CV upload is needed. Our team will prepare your CV after manual payment review. This fee does not guarantee a job, interview, visa or placement.',
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+            {step === 3 && !returning && setup && (
+              <PaymentStep
+                config={setup.config}
+                copyStatus={copyStatus}
+                fileError={fileErrors.paymentScreenshot}
+                fileInputRef={(element) => {
+                  fileInput.current = element;
+                }}
+                onCopy={(name, value) => {
+                  void navigator.clipboard
+                    .writeText(value)
+                    .then(() => setCopyStatus(t('{label} copied.', { label: t(name) })))
+                    .catch(() => setCopyStatus(t('Could not copy {label}.', { label: t(name) })));
+                }}
+                onFileChange={(file) => void changeFile('paymentScreenshot', file)}
+                paymentFile={files.paymentScreenshot}
+                paymentPreviewUrl={preview}
+              />
+            )}
+            {step === 4 && (
+              <div className="space-y-4">
+                {reviewSections.map((section) => (
+                  <section key={section.title} className="rounded-xl border p-5">
+                    <div className="flex items-center justify-between">
+                      <h3>{t(section.title)}</h3>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setShowErrors(false);
+                          setStep(section.index);
+                        }}
+                      >
+                        {t('Edit')}
+                      </Button>
+                    </div>
+                    <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+                      {section.rows
+                        .filter(([, value]) => value)
+                        .map(([name, value]) => (
+                          <div key={name}>
+                            <dt className="text-xs font-bold text-muted">{t(name ?? '')}</dt>
+                            <dd className="mt-1 break-words text-sm font-semibold">{value}</dd>
+                          </div>
+                        ))}
+                    </dl>
+                  </section>
+                ))}
+                {!returning && (
+                  <Button variant="outline" onClick={() => setStep(3)}>
+                    {t('Edit payment screenshot')}
+                  </Button>
+                )}
+              </div>
+            )}
+          </fieldset>
+          {showErrors && Object.values(fileErrors).some(Boolean) && (
+            <div role="alert" className="mt-4 text-sm text-error">
+              {Object.values(fileErrors)
+                .filter(Boolean)
+                .map((message) => (
+                  <p key={message}>{t(message ?? '')}</p>
+                ))}
+            </div>
+          )}
+          <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-between">
+            <Button
+              variant="outline"
+              disabled={step === 0 || isSubmitting}
+              onClick={() => {
+                setShowErrors(false);
+                setStep(activeSteps[Math.max(0, activeIndex - 1)] ?? 0);
+              }}
+            >
+              <ChevronLeft aria-hidden="true" className="rtl:rotate-180" size={18} />
+              {t('Back')}
+            </Button>
+            {step < 4 ? (
+              <Button disabled={isSubmitting || checking || !setup} onClick={() => void next()}>
+                {t('Continue to {step}', {
+                  step: t(steps[activeSteps[activeIndex + 1] ?? 4] ?? ''),
+                })}
+                <ChevronRight aria-hidden="true" className="rtl:rotate-180" size={18} />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={!canSubmit || isSubmitting}
+                aria-describedby={!enabled ? 'demo-submission-notice' : undefined}
+              >
+                {isSubmitting && (
+                  <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />
+                )}
+                {t(enabled ? 'Submit application' : 'Submission disabled in demo')}
+              </Button>
+            )}
+          </div>
+          {submissionError && (
+            <p role="alert" className="mt-5 rounded-xl border border-error p-4 text-sm text-error">
+              {t(submissionError)}{' '}
+              {t('Your information and selected files remain available for retry.')}
+            </p>
+          )}
+        </Card>
+      </form>
+    </FormProvider>
   );
 }

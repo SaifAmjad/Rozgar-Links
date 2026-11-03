@@ -16,19 +16,22 @@ import { useLanguage } from '../../i18n/useLanguage';
 
 const processSteps = [
   {
-    description: 'Choose a country and type of work that matches your experience.',
+    description:
+      'Browse job categories and choose the jobs you want to apply for. You can select up to 3 jobs in your application, or click Apply Now to start directly.',
     icon: BriefcaseBusiness,
-    title: 'Choose work',
+    title: 'Find a Job',
   },
   {
-    description: 'Keep your contact details, CNIC, CV and payment screenshot ready.',
+    description:
+      'Enter your details, choose countries and select up to 3 jobs. Have a Rozgar Links CV? Upload it for verification and reuse it without a CV fee once verified. Need a new CV? Preparation costs Rs. 250; upload a payment screenshot for manual review. The fee does not guarantee a job, interview or visa. Demo payments are not active.',
     icon: FileCheck2,
-    title: 'Prepare details',
+    title: 'Fill Out Your Application',
   },
   {
-    description: 'Follow the five clear application steps and review everything at the end.',
+    description:
+      'Review your details and submit your application. Our team will review your information and contact you by phone or WhatsApp about the next steps.',
     icon: CheckCircle2,
-    title: 'Check and finish',
+    title: 'Submit & Get Contacted',
   },
 ] as const;
 
@@ -225,7 +228,7 @@ export function HowItWorksDialog() {
                 navigate('/apply');
               }}
             >
-              {t(currentStep < processSteps.length - 1 ? 'Next' : 'Start application')}
+              {t(currentStep < processSteps.length - 1 ? 'Next' : 'Apply Now')}
               {currentStep < processSteps.length - 1 ? (
                 <ChevronRight aria-hidden="true" className="rtl:rotate-180" size={18} />
               ) : (

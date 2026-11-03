@@ -7,6 +7,7 @@ import { createJobsRouter } from './jobs.js';
 import { createPublicConfigRouter } from './publicConfig.js';
 import { createStatsRouter } from './stats.js';
 import { taxonomyRouter } from './taxonomy.js';
+import { createCvRouter } from './cv.js';
 import { jobsService as defaultJobsService } from '../services/jobsRuntime.js';
 import type { JobsService } from '../services/jobsService.js';
 import { statsService as defaultStatsService } from '../services/statsRuntime.js';
@@ -30,6 +31,7 @@ export function createApiRouter(options: ApiRouterOptions = {}) {
   };
 
   apiRouter.use('/applications', createApplicationsRouter(applicationOptions));
+  apiRouter.use('/cv', createCvRouter());
   apiRouter.use('/config/public', createPublicConfigRouter(applicationSubmissionEnabled));
   apiRouter.use('/health', healthRouter);
   apiRouter.use('/jobs', createJobsRouter(options.jobsService ?? defaultJobsService));

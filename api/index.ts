@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import occupationSeed from '../server/data/occupations.seed.json' with { type: 'json' };
+import { occupationDirectorySeed as occupationSeed } from '@rozgar-links/shared';
 import { createApp } from '../server/src/app.js';
 import { env } from '../server/src/config/env.js';
 import { parseOccupationSeed } from '../server/src/jobs/occupationDirectory.js';

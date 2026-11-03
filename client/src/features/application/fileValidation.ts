@@ -46,10 +46,15 @@ export function validateApplicationFile(key: ApplicationFileKey, file?: File): s
   return undefined;
 }
 
-export function validateApplicationFiles(files: ApplicationFiles) {
+export function validateApplicationFiles(
+  files: ApplicationFiles,
+  journey?: 'existing_rozgar_cv' | 'new_cv_required',
+) {
   return (Object.keys(rules) as ApplicationFileKey[]).reduce<
     Partial<Record<ApplicationFileKey, string>>
   >((errors, key) => {
+    if (journey === 'existing_rozgar_cv' && key === 'paymentScreenshot') return errors;
+    if (journey === 'new_cv_required' && key === 'cv') return errors;
     const error = validateApplicationFile(key, files[key]);
     if (error) errors[key] = error;
     return errors;

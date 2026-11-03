@@ -3,6 +3,7 @@ import multer from 'multer';
 
 import { env } from '../config/env.js';
 import { HttpError } from '../errors/httpError.js';
+import type { ApplicationFields } from '@rozgar-links/shared';
 import {
   validateUploadedFile,
   type ApplicationFileField,
@@ -82,23 +83,62 @@ export const uploadApplication: RequestHandler = (request, response, next) => {
   });
 };
 
-export type ValidatedApplicationFiles = Record<
-  'cv' | 'paymentScreenshot',
-  ValidatedApplicationFile
+export type ValidatedApplicationFiles = Partial<
+  Record<'cv' | 'paymentScreenshot', ValidatedApplicationFile>
 >;
 
-export function getValidatedApplicationFiles(request: Express.Request): ValidatedApplicationFiles {
+export function getValidatedApplicationFiles(
+  request: Express.Request,
+  journey: ApplicationFields['cvPathType'],
+): ValidatedApplicationFiles {
   const uploaded = (request.files ?? {}) as Record<string, Express.Multer.File[]>;
   const cv = uploaded.cv?.[0];
   const paymentScreenshot = uploaded.paymentScreenshot?.[0];
-  if (!cv || !paymentScreenshot) {
-    throw new HttpError(400, 'missing_upload', 'CV and payment screenshot are required.');
+  if (journey === 'existing_rozgar_cv') {
+    if (!cv || paymentScreenshot)
+      throw new HttpError(
+        400,
+        'invalid_upload',
+        'Returning applicants must upload only their official PDF CV.',
+      );
+    const file = validateUploadedFile('cv', cv);
+    if (file.mimeType !== 'application/pdf')
+      throw new HttpError(400, 'invalid_upload', 'An official PDF CV is required.');
+    return { cv: file };
   }
-
-  return {
-    cv: validateUploadedFile('cv', cv),
-    paymentScreenshot: validateUploadedFile('paymentScreenshot', paymentScreenshot),
-  };
+  if (!paymentScreenshot || cv)
+    throw new HttpError(
+      400,
+      'invalid_upload',
+      'New CV requests must upload only a payment screenshot.',
+    );
+  return { paymentScreenshot: validateUploadedFile('paymentScreenshot', paymentScreenshot) };
 }
+
+export const uploadCvVerification: RequestHandler = (request, response, next) => {
+  const length = Number(request.headers['content-length']);
+  if (Number.isFinite(length) && length > maximumFileBytes + 100 * 1024) {
+    next(new HttpError(413, 'request_too_large', 'The CV upload is too large.'));
+    return;
+  }
+  uploader.single('cv')(request, response, (error: unknown) => {
+    if (!error) {
+      next();
+      return;
+    }
+    if (error instanceof HttpError) {
+      next(error);
+      return;
+    }
+    const tooLarge = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE';
+    next(
+      new HttpError(
+        tooLarge ? 413 : 400,
+        tooLarge ? 'request_too_large' : 'invalid_upload',
+        'Upload one PDF CV, maximum 5 MiB.',
+      ),
+    );
+  });
+};
 
 export { maximumFileBytes, maximumRequestBytes };

@@ -32,8 +32,7 @@ COPY --from=production-dependencies /app/server/package.json ./server/package.js
 COPY --from=production-dependencies /app/shared/package.json ./shared/package.json
 COPY --from=build --chown=node:node /app/server/dist ./server/dist
 COPY --from=build --chown=node:node /app/shared/dist ./shared/dist
-COPY --from=build --chown=node:node /app/server/data/jobs.seed.json ./server/data/jobs.seed.json
-RUN chown -R node:node /app/server/data
+RUN mkdir -p /app/server/data && chown -R node:node /app/server/data
 
 USER node
 EXPOSE 4000

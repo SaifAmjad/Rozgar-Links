@@ -1,8 +1,12 @@
+import { applicationUrdu } from './applicationTranslations';
 export type Language = 'en' | 'ur';
 
 export const languageStorageKey = 'rozgar-links-language';
 
 const urdu: Record<string, string> = {
+  ...applicationUrdu,
+  'Keep your contact details, CV and payment screenshot ready.':
+    'اپنی رابطے کی تفصیلات، سی وی اور ادائیگی کا اسکرین شاٹ تیار رکھیں۔',
   'Sample countries': 'نمونہ ممالک',
   'Sample country assignments only; not verified vacancies.':
     'ممالک کی تقسیم صرف نمونہ ہے؛ تصدیق شدہ آسامیاں نہیں۔',

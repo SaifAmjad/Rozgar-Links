@@ -9,17 +9,14 @@ import { maximumFileBytes } from '../middleware/upload.js';
 const applicationFields = {
   firstName: 'Test',
   lastName: 'Applicant',
-  dateOfBirth: '1990-01-01',
-  nationalId: '12345-1234567-1',
   email: 'applicant@example.com',
   phone: '03001234567',
-  currentCity: 'Lahore',
   countries: ['saudi-arabia'],
   field: 'construction',
-  yearsExperience: 4,
+  selectedJobIds: ['occupation-001'],
+  cvPathType: 'new_cv_required',
 };
 
-const pdf = Buffer.from('%PDF-1.7\n1 0 obj\n%%EOF\n');
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
   'base64',
@@ -33,11 +30,29 @@ function validRequest(
     .post('/api/applications')
     .field('fields', JSON.stringify(overrides.fields ?? applicationFields))
     .field('website', overrides.website ?? '')
-    .attach('cv', pdf, { filename: 'resume.pdf', contentType: 'application/pdf' })
     .attach('paymentScreenshot', png, { filename: 'payment.png', contentType: 'image/png' });
 }
 
 describe('POST /api/applications', () => {
+  it('accepts new education occupations and passes them to administrator delivery', async () => {
+    const deliver = vi.fn().mockResolvedValue(undefined);
+    const app = createApp({
+      applicationSubmissionEnabled: true,
+      applications: { deliver, audit: vi.fn() },
+    });
+    const response = await validRequest(app, {
+      fields: {
+        ...applicationFields,
+        field: 'education',
+        selectedJobIds: ['occupation-065', 'occupation-070'],
+      },
+    });
+    expect(response.status).toBe(201);
+    expect(deliver.mock.calls[0]?.[0].application).toMatchObject({
+      field: 'education',
+      selectedJobIds: ['occupation-065', 'occupation-070'],
+    });
+  });
   it('returns 201 only after one accepted admin delivery', async () => {
     const deliver = vi.fn().mockResolvedValue(undefined);
     const audit = vi.fn();
@@ -54,7 +69,7 @@ describe('POST /api/applications', () => {
     });
     expect(response.body.referenceId).toMatch(/^RL-\d{4}-[A-Z2-9]{6}$/);
     expect(deliver).toHaveBeenCalledTimes(1);
-    expect(deliver.mock.calls[0]?.[0].files.cv.buffer).toEqual(pdf);
+    expect(deliver.mock.calls[0]?.[0].files.paymentScreenshot.buffer).toEqual(png);
     expect(response.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
     expect(audit).toHaveBeenCalledTimes(1);
     expect(audit).toHaveBeenCalledWith({
@@ -65,7 +80,6 @@ describe('POST /api/applications', () => {
     });
     const auditJson = JSON.stringify(audit.mock.calls);
     expect(auditJson).not.toContain(applicationFields.email);
-    expect(auditJson).not.toContain(applicationFields.nationalId);
   });
 
   it('rejects missing, unexpected and signature-spoofed uploads', async () => {

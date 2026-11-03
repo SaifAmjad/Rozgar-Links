@@ -1,4 +1,4 @@
-import { jobTaxonomy, type ApplicationFields } from '@rozgar-links/shared';
+import { applicationOccupations, jobTaxonomy, type ApplicationFields } from '@rozgar-links/shared';
 
 import { env } from '../config/env.js';
 import type { ValidatedApplicationFiles } from '../middleware/upload.js';
@@ -31,10 +31,6 @@ function safeHeaderValue(value: string, maximum = 100) {
     .slice(0, maximum);
 }
 
-function displayValue(value: unknown) {
-  return value === undefined || value === '' ? 'Not provided' : String(value);
-}
-
 const countryLabels: Record<string, string> = {
   'saudi-arabia': 'Saudi Arabia',
   'united-arab-emirates': 'United Arab Emirates',
@@ -48,7 +44,7 @@ const fieldLabels = new Map(jobTaxonomy.fields.map((field) => [field.id, field.l
 
 type SummaryRow = readonly [label: string, value: string];
 
-function applicationSections(application: ApplicationFields) {
+function applicationSections(application: ApplicationFields, cvReference?: string) {
   const countries = application.countries
     .map((country) => countryLabels[country] ?? country)
     .join(', ');
@@ -61,12 +57,9 @@ function applicationSections(application: ApplicationFields) {
       title: 'Applicant details',
       rows: [
         ['Full name', `${application.firstName} ${application.lastName}`.trim()],
-        ['Date of birth', application.dateOfBirth],
         ['Gender', gender],
-        ['CNIC', application.nationalId],
         ['Email address', application.email],
         ['Phone / WhatsApp', application.phone],
-        ['Current city', application.currentCity],
       ] satisfies SummaryRow[],
     },
     {
@@ -75,19 +68,56 @@ function applicationSections(application: ApplicationFields) {
         ['Preferred countries', countries],
         ['Job field', fieldLabels.get(application.field) ?? application.field],
         [
-          'Experience',
-          `${displayValue(application.yearsExperience)} year${application.yearsExperience === 1 ? '' : 's'}`,
+          'Selected jobs',
+          application.selectedJobIds
+            .map((id) => applicationOccupations.find((job) => job.id === id)?.titleEn ?? id)
+            .join(', '),
         ],
       ] satisfies SummaryRow[],
+    },
+    {
+      title: 'CV preparation and payment',
+      rows:
+        application.cvPathType === 'existing_rozgar_cv'
+          ? ([
+              ['Official CV reference', cvReference ?? 'Unavailable'],
+              ['CV verification status', 'Verified'],
+              ['CV preparation fee', 'Waived (PKR 0)'],
+              [
+                'Administrator instructions',
+                'This applicant supplied a cryptographically verified Rozgar Links CV. No new CV preparation fee is required.',
+              ],
+            ] satisfies SummaryRow[])
+          : ([
+              ['CV preparation required', 'Yes'],
+              ['CV preparation fee', `${env.SERVICE_FEE_CURRENCY} ${env.SERVICE_FEE_AMOUNT}`],
+              ['Payment verification status', 'Pending manual review'],
+              [
+                'Payment mode',
+                env.PAYMENT_DETAILS_ARE_DEMO
+                  ? 'DEMO ONLY — do not collect payment'
+                  : 'Manual review',
+              ],
+              [
+                'Administrator instructions',
+                'This applicant has requested CV preparation. Verify the payment evidence manually, prepare the CV, issue a signed Rozgar Links CV reference using the admin utility, and deliver the official CV to the applicant.',
+              ],
+            ] satisfies SummaryRow[]),
     },
   ];
 }
 
 function attachmentRows(files?: ValidatedApplicationFiles): SummaryRow[] {
-  return [
-    ['CV', files?.cv.filename ?? 'Attached to this email'],
-    ['Payment screenshot', files?.paymentScreenshot.filename ?? 'Attached to this email'],
-  ];
+  return Object.values(files ?? {}).flatMap((file) =>
+    file
+      ? [
+          [
+            file.fieldName === 'cv' ? 'Official CV' : 'Payment screenshot',
+            file.filename,
+          ] as SummaryRow,
+        ]
+      : [],
+  );
 }
 
 function renderRows(rows: SummaryRow[]) {
@@ -114,8 +144,9 @@ export function renderApplicationHtml(
   application: ApplicationFields,
   referenceId: string,
   files?: ValidatedApplicationFiles,
+  cvReference?: string,
 ) {
-  const sections = applicationSections(application)
+  const sections = applicationSections(application, cvReference)
     .map((section) => renderSection(section.title, section.rows))
     .join('');
   const attachments = renderSection('Attachments', attachmentRows(files));
@@ -132,8 +163,7 @@ export function renderApplicationHtml(
             <p style="margin:12px 0 0;color:#dbeafe;font-size:14px;">Reference: <strong style="color:#ffffff;">${escapeHtml(referenceId)}</strong></p>
           </td></tr>
           <tr><td style="padding:24px 28px 20px;">
-            <p style="margin:0;color:#334155;font-size:15px;line-height:1.6;">A new application was submitted through Rozgar Links. Review the applicant details and both attachments below.</p>
-            <div style="margin-top:16px;padding:12px 14px;background:#fff7ed;border-left:4px solid #d97706;border-radius:8px;color:#7c2d12;font-size:13px;line-height:1.5;"><strong>Manual review required:</strong> payment evidence has not been verified.</div>
+            <p style="margin:0;color:#334155;font-size:15px;line-height:1.6;">A new application was submitted through Rozgar Links. Review the applicant details and relevant attachment below. Submission does not guarantee employment.</p>
           </td></tr>
           ${sections}
           ${attachments}
@@ -149,8 +179,9 @@ export function renderApplicationText(
   application: ApplicationFields,
   referenceId: string,
   files?: ValidatedApplicationFiles,
+  cvReference?: string,
 ) {
-  const sections = applicationSections(application)
+  const sections = applicationSections(application, cvReference)
     .map(
       (section) =>
         `${section.title}\n${section.rows.map(([label, value]) => `${label}: ${value}`).join('\n')}`,
@@ -160,7 +191,7 @@ export function renderApplicationText(
     .map(([label, value]) => `${label}: ${value}`)
     .join('\n');
 
-  return `ROZGAR LINKS - NEW JOB APPLICATION\nReference: ${referenceId}\n\nPayment evidence requires manual review.\n\n${sections}\n\nAttachments\n${attachments}\n\nConfidential applicant information. Handle it according to your approved privacy and retention policy.`;
+  return `ROZGAR LINKS - JOB APPLICATION\nReference: ${referenceId}\n\n${sections}\n\nAttachments\n${attachments}\n\nConfidential applicant information. Handle it according to your approved privacy and retention policy.`;
 }
 
 function wasAccepted(result: ApplicationMailResult) {
@@ -171,26 +202,46 @@ export interface ApplicationDeliveryInput {
   application: ApplicationFields;
   files: ValidatedApplicationFiles;
   referenceId: string;
+  cvReference?: string | undefined;
 }
 
 export async function deliverApplication(
-  { application, files, referenceId }: ApplicationDeliveryInput,
+  { application, files, referenceId, cvReference }: ApplicationDeliveryInput,
   mailTransport: ApplicationMailTransport = getMailTransport(),
 ) {
-  const fullName = safeHeaderValue(`${application.firstName} ${application.lastName}`);
-  const attachments = Object.values(files).map((file) => ({
+  const returning = application.cvPathType === 'existing_rozgar_cv';
+  const file = returning ? files.cv : files.paymentScreenshot;
+  if (!file || (returning && !cvReference)) throw new AdminDeliveryError();
+  const attachments = [file].map((file) => ({
     content: file.buffer,
     contentType: file.mimeType,
     filename: file.filename,
   }));
-  const adminResult = await mailTransport.sendMail({
-    attachments,
-    from: env.MAIL_FROM,
-    html: renderApplicationHtml(application, referenceId, files),
-    subject: `New application - ${fullName} - ${referenceId}`,
-    text: renderApplicationText(application, referenceId, files),
-    to: env.ADMIN_EMAIL,
-  });
+  const adminResult = await mailTransport
+    .sendMail({
+      attachments,
+      from: env.MAIL_FROM,
+      html: renderApplicationHtml(
+        application,
+        referenceId,
+        { [file.fieldName]: file },
+        cvReference,
+      ),
+      subject: safeHeaderValue(
+        `[Rozgar Links] ${returning ? 'Returning Applicant' : 'New CV Preparation + Job Application'} - ${referenceId}`,
+        160,
+      ),
+      text: renderApplicationText(
+        application,
+        referenceId,
+        { [file.fieldName]: file },
+        cvReference,
+      ),
+      to: env.ADMIN_EMAIL,
+    })
+    .catch(() => {
+      throw new AdminDeliveryError();
+    });
 
   if (!wasAccepted(adminResult)) throw new AdminDeliveryError();
 }

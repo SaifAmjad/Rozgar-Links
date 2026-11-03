@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { jobFieldsById } from '../taxonomy.js';
+import { occupationsForField } from '../occupations.js';
 
 export const gulfCountries = [
   'saudi-arabia',
@@ -32,53 +33,10 @@ const optionalText = (maximum: number) =>
     z.string().trim().max(maximum).optional(),
   );
 
-const requiredNonnegativeNumber = (label: string, maximum: number) =>
-  z.preprocess(
-    (value) => (value === '' || value === null || value === undefined ? undefined : value),
-    z.coerce
-      .number({
-        invalid_type_error: `${label} is required.`,
-        required_error: `${label} is required.`,
-      })
-      .finite()
-      .nonnegative()
-      .max(maximum),
-  );
-
-function isValidIsoDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 0));
-
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === (month ?? 1) - 1 &&
-    date.getUTCDate() === day
-  );
-}
-
-const isoDateSchema = z.string().refine(isValidIsoDate, 'Enter a valid date in YYYY-MM-DD format.');
-
-function parseIsoDate(value: string) {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 0));
-}
-
-function startOfUtcDay(value: Date) {
-  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
-}
-
-function calculateAge(dateOfBirth: Date, onDate: Date) {
-  let age = onDate.getUTCFullYear() - dateOfBirth.getUTCFullYear();
-  const birthdayHasPassed =
-    onDate.getUTCMonth() > dateOfBirth.getUTCMonth() ||
-    (onDate.getUTCMonth() === dateOfBirth.getUTCMonth() &&
-      onDate.getUTCDate() >= dateOfBirth.getUTCDate());
-
-  if (!birthdayHasPassed) age -= 1;
-  return age;
-}
+export const cvPathTypeSchema = z.enum(['existing_rozgar_cv', 'new_cv_required'], {
+  required_error: 'Choose your CV status.',
+  invalid_type_error: 'Choose your CV status.',
+});
 
 const countriesSchema = z
   .array(z.enum([...gulfCountries, 'all-gulf']))
@@ -87,52 +45,42 @@ const countriesSchema = z
     countries.includes('all-gulf') ? [...gulfCountries] : [...new Set(countries)],
   );
 
-interface ApplicationSchemaOptions {
-  now?: () => Date;
-}
-
-export function createApplicationFieldsSchema({
-  now = () => new Date(),
-}: ApplicationSchemaOptions = {}) {
+export function createApplicationFieldsSchema() {
   return z
     .object({
       firstName: requiredText('First name', 100),
       lastName: requiredText('Last name', 100),
-      dateOfBirth: isoDateSchema,
       gender: optionalText(50),
-      nationalId: z
-        .string()
-        .trim()
-        .regex(/^\d{5}-\d{7}-\d$/, 'Enter CNIC as #####-#######-#.'),
       email: z.string().trim().email('Enter a valid email address.').max(254),
       phone: z
         .string()
         .trim()
         .regex(/^03\d{9}$/, 'Enter an 11-digit mobile number starting with 03.'),
-      currentCity: requiredText('Current city', 100),
       countries: countriesSchema,
       field: requiredText('Field', 80),
-      yearsExperience: requiredNonnegativeNumber('Years of experience', 80),
+      selectedJobIds: z
+        .array(z.string().regex(/^occupation-\d{3}$/))
+        .min(1, 'Select at least one occupation.')
+        .max(3, 'Select no more than three occupations.')
+        .refine((ids) => new Set(ids).size === ids.length, 'Selected occupations must be unique.'),
+      cvPathType: cvPathTypeSchema,
     })
     .strict()
     .superRefine((application, context) => {
-      const submissionDate = startOfUtcDay(now());
-      const dateOfBirth = parseIsoDate(application.dateOfBirth);
-
-      if (calculateAge(dateOfBirth, submissionDate) < 18) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Applicant must be at least 18 years old.',
-          path: ['dateOfBirth'],
-        });
-      }
-
       const selectedField = jobFieldsById.get(application.field);
       if (!selectedField) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'Select a recognized job field.',
           path: ['field'],
+        });
+      }
+      const allowedIds = new Set(occupationsForField(application.field).map((job) => job.id));
+      if (application.selectedJobIds.some((id) => !allowedIds.has(id))) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['selectedJobIds'],
+          message: 'Select active occupations matching your job field.',
         });
       }
     });
