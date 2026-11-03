@@ -1,10 +1,27 @@
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import app, { restoreForwardedApiPath } from '../../api/index.js';
 import { env } from './config/env.js';
 
 describe('Vercel adapter', () => {
+  it('refreshes a warm function after Karachi midnight without cron or redeployment', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-11-03T18:59:59.000Z'));
+      const before = await request(app).get('/api?path=stats');
+      vi.setSystemTime(new Date('2026-11-03T19:00:01.000Z'));
+      const after = await request(app).get('/api?path=stats');
+      expect(before.status).toBe(200);
+      expect(after.status).toBe(200);
+      expect(before.body.date).toBe('2026-11-03');
+      expect(after.body.date).toBe('2026-11-04');
+      expect(after.body.totalOpenings).not.toBe(before.body.totalOpenings);
+      expect(after.headers['cache-control']).toBe('no-store');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it('serves deployment data and reports the configured submission mode', async () => {
     const [health, config, stats, jobs] = await Promise.all([
       request(app).get('/api/health'),

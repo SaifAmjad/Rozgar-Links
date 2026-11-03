@@ -57,6 +57,7 @@ describe('HeroJobBar', () => {
     }
     expect(screen.getAllByLabelText(/illustrative (increase|decrease) indicator/i)).toHaveLength(6);
     expect(screen.getByText(/Indicative figures, updated daily/)).toBeInTheDocument();
+    expect(screen.getByText(/Snapshot date: 2026-10-20/)).toBeVisible();
   });
 
   it('offers a retry when counts cannot be loaded', async () => {

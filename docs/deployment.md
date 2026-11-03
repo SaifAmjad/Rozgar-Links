@@ -155,3 +155,24 @@ operational guidance, not legal advice.
 ## Conditional CV applications
 
 See [CV workflow and admin issuance](cv-workflow.md) for the new/returning journeys, dedicated signing key, configurable PKR 250 default fee and private admin CLI. The canonical directory seed is now shared/occupations.seed.json and ships in the shared build. Each journey uploads one relevant attachment; the hosting body-size limitation still applies.
+
+## Daily stats on Vercel
+
+Vercel does not run the conventional server's node-cron startup. The adapter instead calls
+`StatsService.ensureToday()` on stats requests, using `APP_TIME_ZONE` (default Asia/Karachi).
+It creates the deterministic snapshot for the current local date on demand, including in an
+already warm function after midnight. No database, daily redeployment or Vercel cron is needed
+for these generated indicative numbers. Memory caches are not durable history.
+
+Stats and history responses explicitly send `Cache-Control`, `CDN-Cache-Control` and
+`Vercel-CDN-Cache-Control` as `no-store`. The browser refreshes visible stats every minute,
+on tab focus/visibility restoration and on network reconnect; requests are canceled on
+unmount. A failed background refresh retains the last numbers marked stale and retries.
+The hero shows the server snapshot date. Its date follows the configured app timezone,
+not each visitor's local midnight. Values remain indicative and constant within one date;
+individual totals can coincide on different dates.
+
+After deploying this change, inspect `/api/stats`: check `date`, `isStale`, `lastUpdated` and
+the cache headers. Do not rely only on whether the total happens to differ. Verify that
+`VITE_API_BASE_URL` points at this deployment's API (normally `/api`) and redeploy if it
+was built with an outdated external API URL. This local fix is not published automatically.

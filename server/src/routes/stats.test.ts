@@ -50,6 +50,11 @@ describe('stats routes', () => {
     expect(historyResponse.status).toBe(200);
     expect(history.entries).toEqual(stats.last7Days);
     expect(stats.provenance).toBe('estimated');
+    for (const response of [statsResponse, historyResponse]) {
+      expect(response.headers['cache-control']).toBe('no-store');
+      expect(response.headers['cdn-cache-control']).toBe('no-store');
+      expect(response.headers['vercel-cdn-cache-control']).toBe('no-store');
+    }
   });
 
   it.each(['0', '31', '2.5', 'invalid'])('rejects invalid history days %s', async (days) => {

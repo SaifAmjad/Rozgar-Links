@@ -1,12 +1,9 @@
 import { RefreshCw, TrendingDown, TrendingUp } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-import type { StatsResponse } from '@rozgar-links/shared';
 
 import { Button } from '../../components/ui/Button';
 import { useLanguage } from '../../i18n/useLanguage';
-import { fetchStats } from './api';
+import { useDailyStats } from './useDailyStats';
 import { formatCount } from './format';
 
 function CountryFlag({ country }: { country: string }) {
@@ -94,25 +91,7 @@ function hasIllustrativeIncrease(date: string, country: string, count: number) {
 
 export function HeroJobBar() {
   const { language, t } = useLanguage();
-  const [stats, setStats] = useState<StatsResponse>();
-  const [error, setError] = useState(false);
-  const [requestVersion, setRequestVersion] = useState(0);
-
-  const retry = useCallback(() => {
-    setError(false);
-    setStats(undefined);
-    setRequestVersion((version) => version + 1);
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetchStats(controller.signal)
-      .then(setStats)
-      .catch(() => {
-        if (!controller.signal.aborted) setError(true);
-      });
-    return () => controller.abort();
-  }, [requestVersion]);
+  const { stats, error, retry } = useDailyStats();
 
   if (!stats && !error) {
     return (
@@ -192,10 +171,13 @@ export function HeroJobBar() {
           );
         })}
       </div>
-      <p className="sr-only">
+      <p className="border-t bg-surface px-4 py-2 text-xs leading-5 text-muted">
+        {t('Snapshot date: {date}', { date: stats.date })}
+        {' · '}
         {t(
           'Indicative figures, updated daily. Direction arrows are illustrative, not verified trends.',
         )}
+        {stats.isStale ? ` ${t('Figures may be out of date. Retrying automatically.')}` : ''}
       </p>
     </div>
   );

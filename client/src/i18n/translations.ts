@@ -4,6 +4,9 @@ export type Language = 'en' | 'ur';
 export const languageStorageKey = 'rozgar-links-language';
 
 const urdu: Record<string, string> = {
+  'Snapshot date: {date}': 'اعداد و شمار کی تاریخ: {date}',
+  'Figures may be out of date. Retrying automatically.':
+    'اعداد و شمار پرانے ہو سکتے ہیں۔ خودکار طور پر دوبارہ کوشش ہو رہی ہے۔',
   ...applicationUrdu,
   'Keep your contact details, CV and payment screenshot ready.':
     'اپنی رابطے کی تفصیلات، سی وی اور ادائیگی کا اسکرین شاٹ تیار رکھیں۔',

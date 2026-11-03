@@ -1,5 +1,5 @@
 import { BarChart3, Globe2, Info, RefreshCw, TrendingUp } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 
 import type { StatsResponse } from '@rozgar-links/shared';
@@ -9,7 +9,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { fetchStats } from './api';
+import { useDailyStats } from './useDailyStats';
 import { ProvenanceLabel } from './ProvenanceLabel';
 import { SummaryCards } from './SummaryCards';
 import { useLanguage } from '../../i18n/useLanguage';
@@ -60,16 +60,8 @@ function ActiveChart({ stats, view }: { stats: StatsResponse; view: DashboardVie
 
 export function DashboardSection() {
   const { t } = useLanguage();
-  const [stats, setStats] = useState<StatsResponse>();
-  const [error, setError] = useState(false);
-  const [requestVersion, setRequestVersion] = useState(0);
+  const { stats, error, retry } = useDailyStats();
   const [activeView, setActiveView] = useState<DashboardView>('country');
-
-  const retry = useCallback(() => {
-    setError(false);
-    setStats(undefined);
-    setRequestVersion((version) => version + 1);
-  }, []);
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex: number | undefined;
@@ -91,21 +83,6 @@ export function DashboardSection() {
       event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
     tabs?.[nextIndex]?.focus();
   }
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    void fetchStats(controller.signal)
-      .then((response) => setStats(response))
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setError(true);
-          setStats(undefined);
-        }
-      });
-
-    return () => controller.abort();
-  }, [requestVersion]);
 
   return (
     <section className="border-y bg-surface py-10 sm:py-12" aria-labelledby="dashboard-title">

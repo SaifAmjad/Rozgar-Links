@@ -27,6 +27,12 @@ function unavailableResponse(response: Response) {
 
 export function createStatsRouter(service: StatsService) {
   const router = Router();
+  router.use((_request, response, next) => {
+    response.setHeader('Cache-Control', 'no-store');
+    response.setHeader('CDN-Cache-Control', 'no-store');
+    response.setHeader('Vercel-CDN-Cache-Control', 'no-store');
+    next();
+  });
 
   router.get('/', async (_request, response) => {
     try {
