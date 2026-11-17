@@ -8,12 +8,14 @@ import { createPublicConfigRouter } from './publicConfig.js';
 import { createStatsRouter } from './stats.js';
 import { taxonomyRouter } from './taxonomy.js';
 import { createCvRouter } from './cv.js';
+import { createAdminRouter, type AdminRouterOptions } from './admin.js';
 import { jobsService as defaultJobsService } from '../services/jobsRuntime.js';
 import type { JobsService } from '../services/jobsService.js';
 import { statsService as defaultStatsService } from '../services/statsRuntime.js';
 import type { StatsService } from '../services/statsService.js';
 
 export interface ApiRouterOptions {
+  admin?: Partial<AdminRouterOptions>;
   applications?: ApplicationsRouterOptions;
   applicationSubmissionEnabled?: boolean;
   jobsService?: JobsService;
@@ -32,6 +34,13 @@ export function createApiRouter(options: ApiRouterOptions = {}) {
 
   apiRouter.use('/applications', createApplicationsRouter(applicationOptions));
   apiRouter.use('/cv', createCvRouter());
+  apiRouter.use(
+    '/admin',
+    createAdminRouter({
+      ...options.admin,
+      allowedOrigins: options.admin?.allowedOrigins ?? new Set([new URL(env.CLIENT_URL).origin]),
+    }),
+  );
   apiRouter.use('/config/public', createPublicConfigRouter(applicationSubmissionEnabled));
   apiRouter.use('/health', healthRouter);
   apiRouter.use('/jobs', createJobsRouter(options.jobsService ?? defaultJobsService));

@@ -4,6 +4,23 @@ export type Language = 'en' | 'ur';
 export const languageStorageKey = 'rozgar-links-language';
 
 const urdu: Record<string, string> = {
+  'Apply now': 'ابھی درخواست دیں',
+  'Preselected occupation: {job}. You can change it in step 2.':
+    'پہلے سے منتخب پیشہ: {job}۔ آپ اسے مرحلہ 2 میں تبدیل کر سکتے ہیں۔',
+  "We're Here to Help": 'ہم آپ کی مدد کے لیے موجود ہیں',
+  "Have questions? We're here for you.": 'کوئی سوال ہے؟ ہم آپ کے لیے حاضر ہیں۔',
+  'Need help applying for jobs or preparing your CV? Our team is just a WhatsApp message away.':
+    'ملازمتوں کے لیے درخواست دینے یا اپنی سی وی تیار کرنے میں مدد چاہیے؟ ہماری ٹیم سے رابطے کے لیے بس واٹس ایپ پر ایک پیغام بھیجیں۔',
+  'Let’s talk': 'آئیں بات کریں',
+  'Need more information?': 'مزید معلومات چاہیے؟',
+  'Have a question about applying or the documents you need? Send us a message on WhatsApp.':
+    'درخواست دینے یا ضروری دستاویزات کے بارے میں کوئی سوال ہے؟ ہمیں واٹس ایپ پر پیغام بھیجیں۔',
+  'Reach us on WhatsApp': 'واٹس ایپ پر ہم سے رابطہ کریں',
+  'Want to contact us for more information?': 'مزید معلومات کے لیے ہم سے رابطہ کرنا چاہتے ہیں؟',
+  'Reach us on WhatsApp.': 'واٹس ایپ پر ہم سے رابطہ کریں۔',
+  'Chat on WhatsApp': 'واٹس ایپ پر بات کریں',
+  'Chat with Rozgar Links on WhatsApp (opens in a new tab)':
+    'روزگار لنکس سے واٹس ایپ پر بات کریں (نئے ٹیب میں کھلے گا)',
   'Snapshot date: {date}': 'اعداد و شمار کی تاریخ: {date}',
   'Figures may be out of date. Retrying automatically.':
     'اعداد و شمار پرانے ہو سکتے ہیں۔ خودکار طور پر دوبارہ کوشش ہو رہی ہے۔',

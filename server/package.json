@@ -9,7 +9,8 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "cv:issue": "tsx src/admin/issueCv.ts"
+    "cv:issue": "tsx src/admin/issueCv.ts",
+    "admin:password": "npm run build --workspace @rozgar-links/shared && npm run build --workspace @rozgar-links/server && node dist/admin/hashPassword.js"
   },
   "dependencies": {
     "@rozgar-links/shared": "*",

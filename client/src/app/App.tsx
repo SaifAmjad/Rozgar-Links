@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 
 import { SiteLayout } from '../components/layout/SiteLayout';
 import { ApplyPage } from '../pages/ApplyPage';
@@ -9,10 +10,27 @@ import { JobsPage } from '../pages/JobsPage';
 import { FeesRefundsPage, PrivacyPage, TermsPage } from '../pages/LegalPages';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { SuccessPage } from '../pages/SuccessPage';
+const AdminPanel = lazy(() =>
+  import('../features/admin/AdminPanel').then((module) => ({ default: module.AdminPanel })),
+);
 
 export function App() {
   return (
     <Routes>
+      <Route
+        path="admin/*"
+        element={
+          <Suspense
+            fallback={
+              <p role="status" className="p-6 text-muted">
+                Loading admin workspace…
+              </p>
+            }
+          >
+            <AdminPanel />
+          </Suspense>
+        }
+      />
       <Route element={<SiteLayout />}>
         <Route index element={<HomePage />} />
         <Route path="jobs" element={<JobsPage />} />

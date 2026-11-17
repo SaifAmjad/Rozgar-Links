@@ -1,9 +1,12 @@
+import { useLocation } from 'react-router-dom';
+
 import { PageContainer } from '../components/layout/PageContainer';
 import { ApplicationWizard } from '../features/application/ApplicationWizard';
 import { useLanguage } from '../i18n/useLanguage';
 
 export function ApplyPage() {
   const { t } = useLanguage();
+  const { search } = useLocation();
 
   return (
     <>
@@ -22,7 +25,7 @@ export function ApplyPage() {
       </section>
 
       <PageContainer className="py-6 sm:py-10">
-        <ApplicationWizard />
+        <ApplicationWizard key={search} />
       </PageContainer>
     </>
   );

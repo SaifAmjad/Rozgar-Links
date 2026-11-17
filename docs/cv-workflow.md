@@ -82,12 +82,12 @@ country associations are not real eligibility requirements.
 
 ## Verification design and guarantees
 
-Admin issuance uses `pdf-lib` to parse an unsigned PDF and append a visible issuance page.
+Admin issuance uses `pdf-lib` to parse an unsigned PDF and stamp only a small reference in the bottom-right margin of its last page. No new page, branding, date label, or explanatory text is added; existing page sizes and rotations are preserved.
 The human-readable reference has the format `RL-CV-YYYY-XXXXXXXXXXXX`, using twelve random
 characters. It is an identifier, not an authentication credential. Uniqueness is probabilistic;
 there is no database to enforce global uniqueness or keep an issuance ledger.
 
-The final serialized PDF, including the visible page, is hashed with SHA-256. A strict JSON
+The final serialized PDF, including the visible reference, is hashed with SHA-256. A strict JSON
 payload contains only version, fixed purpose, reference, UTC issuance time and the hash.
 It contains no applicant PII. The base64url payload is authenticated with HMAC-SHA256 using
 a dedicated server-side 32-byte key and a domain-separated signing context. The envelope
@@ -110,7 +110,7 @@ printing to PDF, or re-saving can invalidate verification even when the visible 
 same. Deliver the issued original as a file attachment/document, not as an image or converted
 PDF. No metadata/text-only fallback is accepted.
 
-PDF parsing is confined to the trusted offline admin workflow. The public API performs
+PDF parsing is confined to authenticated admin issuance or the private CLI. Public applicant endpoints perform
 bounded upload/content checks and cryptographic verification; it does not render or execute
 uploaded PDFs. Cryptographic issuance is not malware scanning. Administrators must review
 the source PDF before issuance and use an approved document-handling process.
@@ -147,14 +147,15 @@ the source PDF before issuance and use an approved document-handling process.
    ```
 
    The CLI requires an unsigned PDF with 1–100 pages, enforces the smaller of 5 MiB and the
-   server upload limit, adds the reference page, signs and self-verifies the output. It writes
+   server upload limit, stamps the last-page reference, signs and self-verifies the output. It writes
    only the explicitly requested private output, refuses overwrite, and never logs document
    content, applicant details, secrets or paths. Keep private PDFs outside the repository.
    Runtime permissions request 0600; on Windows also protect the directory with suitable ACLs.
 
-5. Inspect the issued reference page and deliver the original file through the approved
-   private channel. Do not re-save the issued result. The API itself never generates a CV,
-   retains a document or sends applicant email.
+5. Inspect the small reference on the final page and deliver the original file through the approved
+   private channel. Do not re-save the issued result. Public applicant endpoints never generate
+   a CV or retain a document. The authenticated admin endpoint now supports the same issuance
+   service through the browser; see [admin setup and operation](admin-panel.md).
 
 ### Legacy CVs and key rotation
 
@@ -191,7 +192,8 @@ reviewed change; this redesign does not activate it.
 
 Both verification and submission use memory uploads and Node crypto. Set the same private
 signing key in the issuer and deployed API. Compose injects it at runtime, never during image
-build. Run issuance on a private admin machine, not through a public HTTP issuance endpoint.
+build. Run issuance on a private admin machine or through the authenticated `/admin/cv` panel.
+The web issuance endpoint requires backend authentication, CSRF and Origin checks.
 The production Node image includes the built CLI for deliberate offline use, but runtime
 application processing still writes no applicant files.
 

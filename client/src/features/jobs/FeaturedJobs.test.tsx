@@ -67,7 +67,9 @@ describe('FeaturedJobs', () => {
       await screen.findByRole('heading', { name: 'House / Building Electrician' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/compare indicative monthly salary/i)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /apply/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /apply now.*House \/ Building Electrician/i }),
+    ).toHaveAttribute('href', '/apply?job=occupation-011');
     expect(fetchJobs).toHaveBeenCalledWith({ limit: 3, page: 1 }, expect.any(AbortSignal));
   });
 });

@@ -111,7 +111,7 @@ describe('JobsDirectory', () => {
     vi.mocked(fetchJobs).mockResolvedValue(directoryResponse());
   });
 
-  it('renders salary and category data without an application action', async () => {
+  it('renders salary and category data with an occupation-specific application action', async () => {
     render(
       <MemoryRouter>
         <JobsDirectory />
@@ -126,7 +126,9 @@ describe('JobsDirectory', () => {
     expect(screen.getByRole('combobox', { name: 'Designation' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Country' })).toBeEnabled();
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /apply/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /apply now.*House \/ Building Electrician/i }),
+    ).toHaveAttribute('href', '/apply?job=occupation-011');
     expect(screen.getByText(/sample country assignments/i)).toBeInTheDocument();
   });
 

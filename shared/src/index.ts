@@ -1,5 +1,12 @@
 export { healthResponseSchema, type HealthResponse } from './schemas/health.js';
 export {
+  adminLoginSchema,
+  adminSessionSchema,
+  type AdminLogin,
+  type AdminSession,
+  type AuthenticatedAdminSession,
+} from './schemas/admin.js';
+export {
   designationFacetSchema,
   directoryCountrySchema,
   jobListingSchema,

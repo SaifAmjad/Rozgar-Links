@@ -1,11 +1,13 @@
-import { ArrowRight, BarChart3, Search } from 'lucide-react';
+import { ArrowRight, Headset, Search } from 'lucide-react';
 
 import { PageContainer } from '../components/layout/PageContainer';
+import { WhatsAppIcon } from '../components/ui/WhatsAppIcon';
 import { ButtonLink } from '../components/ui/ButtonLink';
 import { HeroJobBar } from '../features/dashboard/HeroJobBar';
 import { HowItWorksDialog } from '../features/home/HowItWorksDialog';
 import { FeaturedJobs } from '../features/jobs/FeaturedJobs';
 import { useLanguage } from '../i18n/useLanguage';
+import { whatsAppChatUrl } from '../lib/contact';
 
 export function HomePage() {
   const { t } = useLanguage();
@@ -55,23 +57,55 @@ export function HomePage() {
 
       <FeaturedJobs />
 
-      <section className="bg-primary py-12 text-white sm:py-16" aria-labelledby="home-help-title">
-        <PageContainer className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
-          <div className="max-w-2xl">
-            <BarChart3 aria-hidden="true" className="text-light-green" size={30} />
-            <h2 className="mt-4 text-3xl text-white" id="home-help-title">
-              {t('Not sure where to begin?')}
-            </h2>
-            <p className="mt-3 leading-7 text-white/85">
-              {t(
-                'Read the common questions first. They explain job listings, documents, fees and why no service can guarantee employment.',
-              )}
-            </p>
+      <section
+        className="border-y border-white/10 bg-primary py-8 text-white sm:py-10"
+        aria-labelledby="home-help-title"
+      >
+        <PageContainer>
+          <div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:gap-8 lg:gap-12">
+            <div className="max-w-2xl">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 sm:text-sm">
+                <Headset aria-hidden="true" className="size-4 text-light-green" />
+                {t("We're Here to Help")}
+              </p>
+              <h2
+                className="max-w-lg text-3xl leading-tight text-white sm:text-4xl rtl:leading-relaxed"
+                id="home-help-title"
+              >
+                {t("Have questions? We're here for you.")}
+              </h2>
+              <p className="mt-3 max-w-xl text-base leading-7 text-white/85 rtl:leading-8">
+                {t(
+                  'Need help applying for jobs or preparing your CV? Our team is just a WhatsApp message away.',
+                )}
+              </p>
+            </div>
+            <div className="min-w-0 rounded-2xl border border-white/15 bg-brand-blue/20 p-5 text-white motion-safe:transition-colors motion-safe:duration-200 hover:border-white/30 sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl border border-light-green/20 bg-light-green/10 text-light-green">
+                  <WhatsAppIcon className="size-7" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white/80 rtl:leading-7">
+                    {t('Reach us on WhatsApp')}
+                  </p>
+                  <p className="mt-1 text-xl font-bold tracking-wide sm:text-2xl">
+                    <bdi dir="ltr">0339 7779779</bdi>
+                  </p>
+                </div>
+              </div>
+              <a
+                aria-label={t('Chat with Rozgar Links on WhatsApp (opens in a new tab)')}
+                className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-green px-4 py-3 text-xl font-bold text-white motion-safe:transition-colors motion-safe:duration-200 hover:bg-brand-green/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+                href={whatsAppChatUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {t('Chat on WhatsApp')}
+                <ArrowRight aria-hidden="true" className="rtl:rotate-180" size={18} />
+              </a>
+            </div>
           </div>
-          <ButtonLink className="w-full shrink-0 sm:w-auto" to="/faq" variant="outline">
-            {t('Get simple answers')}{' '}
-            <ArrowRight aria-hidden="true" className="rtl:rotate-180" size={18} />
-          </ButtonLink>
         </PageContainer>
       </section>
     </>

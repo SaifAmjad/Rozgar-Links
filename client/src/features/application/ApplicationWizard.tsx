@@ -28,6 +28,7 @@ import { useLanguage } from '../../i18n/useLanguage';
 import { fetchApplicationSetup, submitApplication, verifyCv } from './api';
 import { SelectField } from './FormControls';
 import { formatPakistaniMobile } from './inputFormatting';
+import { getJobPrefill } from './jobPrefill';
 import {
   validateApplicationFile,
   validateApplicationFiles,
@@ -97,6 +98,10 @@ export function ApplicationWizard() {
   const field = values.field ?? '';
   const countries = values.countries ?? [];
   const selected = values.selectedJobIds ?? [];
+  const preselectedJob =
+    selected.length === 1 && selected[0] === params.get('job')
+      ? applicationOccupations.find((job) => job.id === selected[0])
+      : undefined;
   const returning = values.cvPathType === 'existing_rozgar_cv';
   const [setup, setSetup] = useState<Awaited<ReturnType<typeof fetchApplicationSetup>>>();
   const [setupError, setSetupError] = useState(false);
@@ -135,13 +140,14 @@ export function ApplicationWizard() {
     const controller = new AbortController();
     void fetchApplicationSetup(controller.signal)
       .then((result) => {
+        if (controller.signal.aborted) return;
         setSetup(result);
         setSetupError(false);
         if (!prefilled.current) {
           prefilled.current = true;
-          const requested = params.get('field');
-          if (result.taxonomy.fields.some((item) => item.id === requested))
-            setValue('field', requested ?? '');
+          const prefill = getJobPrefill(params, result.taxonomy);
+          setValue('field', prefill.field);
+          setValue('selectedJobIds', prefill.selectedJobIds);
         }
       })
       .catch(() => {
@@ -536,6 +542,7 @@ export function ApplicationWizard() {
                 />
                 <SelectField
                   {...register('field')}
+                  value={field}
                   label={t('Job field')}
                   required
                   disabled={!setup}
@@ -549,6 +556,13 @@ export function ApplicationWizard() {
                     </option>
                   ))}
                 </SelectField>
+                {preselectedJob && (
+                  <p className="rounded-xl border border-brand-green/20 bg-surface p-4 text-sm leading-6 text-primary sm:col-span-2">
+                    {t('Preselected occupation: {job}. You can change it in step 2.', {
+                      job: label(preselectedJob),
+                    })}
+                  </p>
+                )}
               </div>
             )}
             {step === 1 && (

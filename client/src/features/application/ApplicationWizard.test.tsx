@@ -1,9 +1,11 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   jobTaxonomy,
   applicationOccupations,
+  occupationDirectorySeed,
+  occupationListingSchema,
   type PublicConfigResponse,
   type CvVerificationResponse,
 } from '@rozgar-links/shared';
@@ -11,6 +13,8 @@ import { fetchApplicationSetup, submitApplication, verifyCv } from './api';
 import { ApplicationWizard } from './ApplicationWizard';
 import { browserSubmissionKey } from './browserSubmission';
 import { SuccessPage } from '../../pages/SuccessPage';
+import { ApplyPage } from '../../pages/ApplyPage';
+import { JobCard } from '../jobs/JobCard';
 import { LanguageProvider } from '../../i18n/LanguageProvider';
 import { languageStorageKey, translate, type Language } from '../../i18n/translations';
 
@@ -33,6 +37,20 @@ const config: PublicConfigResponse = {
 const cvReference = 'RL-CV-2026-ABCDEFGH2345';
 const pdf = () => new File(['test CV'], 'official.pdf', { type: 'application/pdf' });
 const screenshot = () => new File(['test image'], 'payment.png', { type: 'image/png' });
+const directoryJob = occupationListingSchema.parse({
+  ...Object.fromEntries(
+    Object.entries(occupationDirectorySeed.occupations[0] ?? {}).filter(
+      ([key]) => key !== 'categoryId' && key !== 'salaryGroup',
+    ),
+  ),
+  category: occupationDirectorySeed.categories[0],
+  salaryCurrency: 'SAR',
+  salaryPeriod: 'monthly',
+  recordType: 'occupation_directory',
+  isActive: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+});
 let language: Language = 'en';
 const t = (message: string, values?: Record<string, string | number>) =>
   translate(language, message, values);
@@ -48,12 +66,15 @@ async function renderWizard(lang: Language = 'en', route = '/apply') {
     <LanguageProvider>
       <MemoryRouter initialEntries={[route]}>
         <Routes>
-          <Route path="/apply" element={<ApplicationWizard />} />
+          <Route path="/jobs" element={<JobCard job={directoryJob} />} />
+          <Route path="/apply" element={<ApplyPage />} />
           <Route path="/success" element={<SuccessPage />} />
         </Routes>
       </MemoryRouter>
     </LanguageProvider>,
   );
+  if (route === '/jobs')
+    fireEvent.click(screen.getByRole('link', { name: new RegExp(t('Apply now')) }));
   await screen.findByRole('option', { name: t('Construction') });
 }
 function change(name: string, value: string) {
@@ -114,6 +135,95 @@ describe('conditional application wizard', () => {
       .mockReset()
       .mockResolvedValue({ success: true, referenceId: 'RL-2026-ABC234' });
     vi.mocked(verifyCv).mockReset().mockResolvedValue({ valid: true, cvReference });
+  });
+  it.each(['en', 'ur'] as const)(
+    'carries a clicked job through preferences, review and submission in %s',
+    async (lang) => {
+      await renderWizard(lang, '/jobs');
+      expect(screen.getByRole('combobox', { name: new RegExp(t('Job field')) })).toHaveValue(
+        'construction',
+      );
+      expect(
+        screen.getByText(
+          t('Preselected occupation: {job}. You can change it in step 2.', { job: jobLabel() }),
+        ),
+      ).toBeInTheDocument();
+      change('First name', 'Test');
+      change('Last name', 'Applicant');
+      change('Email address', 'test@example.invalid');
+      change('WhatsApp number', '03001234567');
+      await proceed('Preferences');
+      expect(screen.getByRole('checkbox', { name: jobLabel() })).toBeChecked();
+      expect(screen.getByText(t('{count} of 3 jobs selected', { count: 1 }))).toBeInTheDocument();
+      // A job link must not invent a preferred country from sample assignments.
+      expect(screen.getByLabelText(t('Saudi Arabia'))).not.toBeChecked();
+      fireEvent.click(screen.getByLabelText(t('Saudi Arabia')));
+      await proceed('CV Status');
+      await chooseReturning();
+      await proceed('Review');
+      expect(screen.getByText(jobLabel())).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: t('Submit application') }));
+      await screen.findByRole('heading', { name: t('Application submitted') });
+      expect(submitApplication).toHaveBeenCalledWith(
+        expect.objectContaining({ field: 'construction', selectedJobIds: ['occupation-001'] }),
+        expect.objectContaining({ cv: expect.any(File) }),
+        '',
+      );
+    },
+  );
+  it('allows removing and changing a preselected occupation and clears incompatible choices', async () => {
+    await renderWizard('en', '/apply?job=occupation-001&country=qatar');
+    change('First name', 'Test');
+    change('Last name', 'Applicant');
+    change('Email address', 'test@example.invalid');
+    change('WhatsApp number', '03001234567');
+    await proceed('Preferences');
+    expect(screen.getByLabelText('Qatar')).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: `Remove ${jobLabel()}` }));
+    expect(screen.getByRole('checkbox', { name: jobLabel() })).not.toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: jobLabel(1) }));
+    fireEvent.click(screen.getByRole('button', { name: 'Personal' }));
+    change('Job field', 'healthcare');
+    await proceed('Preferences');
+    expect(screen.getByText('0 of 3 jobs selected')).toBeInTheDocument();
+    expect(screen.getByLabelText('Qatar')).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Registered Staff Nurse' })).not.toBeChecked();
+  });
+  it('starts an ordinary application with no field or occupations selected', async () => {
+    await renderWizard();
+    expect(screen.getByRole('combobox', { name: /job field/i })).toHaveValue('');
+    expect(screen.queryByText(/Preselected occupation:/)).not.toBeInTheDocument();
+    change('First name', 'Test');
+    change('Last name', 'Applicant');
+    change('Email address', 'test@example.invalid');
+    change('WhatsApp number', '03001234567');
+    change('Job field', 'construction');
+    await proceed('Preferences');
+    expect(screen.getByText('0 of 3 jobs selected')).toBeInTheDocument();
+  });
+  it('resets preselection when navigating to ordinary Apply now or another job on the same page', async () => {
+    render(
+      <MemoryRouter initialEntries={['/apply?job=occupation-001']}>
+        <Link to="/apply">Ordinary apply</Link>
+        <Link to="/apply?job=occupation-058">Apply for nurse</Link>
+        <Routes>
+          <Route path="/apply" element={<ApplyPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: /job field/i })).toHaveValue('construction'),
+    );
+    change('First name', 'Test');
+    fireEvent.click(screen.getByRole('link', { name: 'Ordinary apply' }));
+    await screen.findByRole('option', { name: 'Construction' });
+    expect(screen.getByRole('combobox', { name: /job field/i })).toHaveValue('');
+    expect(screen.getByLabelText(/First name/)).toHaveValue('');
+    fireEvent.click(screen.getByRole('link', { name: 'Apply for nurse' }));
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: /job field/i })).toHaveValue('healthcare'),
+    );
+    expect(screen.getByText(/Preselected occupation: Registered Staff Nurse/)).toBeInTheDocument();
   });
   it('requires personal fields including job field, omits removed fields and formats WhatsApp', async () => {
     await renderWizard();

@@ -6,6 +6,7 @@ import { env } from './config/env.js';
 import { HttpError } from './errors/httpError.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { createApiRouter, type ApiRouterOptions } from './routes/index.js';
+import { adminNoCache } from './routes/admin.js';
 
 const vercelOriginKeys = [
   'VERCEL_URL',
@@ -42,8 +43,11 @@ export function createApp(options: ApiRouterOptions = {}) {
   app.disable('x-powered-by');
   if (trustProxyHops > 0) app.set('trust proxy', trustProxyHops);
   app.use(helmet());
+  app.use('/api/admin', adminNoCache);
   app.use(
     cors({
+      credentials: true,
+      exposedHeaders: ['X-CV-Reference', 'Content-Disposition'],
       methods: ['GET', 'POST'],
       origin(origin, callback) {
         if (!origin || allowedOrigins.has(origin)) {
@@ -55,7 +59,7 @@ export function createApp(options: ApiRouterOptions = {}) {
     }),
   );
   app.use(express.json({ limit: '100kb' }));
-  app.use('/api', createApiRouter(options));
+  app.use('/api', createApiRouter({ ...options, admin: { ...options.admin, allowedOrigins } }));
   app.use(notFoundHandler);
   app.use(errorHandler);
 

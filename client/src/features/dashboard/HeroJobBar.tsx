@@ -171,14 +171,11 @@ export function HeroJobBar() {
           );
         })}
       </div>
-      <p className="border-t bg-surface px-4 py-2 text-xs leading-5 text-muted">
-        {t('Snapshot date: {date}', { date: stats.date })}
-        {' · '}
-        {t(
-          'Indicative figures, updated daily. Direction arrows are illustrative, not verified trends.',
-        )}
-        {stats.isStale ? ` ${t('Figures may be out of date. Retrying automatically.')}` : ''}
-      </p>
+      {stats.isStale ? (
+        <p className="border-t bg-surface px-4 py-2 text-xs leading-5 text-muted">
+          {t('Figures may be out of date. Retrying automatically.')}
+        </p>
+      ) : null}
     </div>
   );
 }

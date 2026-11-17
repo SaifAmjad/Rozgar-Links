@@ -35,7 +35,7 @@ export function createCvReference(now = new Date()) {
   return `RL-CV-${now.getUTCFullYear()}-${Array.from({ length: 12 }, () => alphabet[randomInt(alphabet.length)]).join('')}`;
 }
 
-// The final, exact PDF bytes (including the visible reference page) are hashed BEFORE
+// The final, exact PDF bytes (including the visible reference) are hashed BEFORE
 // appending this ASCII comment. The verifier accepts only this single terminal envelope.
 export function signIssuedCv(pdf: Buffer, reference: string, secret?: string, now = new Date()) {
   const key = signingKey(secret);
