@@ -1,10 +1,11 @@
-import { Clock3, MailWarning, MapPin } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { PageIntro } from '../components/PageIntro';
 import { PageContainer } from '../components/layout/PageContainer';
-import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
+import { WhatsAppIcon } from '../components/ui/WhatsAppIcon';
+import { getButtonClasses } from '../components/ui/buttonStyles';
 import { useLanguage } from '../i18n/useLanguage';
+import { whatsAppChatUrl } from '../lib/contact';
 
 export function ContactPage() {
   const { t } = useLanguage();
@@ -13,48 +14,44 @@ export function ContactPage() {
     <>
       <PageIntro
         description={t(
-          'Verified business contact details will be published only after the owner confirms the legal entity, service address and support channel.',
+          'Have a question? Contact us on WhatsApp for help with applications, CV preparation or general enquiries.',
         )}
         eyebrow={t('Get in touch')}
         title={t('Contact Rozgar Links')}
       />
-      <PageContainer className="py-12 sm:py-16">
-        <div className="grid gap-5 md:grid-cols-3">
-          <Card>
-            <MailWarning aria-hidden="true" className="text-warning" size={26} />
-            <h2 className="mt-4 text-xl">{t('Email')}</h2>
-            <Badge tone="warning">{t('Pending verification')}</Badge>
-            <p className="mt-4 leading-7 text-muted">
-              {t(
-                'No public support email is approved. Do not send personal or identity information.',
-              )}
-            </p>
-          </Card>
-          <Card>
-            <MapPin aria-hidden="true" className="text-brand-blue" size={26} />
-            <h2 className="mt-4 text-xl">{t('Business address')}</h2>
-            <Badge tone="warning">{t('Pending verification')}</Badge>
-            <p className="mt-4 leading-7 text-muted">
-              {t('A legitimate service address will appear after owner and legal review.')}
-            </p>
-          </Card>
-          <Card>
-            <Clock3 aria-hidden="true" className="text-brand-green" size={26} />
-            <h2 className="mt-4 text-xl">{t('Support hours')}</h2>
-            <Badge tone="warning">{t('Pending verification')}</Badge>
-            <p className="mt-4 leading-7 text-muted">
-              {t('Support availability has not been approved or published.')}
-            </p>
-          </Card>
-        </div>
-        <div className="mt-8 rounded-xl border border-warning/30 bg-warning/10 p-5">
-          <h2 className="text-lg">{t('Applicant safety notice')}</h2>
-          <p className="mt-2 leading-7 text-muted">
-            {t(
-              'Rozgar Links is not accepting applications, fees, resumes, passport copies, CNIC values or payment evidence through contact channels during this demonstration stage.',
+      <PageContainer className="py-8 sm:py-12">
+        <section
+          className="mx-auto max-w-2xl rounded-2xl border border-brand-green/20 bg-surface p-6 sm:p-8"
+          aria-labelledby="contact-whatsapp-title"
+        >
+          <div className="flex items-start gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-green/10 text-brand-green">
+              <WhatsAppIcon className="size-7" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-xl rtl:leading-loose" id="contact-whatsapp-title">
+                {t('Reach us on WhatsApp')}
+              </h2>
+              <p className="mt-2 text-2xl font-bold tracking-wide text-primary">
+                <bdi dir="ltr">0339 7779779</bdi>
+              </p>
+            </div>
+          </div>
+          <a
+            aria-label={t('Chat with Rozgar Links on WhatsApp (opens in a new tab)')}
+            className={getButtonClasses(
+              'secondary',
+              'mt-6 min-h-12 w-full motion-reduce:transition-none',
             )}
-          </p>
-        </div>
+            href={whatsAppChatUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <WhatsAppIcon className="size-5" />
+            {t('Chat on WhatsApp')}
+            <ArrowRight aria-hidden="true" className="rtl:rotate-180" size={18} />
+          </a>
+        </section>
       </PageContainer>
     </>
   );

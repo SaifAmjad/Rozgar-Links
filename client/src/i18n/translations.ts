@@ -4,6 +4,8 @@ export type Language = 'en' | 'ur';
 export const languageStorageKey = 'rozgar-links-language';
 
 const urdu: Record<string, string> = {
+  'Have a question? Contact us on WhatsApp for help with applications, CV preparation or general enquiries.':
+    'کوئی سوال ہے؟ درخواستوں، سی وی کی تیاری یا عام معلومات کے لیے واٹس ایپ پر ہم سے رابطہ کریں۔',
   'Apply now': 'ابھی درخواست دیں',
   'Preselected occupation: {job}. You can change it in step 2.':
     'پہلے سے منتخب پیشہ: {job}۔ آپ اسے مرحلہ 2 میں تبدیل کر سکتے ہیں۔',
